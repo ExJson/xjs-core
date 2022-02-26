@@ -10,8 +10,8 @@ import java.util.stream.StreamSupport;
 public abstract class JsonContainer extends JsonValue {
 
     protected final List<JsonReference> references;
-    protected Iterable<JsonValue> accessor;
-    protected Iterable<JsonValue> visitor;
+    protected View<JsonValue> accessor;
+    protected View<JsonValue> visitor;
     protected int lineLength;
 
     protected JsonContainer() {
@@ -133,16 +133,16 @@ public abstract class JsonContainer extends JsonValue {
         return true;
     }
 
-    public Iterable<JsonValue> values() {
+    public View<JsonValue> values() {
         if (this.accessor == null) {
-            return this.accessor = new AccessingValueIterable();
+            return this.accessor = new AccessingView();
         }
         return this.accessor;
     }
 
-    public Iterable<JsonValue> visitAll() {
+    public View<JsonValue> visitAll() {
         if (this.visitor == null) {
-            return this.visitor = new VisitingValueIterable();
+            return this.visitor = new VisitingView();
         }
         return this.visitor;
     }
@@ -243,7 +243,7 @@ public abstract class JsonContainer extends JsonValue {
         return this;
     }
 
-    private class AccessingValueIterable implements Iterable<JsonValue> {
+    private class AccessingView implements View<JsonValue> {
         @Override
         public @NotNull Iterator<JsonValue> iterator() {
             return new AccessingValueIterator();
@@ -269,7 +269,7 @@ public abstract class JsonContainer extends JsonValue {
         }
     }
 
-    private class VisitingValueIterable implements Iterable<JsonValue> {
+    private class VisitingView implements View<JsonValue> {
         @Override
         public @NotNull Iterator<JsonValue> iterator() {
             return new VisitingValueIterator();
