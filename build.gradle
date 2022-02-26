@@ -1,0 +1,66 @@
+
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'org.jetbrains', name: 'annotations', version: '16.0.2'
+
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.3.1'
+    testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.3.1'
+}
+
+compileJava {
+    sourceCompatibility = 1.8
+}
+
+compileTestJava {
+    sourceCompatibility = 16
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+    test {
+        java {
+            srcDir 'src/test/java'
+        }
+    }
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier 'javadoc'
+    from 'build/docs/javadoc'
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+    ignoreFailures = false
+    failFast = false
+}
+
+jar {
+    manifest {
+        attributes(
+            'XJS-Version': archiveVersion,
+        )
+    }
+}
+
+artifacts {
+    archives jar
+    archives sourcesJar
+    archives javadocJar
+}
+
+
