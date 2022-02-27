@@ -27,12 +27,17 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
         return this.set(index, valueOf(value));
     }
 
-    public JsonArray add(final int index, final String value) {
+    public JsonArray set(final int index, final String value) {
         return this.set(index, valueOf(value));
     }
 
     public JsonArray set(final int index, final JsonValue value) {
         this.references.get(index).set(value);
+        return this;
+    }
+
+    public JsonArray setComment(final int index, final String comment) {
+        this.getReference(index).setComment(comment);
         return this;
     }
 
@@ -55,6 +60,26 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
     public JsonArray add(final JsonValue value) {
         this.references.add(new JsonReference(value));
         return this;
+    }
+
+    public JsonArray add(final long value, final String comment) {
+        return this.add(valueOf(value), comment);
+    }
+
+    public JsonArray add(final double value, final String comment) {
+        return this.add(valueOf(value), comment);
+    }
+
+    public JsonArray add(final boolean value, final String comment) {
+        return this.add(valueOf(value), comment);
+    }
+
+    public JsonArray add(final String value, final String comment) {
+        return this.add(valueOf(value), comment);
+    }
+
+    public JsonArray add(final JsonValue value, final String comment) {
+        return this.addReference(new JsonReference(value).setComment(comment));
     }
 
     public JsonArray addAll(final JsonContainer container) {

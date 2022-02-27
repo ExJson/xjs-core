@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collector;
 
-public class JsonCollectors {
+public final class JsonCollectors {
 
     private JsonCollectors() {}
 

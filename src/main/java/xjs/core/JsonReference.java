@@ -3,18 +3,36 @@ package xjs.core;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.UnaryOperator;
 
 public class JsonReference extends JsonValue {
 
     protected JsonValue referent;
     protected boolean accessed;
-    protected int emptyLines;
-    protected boolean forceNewLine;
+    protected int linesAbove;
+    protected int linesBetween;
     protected int flags;
+    protected CommentHolder comments;
 
     public JsonReference(final @Nullable JsonValue referent) {
         this.referent = JsonValue.nonnull(referent);
+    }
+
+    public static JsonReference wrap(final long value) {
+        return new JsonReference(valueOf(value));
+    }
+
+    public static JsonReference wrap(final double value) {
+        return new JsonReference(valueOf(value));
+    }
+
+    public static JsonReference wrap(final boolean value) {
+        return new JsonReference(valueOf(value));
+    }
+
+    public static JsonReference wrap(final @Nullable String value) {
+        return new JsonReference(valueOf(value));
     }
 
     public static JsonValue unwrap(@Nullable JsonValue referent) {
@@ -59,6 +77,30 @@ public class JsonReference extends JsonValue {
         return this.mutate(updater.apply(this.referent));
     }
 
+    public CommentHolder getComments() {
+        if (this.comments == null) {
+            return this.comments = new CommentHolder();
+        }
+        return this.comments;
+    }
+
+    public boolean hasComment() {
+        return this.comments != null && this.comments.hasAny();
+    }
+
+    public JsonReference setComment(final String text) {
+        return this.setComment(CommentType.HEADER, CommentStyle.LINE, text);
+    }
+
+    public JsonReference setComment(final CommentType type, final CommentStyle style, final String text) {
+        this.getComments().set(type, style, text);
+        return this;
+    }
+
+    public String getComment(final CommentType type) {
+        return this.getComments().get(type);
+    }
+
     public boolean isAccessed() {
         return this.accessed;
     }
@@ -68,21 +110,21 @@ public class JsonReference extends JsonValue {
         return this;
     }
 
-    public int getEmptyLines() {
-        return this.emptyLines;
+    public int getLinesAbove() {
+        return this.linesAbove;
     }
 
-    public JsonReference setEmptyLines(final int emptyLines) {
-        this.emptyLines = emptyLines;
+    public JsonReference setLinesAbove(final int linesAbove) {
+        this.linesAbove = linesAbove;
         return this;
     }
 
-    public boolean isForceNewLine() {
-        return this.forceNewLine;
+    public int getLinesBetween() {
+        return this.linesBetween;
     }
 
-    public JsonReference setForceNewLine(final boolean forceNewLine) {
-        this.forceNewLine = forceNewLine;
+    public JsonReference setLinesBetween(final int linesBetween) {
+        this.linesBetween = linesBetween;
         return this;
     }
 
@@ -280,7 +322,7 @@ public class JsonReference extends JsonValue {
     }
 
     public JsonReference clone(final boolean trackAccess) {
-        final JsonReference clone = new JsonReference(this.referent).setEmptyLines(this.emptyLines);
+        final JsonReference clone = new JsonReference(this.referent).setLinesAbove(this.linesAbove);
         return trackAccess ? clone.setAccessed(this.accessed) : clone;
     }
 
@@ -288,20 +330,28 @@ public class JsonReference extends JsonValue {
     public int hashCode() {
         int result = 1;
         result = 31 * result + this.referent.hashCode();
-        result = 31 * result + this.emptyLines;
-        result = 31 * result + (this.forceNewLine ? 1 : 0);
+        result = 31 * result + this.linesAbove;
+        result = 31 * result + this.linesBetween;
         result = 31 * result + this.flags;
+
+        if (this.comments != null) {
+            result = 31 * result + this.comments.hashCode();
+        }
         return result;
     }
 
     @Override
     public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
         if (o instanceof JsonReference) {
             final JsonReference other = (JsonReference) o;
             return this.referent.equals(other.referent)
-                && this.emptyLines == other.emptyLines
-                && this.forceNewLine == other.forceNewLine
-                && this.flags == other.flags;
+                && this.linesAbove == other.linesAbove
+                && this.linesBetween == other.linesBetween
+                && this.flags == other.flags
+                && Objects.equals(this.comments, other.comments);
         }
         return false;
     }

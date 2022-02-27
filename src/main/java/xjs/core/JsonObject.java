@@ -100,6 +100,26 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return this;
     }
 
+    public JsonObject add(final String key, final long value, final String comment) {
+        return this.add(key, valueOf(value), comment);
+    }
+
+    public JsonObject add(final String key, final double value, final String comment) {
+        return this.add(key, valueOf(value), comment);
+    }
+
+    public JsonObject add(final String key, final boolean value, final String comment) {
+        return this.add(key, valueOf(value), comment);
+    }
+
+    public JsonObject add(final String key, final String value, final String comment) {
+        return this.add(key, valueOf(value), comment);
+    }
+
+    public JsonObject add(final String key, final @Nullable JsonValue value, final String comment) {
+        return this.addReference(key, new JsonReference(value).setComment(comment));
+    }
+
     public JsonObject addAll(final JsonObject object) {
         final Iterator<String> keyIterator = object.keys.iterator();
         final Iterator<JsonReference> referenceIterator = object.references.iterator();

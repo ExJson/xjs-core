@@ -3,9 +3,19 @@ package xjs.core;
 public class JsonString extends JsonValue {
 
     private final String value;
+    private final Type type;
 
     public JsonString(final String value) {
+        this(value, Type.SINGLE);
+    }
+
+    public JsonString(final String value, final Type type) {
         this.value = value;
+        this.type = type;
+    }
+
+    public Type getStringType() {
+        return this.type;
     }
 
     @Override
@@ -91,5 +101,12 @@ public class JsonString extends JsonValue {
     @Override
     public String toString() {
         return this.value;
+    }
+
+    public enum Type {
+        SINGLE,
+        DOUBLE,
+        MULTI,
+        IMPLICIT
     }
 }

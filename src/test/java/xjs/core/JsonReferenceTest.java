@@ -99,13 +99,13 @@ public final class JsonReferenceTest {
     public void clone_copiesMetadata() {
         final JsonReference reference =
             new JsonReference(null)
-                .setEmptyLines(10)
-                .setForceNewLine(true)
+                .setLinesAbove(10)
+                .setLinesBetween(20)
                 .setFlags(2);
 
         final JsonReference clone = reference.clone(false);
-        assertEquals(reference.getEmptyLines(), clone.getEmptyLines());
-        assertEquals(reference.isForceNewLine(), clone.isForceNewLine());
+        assertEquals(reference.getLinesAbove(), clone.getLinesAbove());
+        assertEquals(reference.getLinesBetween(), clone.getLinesBetween());
         assertEquals(reference.getFlags(), clone.getFlags());
     }
 }

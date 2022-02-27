@@ -33,9 +33,9 @@ public final class JsonCollectorsTest {
     @Test
     public void reference_preservesMetadata() {
         final JsonArray collected =
-            Stream.of(new JsonReference(null).setEmptyLines(1234))
+            Stream.of(new JsonReference(null).setLinesAbove(1234))
                 .collect(JsonCollectors.reference());
-        assertEquals(1234, collected.getReference(0).getEmptyLines());
+        assertEquals(1234, collected.getReference(0).getLinesAbove());
     }
 
     @Test
