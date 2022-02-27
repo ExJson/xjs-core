@@ -77,30 +77,6 @@ public class JsonReference extends JsonValue {
         return this.mutate(updater.apply(this.referent));
     }
 
-    public CommentHolder getComments() {
-        if (this.comments == null) {
-            return this.comments = new CommentHolder();
-        }
-        return this.comments;
-    }
-
-    public boolean hasComment() {
-        return this.comments != null && this.comments.hasAny();
-    }
-
-    public JsonReference setComment(final String text) {
-        return this.setComment(CommentType.HEADER, CommentStyle.LINE, text);
-    }
-
-    public JsonReference setComment(final CommentType type, final CommentStyle style, final String text) {
-        this.getComments().set(type, style, text);
-        return this;
-    }
-
-    public String getComment(final CommentType type) {
-        return this.getComments().get(type);
-    }
-
     public boolean isAccessed() {
         return this.accessed;
     }
@@ -149,6 +125,39 @@ public class JsonReference extends JsonValue {
     public JsonReference removeFlag(final int flag) {
         this.flags &= ~flag;
         return this;
+    }
+
+    public CommentHolder getComments() {
+        if (this.comments == null) {
+            return this.comments = new CommentHolder();
+        }
+        return this.comments;
+    }
+
+    public JsonReference setComments(final CommentHolder comments) {
+        this.comments = comments;
+        return this;
+    }
+
+    public boolean hasComments() {
+        return this.comments != null && this.comments.hasAny();
+    }
+
+    public boolean hasComment(final CommentType type) {
+        return this.comments != null && !this.comments.get(type).isEmpty();
+    }
+
+    public JsonReference setComment(final String text) {
+        return this.setComment(CommentType.HEADER, CommentStyle.LINE, text);
+    }
+
+    public JsonReference setComment(final CommentType type, final CommentStyle style, final String text) {
+        this.getComments().set(type, style, text);
+        return this;
+    }
+
+    public String getComment(final CommentType type) {
+        return this.getComments().get(type);
     }
 
     @Override
