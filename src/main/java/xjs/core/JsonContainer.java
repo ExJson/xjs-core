@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -12,7 +14,6 @@ public abstract class JsonContainer extends JsonValue {
     protected final List<JsonReference> references;
     protected View<JsonValue> accessor;
     protected View<JsonValue> visitor;
-    protected int lineLength;
 
     protected JsonContainer() {
         this(new ArrayList<>());
@@ -20,24 +21,32 @@ public abstract class JsonContainer extends JsonValue {
 
     protected JsonContainer(final List<JsonReference> references) {
         this.references = references;
-        this.lineLength = 0;
-    }
-
-    public int getLineLength() {
-        return this.lineLength;
     }
 
     public JsonContainer setLineLength(final int lineLength) {
-        this.lineLength = lineLength;
+        for (int i = 0; i < this.references.size(); i++) {
+            if ((i - 1 % lineLength) == 0) {
+                this.references.get(i).setLinesAbove(1).setLinesBetween(0);
+            } else {
+                this.references.get(i).setLinesAbove(0).setLinesBetween(0);
+            }
+        }
         return this;
     }
 
     public boolean isCondensed() {
-        return this.lineLength == 0;
+        for (final JsonReference reference : this.references) {
+            if (reference.getLinesAbove() > 0 || reference.getLinesBetween() > 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public JsonContainer setCondensed() {
-        this.lineLength = 0;
+        for (final JsonReference reference : this.references) {
+            reference.setLinesAbove(0).setLinesBetween(0);
+        }
         return this;
     }
 
@@ -208,11 +217,17 @@ public abstract class JsonContainer extends JsonValue {
         return -1;
     }
 
+    public <T> List<T> toList(final Function<JsonReference, T> mapper) {
+        return this.references.stream().map(mapper).collect(Collectors.toList());
+    }
+
     public abstract JsonContainer shallowCopy();
 
     public abstract JsonContainer deepCopy();
 
     public abstract JsonContainer deepCopy(final boolean trackAccess);
+
+    public abstract JsonContainer unformatted();
 
     @Override
     public final boolean isContainer() {

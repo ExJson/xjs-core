@@ -17,6 +17,11 @@ public class JsonReference extends JsonValue {
 
     public JsonReference(final @Nullable JsonValue referent) {
         this.referent = JsonValue.nonnull(referent);
+        this.accessed = false;
+        this.linesAbove = -1;
+        this.linesBetween = -1;
+        this.flags = 0;
+        this.comments = null;
     }
 
     public static JsonReference wrap(final long value) {

@@ -142,6 +142,7 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
         return (JsonArray) super.intoContainer();
     }
 
+    @Override
     public JsonArray shallowCopy() {
         final JsonArray copy = new JsonArray();
         for (final JsonReference reference : this.references) {
@@ -155,10 +156,12 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
         return copy;
     }
 
+    @Override
     public JsonArray deepCopy() {
         return this.deepCopy(false);
     }
 
+    @Override
     public JsonArray deepCopy(final boolean trackAccess) {
         final JsonArray copy = new JsonArray();
         for (final JsonReference reference : this.references) {
@@ -167,6 +170,20 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
                 copy.add(value.asContainer().deepCopy(trackAccess));
             } else {
                 copy.addReference(reference.clone(trackAccess));
+            }
+        }
+        return copy;
+    }
+
+    @Override
+    public JsonArray unformatted() {
+        final JsonArray copy = new JsonArray();
+        for (final JsonReference reference : this.references) {
+            final JsonValue value = reference.visit();
+            if (value.isContainer()) {
+                copy.add(value.asContainer().unformatted());
+            } else {
+                copy.add(value);
             }
         }
         return copy;
@@ -194,7 +211,7 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
 
     @Override
     public JsonObject intoObject() {
-        return new JsonObject(this.references).setLineLength(this.lineLength);
+        return new JsonObject(this.references);
     }
 
     @Override

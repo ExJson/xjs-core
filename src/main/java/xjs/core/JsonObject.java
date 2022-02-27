@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.*;
+import java.util.function.Function;
 
 public class JsonObject extends JsonContainer implements JsonContainer.View<JsonObject.Member> {
 
@@ -262,11 +263,23 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return (JsonObject) super.setAllAccessed(accessed);
     }
 
+    public <T> Map<String, T> toMap(final Function<JsonReference, T> mapper) {
+        final Map<String, T> map = new HashMap<>();
+        final Iterator<String> keyIterator = this.keys.iterator();
+        final Iterator<JsonReference> referenceIterator = this.references.iterator();
+
+        while (keyIterator.hasNext() && referenceIterator.hasNext()) {
+            map.put(keyIterator.next(), mapper.apply(referenceIterator.next()));
+        }
+        return map;
+    }
+
     @Override
     public JsonObject intoContainer() {
         return (JsonObject) super.intoContainer();
     }
 
+    @Override
     public JsonObject shallowCopy() {
         final JsonObject copy = new JsonObject();
         final Iterator<String> keyIterator = this.keys.iterator();
@@ -286,10 +299,12 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return copy;
     }
 
+    @Override
     public JsonObject deepCopy() {
         return this.deepCopy(false);
     }
 
+    @Override
     public JsonObject deepCopy(final boolean trackAccess) {
         final JsonObject copy = new JsonObject();
         final Iterator<String> keyIterator = this.keys.iterator();
@@ -304,6 +319,26 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
                 copy.add(key, value.asContainer().deepCopy(trackAccess));
             } else {
                 copy.addReference(key, reference.clone(trackAccess));
+            }
+        }
+        return copy;
+    }
+
+    @Override
+    public JsonObject unformatted() {
+        final JsonObject copy = new JsonObject();
+        final Iterator<String> keyIterator = this.keys.iterator();
+        final Iterator<JsonReference> referenceIterator = this.references.iterator();
+
+        while (keyIterator.hasNext() && referenceIterator.hasNext()) {
+            final String key = keyIterator.next();
+            final JsonReference reference = referenceIterator.next();
+            final JsonValue value = reference.visit();
+
+            if (value.isContainer()) {
+                copy.add(key, value.asContainer().unformatted());
+            } else {
+                copy.add(key, value);
             }
         }
         return copy;
@@ -336,7 +371,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
     @Override
     public JsonArray intoArray() {
-        return new JsonArray(this.references).setLineLength(this.lineLength);
+        return new JsonArray(this.references);
     }
 
     @Override
@@ -355,7 +390,6 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         int result=1;
         result = 31 * result + this.keys.hashCode();
         result = 31 * result + this.references.hashCode();
-        result = 31 * result + this.lineLength;
         return result;
     }
 
@@ -364,8 +398,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         if (o instanceof JsonObject) {
             final JsonObject other = (JsonObject) o;
             return this.keys.equals(other.keys)
-                && this.references.equals(other.references)
-                && this.lineLength == other.lineLength;
+                && this.references.equals(other.references);
         }
         return false;
     }

@@ -6,7 +6,7 @@ public class JsonString extends JsonValue {
     private final Type type;
 
     public JsonString(final String value) {
-        this(value, Type.SINGLE);
+        this(value, Type.NONE);
     }
 
     public JsonString(final String value, final Type type) {
@@ -107,6 +107,7 @@ public class JsonString extends JsonValue {
         SINGLE,
         DOUBLE,
         MULTI,
-        IMPLICIT
+        IMPLICIT,
+        NONE
     }
 }

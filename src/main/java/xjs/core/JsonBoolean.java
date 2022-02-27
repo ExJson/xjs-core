@@ -4,6 +4,14 @@ public abstract class JsonBoolean extends JsonValue {
 
     private JsonBoolean() {}
 
+    public static JsonTrue jsonTrue() {
+        return JsonTrue.INSTANCE;
+    }
+
+    public static JsonFalse jsonFalse() {
+        return JsonFalse.INSTANCE;
+    }
+
     public static JsonBoolean get(final boolean value) {
         return value ? JsonTrue.INSTANCE : JsonFalse.INSTANCE;
     }
