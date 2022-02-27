@@ -124,7 +124,7 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
             if (value.isContainer()) {
                 copy.add(value.asContainer().shallowCopy());
             } else {
-                copy.add(value);
+                copy.addReference(reference);
             }
         }
         return copy;
@@ -155,6 +155,11 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
     @Override
     public boolean isArray() {
         return true;
+    }
+
+    @Override
+    public JsonArray asContainer() {
+        return this;
     }
 
     @Override

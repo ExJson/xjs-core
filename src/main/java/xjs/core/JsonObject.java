@@ -104,7 +104,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         final Iterator<String> keyIterator = object.keys.iterator();
         final Iterator<JsonReference> referenceIterator = object.references.iterator();
         while (keyIterator.hasNext() && referenceIterator.hasNext()) {
-            this.add(keyIterator.next(), referenceIterator.next());
+            this.addReference(keyIterator.next(), referenceIterator.next());
         }
         return this;
     }
@@ -260,7 +260,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             if (value.isContainer()) {
                 copy.add(key, value.asContainer().shallowCopy());
             } else {
-                copy.add(key, value);
+                copy.addReference(key, reference);
             }
         }
         return copy;
@@ -300,6 +300,11 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     @Override
+    public JsonObject asContainer() {
+        return this;
+    }
+
+    @Override
     public JsonObject asObject() {
         return this;
     }
@@ -316,7 +321,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
     @Override
     public Iterator<Member> iterator() {
-        return this.view().iterator();
+        return new MemberIterator();
     }
 
     private synchronized void readObject(final ObjectInputStream ois) throws IOException, ClassNotFoundException {
@@ -330,6 +335,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         int result=1;
         result = 31 * result + this.keys.hashCode();
         result = 31 * result + this.references.hashCode();
+        result = 31 * result + this.lineLength;
         return result;
     }
 
@@ -337,7 +343,9 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     public boolean equals(final Object o) {
         if (o instanceof JsonObject) {
             final JsonObject other = (JsonObject) o;
-            return this.keys.equals(other.keys) && this.references.equals(other.references);
+            return this.keys.equals(other.keys)
+                && this.references.equals(other.references)
+                && this.lineLength == other.lineLength;
         }
         return false;
     }

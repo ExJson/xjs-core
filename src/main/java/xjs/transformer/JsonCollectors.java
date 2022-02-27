@@ -10,10 +10,10 @@ public class JsonCollectors {
 
     private JsonCollectors() {}
 
-    public static Collector<JsonContainer.Access, JsonArray, JsonArray> access() {
+    public static Collector<JsonValue, JsonArray, JsonArray> value() {
         return Collector.of(
             JsonArray::new,
-            (array, access) -> array.addReference(access.getReference()),
+            JsonArray::add,
             (left, right) -> { left.addAll(right); return left; },
             Collector.Characteristics.IDENTITY_FINISH
         );
@@ -28,10 +28,10 @@ public class JsonCollectors {
         );
     }
 
-    public static Collector<JsonValue, JsonArray, JsonArray> value() {
+    public static Collector<JsonContainer.Access, JsonArray, JsonArray> access() {
         return Collector.of(
             JsonArray::new,
-            JsonArray::add,
+            (array, access) -> array.addReference(access.getReference()),
             (left, right) -> { left.addAll(right); return left; },
             Collector.Characteristics.IDENTITY_FINISH
         );

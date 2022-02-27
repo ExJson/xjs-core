@@ -24,6 +24,13 @@ public class JsonReference extends JsonValue {
         return JsonValue.nonnull(referent);
     }
 
+    public static JsonValue inspect(@Nullable JsonValue referent) {
+        while (referent instanceof JsonReference) {
+            referent = ((JsonReference) referent).visit();
+        }
+        return JsonValue.nonnull(referent);
+    }
+
     public @NotNull JsonValue get() {
         this.accessed = true;
         return this.referent;
@@ -279,7 +286,12 @@ public class JsonReference extends JsonValue {
 
     @Override
     public int hashCode() {
-        return this.referent.hashCode();
+        int result = 1;
+        result = 31 * result + this.referent.hashCode();
+        result = 31 * result + this.emptyLines;
+        result = 31 * result + (this.forceNewLine ? 1 : 0);
+        result = 31 * result + this.flags;
+        return result;
     }
 
     @Override
@@ -287,7 +299,9 @@ public class JsonReference extends JsonValue {
         if (o instanceof JsonReference) {
             final JsonReference other = (JsonReference) o;
             return this.referent.equals(other.referent)
-                && this.emptyLines == other.emptyLines;
+                && this.emptyLines == other.emptyLines
+                && this.forceNewLine == other.forceNewLine
+                && this.flags == other.flags;
         }
         return false;
     }

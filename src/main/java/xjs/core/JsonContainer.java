@@ -115,9 +115,25 @@ public abstract class JsonContainer extends JsonValue {
         return this.references.isEmpty();
     }
 
+    public boolean contains(final long value) {
+        return this.contains(valueOf(value));
+    }
+
+    public boolean contains(final double value) {
+        return this.contains(valueOf(value));
+    }
+
+    public boolean contains(final boolean value) {
+        return this.contains(valueOf(value));
+    }
+
+    public boolean contains(final @Nullable String value) {
+        return this.contains(valueOf(value));
+    }
+
     public boolean contains(final JsonValue value) {
         for (final JsonReference reference : this.references) {
-            if (reference.visit().equals(value)) {
+            if (JsonReference.inspect(reference).equals(value)) {
                 return true;
             }
         }
@@ -201,6 +217,11 @@ public abstract class JsonContainer extends JsonValue {
     @Override
     public final boolean isContainer() {
         return true;
+    }
+
+    @Override
+    public JsonContainer asContainer() {
+        return this;
     }
 
     @Override
