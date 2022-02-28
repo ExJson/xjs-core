@@ -161,6 +161,8 @@ public final class JsonWriterTest {
               "a": [
                 3, 4,
                 { "5": 5, "6": 6 }
+                
+                
               ]
             }""";
         assertEquals(expected, write(new JsonParser(expected).parse()));

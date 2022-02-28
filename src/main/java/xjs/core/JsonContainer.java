@@ -14,6 +14,7 @@ public abstract class JsonContainer extends JsonValue {
     protected final List<JsonReference> references;
     protected View<JsonValue> accessor;
     protected View<JsonValue> visitor;
+    protected int emptyLinesTrailing;
 
     protected JsonContainer() {
         this(new ArrayList<>());
@@ -21,6 +22,16 @@ public abstract class JsonContainer extends JsonValue {
 
     protected JsonContainer(final List<JsonReference> references) {
         this.references = references;
+        this.emptyLinesTrailing = -1;
+    }
+
+    public int getEmptyLinesTrailing() {
+        return this.emptyLinesTrailing;
+    }
+
+    public JsonContainer setEmptyLinesTrailing(final int emptyLinesTrailing) {
+        this.emptyLinesTrailing = emptyLinesTrailing;
+        return this;
     }
 
     public JsonContainer setLineLength(final int lineLength) {

@@ -114,7 +114,7 @@ public class JsonParser extends AbstractJsonParser {
         if (!this.readIf(']')) {
             throw expected("',' or ']'");
         }
-        return array;
+        return (JsonArray) array.setEmptyLinesTrailing(this.linesSkipped);
     }
 
     private JsonObject readObject() throws IOException {
@@ -129,9 +129,7 @@ public class JsonParser extends AbstractJsonParser {
             final int linesAbove = this.linesSkipped;
             final String key = this.readKey();
             this.skipWhitespace();
-            if (!this.readIf(':')) {
-                throw this.expected(':');
-            }
+            this.expect(':');
             this.skipWhitespace();
             final int linesBetween = this.linesSkipped;
             object.add(key,
@@ -143,7 +141,7 @@ public class JsonParser extends AbstractJsonParser {
         if (!this.readIf('}')) {
             throw this.expected("',' or '}'");
         }
-        return object;
+        return (JsonObject) object.setEmptyLinesTrailing(this.linesSkipped);
     }
 
     private String readKey() throws IOException {

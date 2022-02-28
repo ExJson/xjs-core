@@ -1,5 +1,6 @@
 package xjs.serialization.writer;
 
+import xjs.core.JsonContainer;
 import xjs.core.JsonValue;
 import xjs.serialization.JsonSerializationContext;
 
@@ -159,11 +160,15 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         }
     }
 
-    protected void close(final boolean condensed, final int level, final char closer) throws IOException {
+    protected void close(
+            final JsonContainer c, final boolean condensed, final int level, final char closer) throws IOException {
         if (this.format) {
             if (condensed && this.allowCondense) {
                 this.tw.write(this.separator);
-            } else {
+            } else if (c.getEmptyLinesTrailing() > 0 || c.size() > 0) {
+                for (int i = 0; i < Math.max(0, c.getEmptyLinesTrailing()) - 1; i++) {
+                    this.tw.write(this.eol);
+                }
                 this.nl(level);
             }
         }

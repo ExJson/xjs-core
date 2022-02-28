@@ -31,37 +31,27 @@ public class JsonWriter extends AbstractJsonWriter {
 
         switch (value.getType()) {
             case OBJECT:
-                final JsonObject object = value.asObject();
-                if (object.isEmpty()) {
-                    this.tw.write("{}");
-                    return;
-                }
                 this.open(condensed, '{');
-                for (final JsonObject.Member member : object) {
+                for (final JsonObject.Member member : value.asObject()) {
                     this.delimit(following, member.visit().getLinesAbove());
-                    this.nl(Math.max(0, level + 1), member.visit());
+                    this.nl(level + 1, member.visit());
                     this.writeQuoted(member.getKey(), '"');
                     this.tw.write(':');
                     this.separate(level + 2, member.visit());
                     this.write(member.visit(), level + 1);
                     following = true;
                 }
-                this.close(condensed, level, '}');
+                this.close(value.asObject(), condensed, level, '}');
                 break;
             case ARRAY:
-                final JsonArray array = value.asArray();
-                if (array.isEmpty()) {
-                    this.tw.write("[]");
-                    return;
-                }
                 this.open(condensed, '[');
-                for (final JsonValue v : array.visitAll()) {
+                for (final JsonValue v : value.asArray().visitAll()) {
                     this.delimit(following, v.getLinesAbove());
-                    this.nl(Math.max(0, level + 1), v);
+                    this.nl(level + 1, v);
                     this.write(v, level + 1);
                     following = true;
                 }
-                this.close(condensed, level, ']');
+                this.close(value.asArray(), condensed, level, ']');
                 break;
             case INTEGER:
                 this.writeInteger(value.asLong());
