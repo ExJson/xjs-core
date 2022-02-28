@@ -143,6 +143,27 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return this;
     }
 
+    public JsonObject set(final int index, final String key, final @Nullable JsonValue value) {
+        if (index < 0 || index >= this.references.size()) {
+            return this.add(key, value);
+        }
+        this.references.get(index).update(og ->
+            nonnull(value).setDefaultMetadata(og));
+        this.keys.set(index, key);
+        this.table.clear();
+        this.table.init(this.keys);
+        return this;
+    }
+
+    public JsonObject setKey(final int index, final String key) {
+        if (index >= 0 && index < this.references.size()) {
+            this.keys.set(index, key);
+            this.table.clear();
+            this.table.init(this.keys);
+        }
+        return this;
+    }
+
     public JsonObject insert(final int index, final String key, final @Nullable JsonValue value) {
         this.references.add(index, new JsonReference(value).setAccessed(true));
         this.keys.add(index, key);
