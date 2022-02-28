@@ -26,9 +26,9 @@ public abstract class JsonContainer extends JsonValue {
     public JsonContainer setLineLength(final int lineLength) {
         for (int i = 0; i < this.references.size(); i++) {
             if ((i - 1 % lineLength) == 0) {
-                this.references.get(i).setLinesAbove(1).setLinesBetween(0);
+                this.references.get(i).visit().setLinesAbove(1).setLinesBetween(0);
             } else {
-                this.references.get(i).setLinesAbove(0).setLinesBetween(0);
+                this.references.get(i).visit().setLinesAbove(0).setLinesBetween(0);
             }
         }
         return this;
@@ -36,7 +36,7 @@ public abstract class JsonContainer extends JsonValue {
 
     public boolean isCondensed() {
         for (final JsonReference reference : this.references) {
-            if (reference.getLinesAbove() > 0 || reference.getLinesBetween() > 0) {
+            if (reference.visit().getLinesAbove() > 0 || reference.visit().getLinesBetween() > 0) {
                 return false;
             }
         }
@@ -45,7 +45,7 @@ public abstract class JsonContainer extends JsonValue {
 
     public JsonContainer setCondensed() {
         for (final JsonReference reference : this.references) {
-            reference.setLinesAbove(0).setLinesBetween(0);
+            reference.visit().setLinesAbove(0).setLinesBetween(0);
         }
         return this;
     }
@@ -101,10 +101,7 @@ public abstract class JsonContainer extends JsonValue {
 
     public <T extends JsonValue> Optional<T> getOptional(final int index, final Class<T> type) {
         if (index >= 0 && index < this.references.size()) {
-            JsonValue value = this.references.get(index).get();
-            while (value instanceof JsonReference) {
-                value = ((JsonReference) value).get();
-            }
+            final JsonValue value = this.references.get(index).get();
             if (type.isInstance(value)) {
                 return Optional.of(type.cast(value));
             }
@@ -142,7 +139,7 @@ public abstract class JsonContainer extends JsonValue {
 
     public boolean contains(final JsonValue value) {
         for (final JsonReference reference : this.references) {
-            if (JsonReference.inspect(reference).equals(value)) {
+            if (reference.visit().equals(value)) {
                 return true;
             }
         }
@@ -217,17 +214,9 @@ public abstract class JsonContainer extends JsonValue {
         return -1;
     }
 
-    public <T> List<T> toList(final Function<JsonReference, T> mapper) {
-        return this.references.stream().map(mapper).collect(Collectors.toList());
+    public <T> List<T> toList(final Function<JsonValue, T> mapper) {
+        return this.values().stream().map(mapper).collect(Collectors.toList());
     }
-
-    public abstract JsonContainer shallowCopy();
-
-    public abstract JsonContainer deepCopy();
-
-    public abstract JsonContainer deepCopy(final boolean trackAccess);
-
-    public abstract JsonContainer unformatted();
 
     @Override
     public final boolean isContainer() {
@@ -278,6 +267,14 @@ public abstract class JsonContainer extends JsonValue {
     public JsonContainer intoContainer() {
         return this;
     }
+
+    public abstract JsonContainer shallowCopy();
+
+    public abstract JsonContainer deepCopy();
+
+    public abstract JsonContainer deepCopy(final boolean trackAccess);
+
+    public abstract JsonContainer unformatted();
 
     private class AccessingView implements View<JsonValue> {
         @Override

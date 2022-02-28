@@ -89,13 +89,25 @@ public class JsonString extends JsonValue {
     }
 
     @Override
+    public JsonString deepCopy(final boolean trackAccess) {
+        return new JsonString(this.value, this.type);
+    }
+
+    @Override
     public int hashCode() {
-        return this.value.hashCode();
+        return 31 * super.hashCode() + this.value.hashCode();
     }
 
     @Override
     public boolean equals(final Object o) {
-        return o instanceof JsonString && this.value.equals(((JsonString) o).value);
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof JsonString) {
+            return this.value.equals(((JsonString) o).value)
+                && this.metadataEquals((JsonString) o);
+        }
+        return false;
     }
 
     @Override

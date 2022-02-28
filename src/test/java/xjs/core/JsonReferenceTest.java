@@ -84,28 +84,17 @@ public final class JsonReferenceTest {
     }
 
     @Test
-    public void reference_canBeCoerced_intoReferent() {
-        final JsonReference reference = new JsonReference(JsonValue.valueOf("test"));
-        assertEquals("test", reference.asString());
-    }
-
-    @Test
     public void clone_createsNewInstance() {
         final JsonReference reference = new JsonReference(null);
         assertNotSame(reference, reference.clone(false));
     }
 
     @Test
-    public void clone_copiesMetadata() {
+    public void clone_copiesAccess() {
         final JsonReference reference =
-            new JsonReference(null)
-                .setLinesAbove(10)
-                .setLinesBetween(20)
-                .setFlags(2);
+            new JsonReference(null).setAccessed(true);
 
-        final JsonReference clone = reference.clone(false);
-        assertEquals(reference.getLinesAbove(), clone.getLinesAbove());
-        assertEquals(reference.getLinesBetween(), clone.getLinesBetween());
-        assertEquals(reference.getFlags(), clone.getFlags());
+        final JsonReference clone = reference.clone(true);
+        assertEquals(reference.isAccessed(), clone.isAccessed());
     }
 }

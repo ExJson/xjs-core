@@ -5,15 +5,15 @@ public abstract class JsonBoolean extends JsonValue {
     private JsonBoolean() {}
 
     public static JsonTrue jsonTrue() {
-        return JsonTrue.INSTANCE;
+        return new JsonTrue();
     }
 
     public static JsonFalse jsonFalse() {
-        return JsonFalse.INSTANCE;
+        return new JsonFalse();
     }
 
     public static JsonBoolean get(final boolean value) {
-        return value ? JsonTrue.INSTANCE : JsonFalse.INSTANCE;
+        return value ? new JsonTrue() : new JsonFalse();
     }
 
     @Override
@@ -46,9 +46,18 @@ public abstract class JsonBoolean extends JsonValue {
         return new JsonArray().add(this);
     }
 
-    public static class JsonTrue extends JsonBoolean {
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o.getClass().equals(this.getClass())) {
+            return this.metadataEquals((JsonBoolean) o);
+        }
+        return false;
+    }
 
-        static final JsonTrue INSTANCE = new JsonTrue();
+    public static class JsonTrue extends JsonBoolean {
 
         private JsonTrue() {}
 
@@ -98,14 +107,22 @@ public abstract class JsonBoolean extends JsonValue {
         }
 
         @Override
+        public JsonTrue deepCopy(final boolean trackAccess) {
+            return new JsonTrue();
+        }
+
+        @Override
         public String toString() {
             return "true";
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * super.hashCode() + 1;
         }
     }
 
     public static class JsonFalse extends JsonBoolean {
-
-        static final JsonFalse INSTANCE = new JsonFalse();
 
         private JsonFalse() {}
 
@@ -152,6 +169,11 @@ public abstract class JsonBoolean extends JsonValue {
         @Override
         public String intoString() {
             return "false";
+        }
+
+        @Override
+        public JsonFalse deepCopy(final boolean trackAccess) {
+            return new JsonFalse();
         }
 
         @Override

@@ -37,7 +37,7 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
     }
 
     public JsonArray setComment(final int index, final String comment) {
-        this.getReference(index).setComment(comment);
+        this.get(index).setComment(comment);
         return this;
     }
 
@@ -79,7 +79,7 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
     }
 
     public JsonArray add(final JsonValue value, final String comment) {
-        return this.addReference(new JsonReference(value).setComment(comment));
+        return this.add(JsonValue.nonnull(value).setComment(comment));
     }
 
     public JsonArray addAll(final JsonContainer container) {
@@ -179,13 +179,8 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
     public JsonArray unformatted() {
         final JsonArray copy = new JsonArray();
         for (final JsonReference reference : this.references) {
-            final JsonValue value = reference.visit();
-            if (value.isContainer()) {
-                final JsonContainer unformatted = value.asContainer().unformatted();
-                copy.addReference(new JsonReference(unformatted).setAccessed(reference.isAccessed()));
-            } else {
-                copy.addReference(new JsonReference(value).setAccessed(reference.isAccessed()));
-            }
+            copy.addReference(reference.clone(true)
+                .mutate(reference.visit().unformatted()));
         }
         return copy;
     }
@@ -227,13 +222,17 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
 
     @Override
     public int hashCode() {
-        return this.references.hashCode();
+        return 31 * super.hashCode() + this.references.hashCode();
     }
 
     @Override
     public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
         if (o instanceof JsonArray) {
-            return this.references.equals(((JsonArray) o).references);
+            return this.references.equals(((JsonArray) o).references)
+                && super.metadataEquals((JsonArray) o);
         }
         return false;
     }

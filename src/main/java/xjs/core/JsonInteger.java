@@ -104,17 +104,27 @@ public class JsonInteger extends JsonValue {
     }
 
     @Override
+    public JsonInteger deepCopy(final boolean trackAccess) {
+        return new JsonInteger(this.value);
+    }
+
+    @Override
     public int hashCode() {
-        return Long.hashCode(this.value);
+        return 31 * super.hashCode() + Long.hashCode(this.value);
     }
 
     @Override
     public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
         if (o instanceof JsonInteger) {
-            return this.value == ((JsonInteger) o).value;
+            return this.value == ((JsonInteger) o).value
+                && this.metadataEquals((JsonInteger) o);
         }
         if (o instanceof JsonDecimal) {
-            return this.value == ((JsonDecimal) o).asLong();
+            return this.value == ((JsonDecimal) o).asLong()
+                && this.metadataEquals((JsonDecimal) o);
         }
         return false;
     }

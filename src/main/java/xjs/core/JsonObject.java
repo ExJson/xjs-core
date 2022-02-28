@@ -64,6 +64,11 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return this;
     }
 
+    public JsonObject setComment(final String key, final String comment) {
+        this.get(key).setComment(comment);
+        return this;
+    }
+
     public JsonObject setDefaults(final JsonObject defaultValues) {
         final Iterator<String> keyIterator = defaultValues.keys.iterator();
         final Iterator<JsonReference> referenceIterator = defaultValues.references.iterator();
@@ -118,7 +123,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     public JsonObject add(final String key, final @Nullable JsonValue value, final String comment) {
-        return this.addReference(key, new JsonReference(value).setComment(comment));
+        return this.add(key, JsonValue.nonnull(value).setComment(comment));
     }
 
     public JsonObject addAll(final JsonObject object) {
@@ -189,10 +194,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     public <T extends JsonValue> Optional<T> getOptional(final String key, final Class<T> type) {
-        JsonValue value = this.get(key);
-        while (value instanceof JsonReference) {
-            value = ((JsonReference) value).get();
-        }
+        final JsonValue value = this.get(key);
         if (type.isInstance(value)) {
             return Optional.of(type.cast(value));
         }
@@ -263,13 +265,13 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return (JsonObject) super.setAllAccessed(accessed);
     }
 
-    public <T> Map<String, T> toMap(final Function<JsonReference, T> mapper) {
+    public <T> Map<String, T> toMap(final Function<JsonValue, T> mapper) {
         final Map<String, T> map = new HashMap<>();
         final Iterator<String> keyIterator = this.keys.iterator();
         final Iterator<JsonReference> referenceIterator = this.references.iterator();
 
         while (keyIterator.hasNext() && referenceIterator.hasNext()) {
-            map.put(keyIterator.next(), mapper.apply(referenceIterator.next()));
+            map.put(keyIterator.next(), mapper.apply(referenceIterator.next().get()));
         }
         return map;
     }
@@ -335,14 +337,8 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             final JsonReference reference = referenceIterator.next();
             final JsonValue value = reference.visit();
 
-            if (value.isContainer()) {
-                final JsonContainer unformatted = value.asContainer().unformatted();
-                copy.addReference(key,
-                    new JsonReference(unformatted).setAccessed(reference.isAccessed()));
-            } else {
-                copy.addReference(key,
-                    new JsonReference(value).setAccessed(reference.isAccessed()));
-            }
+            copy.addReference(key, reference.clone(true)
+                    .mutate(reference.visit().unformatted()));
         }
         return copy;
     }
@@ -390,7 +386,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
     @Override
     public int hashCode() {
-        int result=1;
+        int result = super.hashCode();
         result = 31 * result + this.keys.hashCode();
         result = 31 * result + this.references.hashCode();
         return result;
@@ -398,10 +394,14 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
     @Override
     public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
         if (o instanceof JsonObject) {
             final JsonObject other = (JsonObject) o;
             return this.keys.equals(other.keys)
-                && this.references.equals(other.references);
+                && this.references.equals(other.references)
+                && super.metadataEquals(other);
         }
         return false;
     }

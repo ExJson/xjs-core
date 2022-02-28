@@ -55,7 +55,7 @@ public abstract class AbstractJsonParser {
         this.captureStart = -1;
     }
 
-    public abstract @NotNull JsonReference parse() throws IOException;
+    public abstract @NotNull JsonValue parse() throws IOException;
 
     protected void expect(final char c) throws IOException {
         if (!this.readIf(c)) {

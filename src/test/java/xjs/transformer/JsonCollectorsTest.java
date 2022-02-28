@@ -6,11 +6,11 @@ import xjs.core.JsonObject;
 import xjs.core.JsonReference;
 import xjs.core.JsonValue;
 
-import java.util.Comparator;
 import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class JsonCollectorsTest {
 
@@ -32,11 +32,11 @@ public final class JsonCollectorsTest {
     }
 
     @Test
-    public void reference_preservesMetadata() {
+    public void reference_preservesAccess() {
         final JsonArray collected =
-            Stream.of(new JsonReference(null).setLinesAbove(1234))
+            Stream.of(new JsonReference(null).setAccessed(true))
                 .collect(JsonCollectors.reference());
-        assertEquals(1234, collected.getReference(0).getLinesAbove());
+        assertTrue(collected.getReference(0).isAccessed());
     }
 
     @Test

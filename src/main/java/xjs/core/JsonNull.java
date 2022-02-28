@@ -2,12 +2,10 @@ package xjs.core;
 
 public class JsonNull extends JsonValue {
 
-    private static final JsonNull INSTANCE = new JsonNull();
-
-    private JsonNull() {}
+    public JsonNull() {}
 
     public static JsonNull instance() {
-        return INSTANCE;
+        return new JsonNull();
     }
 
     @Override
@@ -76,7 +74,28 @@ public class JsonNull extends JsonValue {
     }
 
     @Override
+    public JsonNull deepCopy(boolean trackAccess) {
+        return new JsonNull();
+    }
+
+    @Override
     public String toString() {
         return "null";
+    }
+
+    @Override
+    public int hashCode() {
+        return 17 * super.hashCode();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof JsonNull) {
+            return super.metadataEquals((JsonNull) o);
+        }
+        return false;
     }
 }

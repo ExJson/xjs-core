@@ -94,17 +94,27 @@ public class JsonDecimal extends JsonValue {
     }
 
     @Override
+    public JsonDecimal deepCopy(final boolean trackAccess) {
+        return new JsonDecimal(this.value);
+    }
+
+    @Override
     public int hashCode() {
-        return Double.hashCode(this.value);
+        return 31 * super.hashCode() + Double.hashCode(this.value);
     }
 
     @Override
     public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
         if (o instanceof JsonDecimal) {
-            return this.value == ((JsonDecimal) o).value;
+            return this.value == ((JsonDecimal) o).value
+                && this.metadataEquals((JsonDecimal) o);
         }
         if (o instanceof JsonInteger) {
-            return this.value == ((JsonInteger) o).asDouble();
+            return this.value == ((JsonInteger) o).asDouble()
+                && this.metadataEquals((JsonInteger) o);
         }
         return false;
     }

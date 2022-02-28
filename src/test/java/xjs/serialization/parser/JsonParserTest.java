@@ -53,12 +53,12 @@ public final class JsonParserTest {
 
     @Test
     public void parse_readsEmptyObject() throws IOException {
-        assertEquals(new JsonObject(), new JsonParser("{}").parse().asObject());
+        assertEquals(new JsonObject(), new JsonParser("{}").parse().asObject().unformatted());
     }
 
     @Test
     public void parse_readsEmptyArray() throws IOException {
-        assertEquals(new JsonArray(), new JsonParser("[]").parse().asArray());
+        assertEquals(new JsonArray(), new JsonParser("[]").parse().asArray().unformatted());
     }
 
     @Test
@@ -93,7 +93,7 @@ public final class JsonParserTest {
     @Test
     public void parse_preservesWhitespaceBetween() throws IOException {
         assertEquals(3, new JsonParser("{\"\":\n\n\n\"\"}")
-            .parse().asObject().getReference(0).getLinesBetween());
+            .parse().asObject().get(0).getLinesBetween());
     }
 
     @Test
