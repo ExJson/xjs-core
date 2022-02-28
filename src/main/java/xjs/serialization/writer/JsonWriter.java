@@ -25,9 +25,9 @@ public class JsonWriter extends AbstractJsonWriter {
     @Override
     public void write(final JsonValue value, final int level) throws IOException {
         boolean following = false;
-        int lastAbove = value.isContainer() && value.asContainer().size() > 0
-            ? value.asContainer().get(0).getLinesAbove() : 0;
-        final boolean condensed = lastAbove == 0;
+        final boolean condensed = value.isContainer()
+            && value.asContainer().size() > 0
+            && value.asContainer().get(0).getLinesAbove() == 0;
 
         switch (value.getType()) {
             case OBJECT:
@@ -38,14 +38,13 @@ public class JsonWriter extends AbstractJsonWriter {
                 }
                 this.open(condensed, '{');
                 for (final JsonObject.Member member : object) {
-                    this.delimit(following, lastAbove);
+                    this.delimit(following, member.visit().getLinesAbove());
                     this.nl(Math.max(0, level + 1), member.visit());
                     this.writeQuoted(member.getKey(), '"');
                     this.tw.write(':');
                     this.separate(level + 2, member.visit());
                     this.write(member.visit(), level + 1);
                     following = true;
-                    lastAbove = member.visit().getLinesAbove();
                 }
                 this.close(condensed, level, '}');
                 break;
@@ -57,11 +56,10 @@ public class JsonWriter extends AbstractJsonWriter {
                 }
                 this.open(condensed, '[');
                 for (final JsonValue v : array.visitAll()) {
-                    this.delimit(following, lastAbove);
+                    this.delimit(following, v.getLinesAbove());
                     this.nl(Math.max(0, level + 1), v);
                     this.write(v, level + 1);
                     following = true;
-                    lastAbove = v.getLinesAbove();
                 }
                 this.close(condensed, level, ']');
                 break;

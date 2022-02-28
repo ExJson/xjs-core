@@ -199,7 +199,9 @@ public abstract class AbstractJsonParser {
     }
 
     protected void skipWhitespace(final boolean reset) throws IOException {
-        this.linesSkipped = 0;
+        if (reset) {
+            this.linesSkipped = 0;
+        }
         while (this.isWhiteSpace()) {
             this.read();
         }

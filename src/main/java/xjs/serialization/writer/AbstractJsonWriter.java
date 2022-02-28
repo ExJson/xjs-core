@@ -150,10 +150,10 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         return 0;
     }
 
-    protected void delimit(final boolean following, final int lastAbove) throws IOException {
+    protected void delimit(final boolean following, final int nextAbove) throws IOException {
         if (following) {
             this.tw.write(',');
-            if (lastAbove == 0 && this.allowCondense) {
+            if ((nextAbove == 0) && this.allowCondense) {
                 this.tw.write(this.separator);
             }
         }

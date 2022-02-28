@@ -7,12 +7,12 @@ import xjs.core.JsonArray;
 import xjs.core.JsonObject;
 import xjs.core.JsonValue;
 import xjs.serialization.JsonSerializationContext;
+import xjs.serialization.parser.JsonParser;
 
+import java.io.IOException;
 import java.io.StringWriter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class JsonWriterTest {
 
@@ -145,6 +145,25 @@ public final class JsonWriterTest {
               ]
             }""";
         assertEquals(expected, write(object));
+    }
+
+    @Test
+    public void parse_thenRewrite_preservesComplexFormatting() throws IOException {
+        final String expected = """
+            {
+              
+              "1":
+                1,
+              "2":
+               
+                2,
+            
+              "a": [
+                3, 4,
+                { "5": 5, "6": 6 }
+              ]
+            }""";
+        assertEquals(expected, write(new JsonParser(expected).parse()));
     }
 
     private static String write(final JsonValue value) {
