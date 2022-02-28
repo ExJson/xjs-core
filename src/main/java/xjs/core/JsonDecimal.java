@@ -95,6 +95,11 @@ public class JsonDecimal extends JsonValue {
 
     @Override
     public JsonDecimal deepCopy(final boolean trackAccess) {
+        return (JsonDecimal) new JsonDecimal(this.value).setDefaultMetadata(this);
+    }
+
+    @Override
+    public JsonDecimal unformatted() {
         return new JsonDecimal(this.value);
     }
 

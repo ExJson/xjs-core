@@ -108,6 +108,11 @@ public abstract class JsonBoolean extends JsonValue {
 
         @Override
         public JsonTrue deepCopy(final boolean trackAccess) {
+            return (JsonTrue) new JsonTrue().setDefaultMetadata(this);
+        }
+
+        @Override
+        public JsonTrue unformatted() {
             return new JsonTrue();
         }
 
@@ -173,6 +178,11 @@ public abstract class JsonBoolean extends JsonValue {
 
         @Override
         public JsonFalse deepCopy(final boolean trackAccess) {
+            return (JsonFalse) new JsonFalse().setDefaultMetadata(this);
+        }
+
+        @Override
+        public JsonValue unformatted() {
             return new JsonFalse();
         }
 

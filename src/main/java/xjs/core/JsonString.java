@@ -90,6 +90,11 @@ public class JsonString extends JsonValue {
 
     @Override
     public JsonString deepCopy(final boolean trackAccess) {
+        return (JsonString) new JsonString(this.value, this.type).setDefaultMetadata(this);
+    }
+
+    @Override
+    public JsonString unformatted() {
         return new JsonString(this.value, this.type);
     }
 

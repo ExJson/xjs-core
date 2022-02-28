@@ -74,7 +74,12 @@ public class JsonNull extends JsonValue {
     }
 
     @Override
-    public JsonNull deepCopy(boolean trackAccess) {
+    public JsonNull deepCopy(final boolean trackAccess) {
+        return (JsonNull) new JsonNull().setDefaultMetadata(this);
+    }
+
+    @Override
+    public JsonNull unformatted() {
         return new JsonNull();
     }
 

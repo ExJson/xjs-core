@@ -48,6 +48,22 @@ public final class JsonArrayTest {
     }
 
     @Test
+    public void set_preservesMetadata() {
+        final JsonArray array =
+            new JsonArray().add(JsonValue.valueOf(1).setLinesAbove(1));
+        array.set(0, 2);
+        assertEquals(1, array.get(0).getLinesAbove());
+    }
+
+    @Test
+    public void set_canUpdateMetadata() {
+        final JsonArray array =
+            new JsonArray().add(JsonValue.valueOf(1).setLinesAbove(1));
+        array.set(0, JsonValue.valueOf(2).setLinesAbove(0));
+        assertEquals(0, array.get(0).getLinesAbove());
+    }
+
+    @Test
     public void set_doesNotTolerateInsertion() {
         final JsonArray array = new JsonArray();
         assertThrows(IndexOutOfBoundsException.class,

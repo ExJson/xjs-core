@@ -105,6 +105,11 @@ public class JsonInteger extends JsonValue {
 
     @Override
     public JsonInteger deepCopy(final boolean trackAccess) {
+        return (JsonInteger) new JsonInteger(this.value).setDefaultMetadata(this);
+    }
+
+    @Override
+    public JsonInteger unformatted() {
         return new JsonInteger(this.value);
     }
 

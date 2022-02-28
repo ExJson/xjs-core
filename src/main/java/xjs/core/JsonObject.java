@@ -55,7 +55,8 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     public JsonObject set(final String key, final @Nullable JsonValue value) {
         final int index = this.indexOf(key);
         if (index != -1) {
-            this.references.get(index).set(value);
+            this.references.get(index).update(og ->
+                nonnull(value).setDefaultMetadata(og));
         } else {
             this.table.add(key, this.keys.size());
             this.keys.add(key);
@@ -308,7 +309,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
     @Override
     public JsonObject deepCopy(final boolean trackAccess) {
-        final JsonObject copy = new JsonObject();
+        final JsonObject copy = (JsonObject) new JsonObject().setDefaultMetadata(this);
         final Iterator<String> keyIterator = this.keys.iterator();
         final Iterator<JsonReference> referenceIterator = this.references.iterator();
 

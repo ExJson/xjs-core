@@ -48,6 +48,22 @@ public final class JsonObjectTest {
     }
 
     @Test
+    public void set_preservesMetadata() {
+        final JsonObject object =
+            new JsonObject().add("0", JsonValue.valueOf(1).setLinesAbove(1));
+        object.set("0", 2);
+        assertEquals(1, object.get("0").getLinesAbove());
+    }
+
+    @Test
+    public void set_canUpdateMetadata() {
+        final JsonObject object =
+            new JsonObject().add("0", JsonValue.valueOf(1).setLinesAbove(1));
+        object.set("0", JsonValue.valueOf(2).setLinesAbove(0));
+        assertEquals(0, object.get("0").getLinesAbove());
+    }
+
+    @Test
     public void set_toleratesInsertion() {
         final JsonObject object = new JsonObject();
         assertDoesNotThrow(() -> object.set("value", 2));

@@ -116,6 +116,14 @@ public abstract class JsonValue implements Serializable {
         return this.getComments().get(type);
     }
 
+    public JsonValue setDefaultMetadata(final JsonValue metadata) {
+        if (this.linesAbove < 0) this.linesAbove = metadata.linesAbove;
+        if (this.linesBetween < 0) this.linesBetween = metadata.linesBetween;
+        if (this.flags == 0) this.flags = metadata.flags; // todo: JsonFlags#NULL
+        if (this.comments == null) this.comments = metadata.comments;
+        return this;
+    }
+
     public abstract JsonType getType();
 
     public boolean isPrimitive() {
@@ -240,9 +248,7 @@ public abstract class JsonValue implements Serializable {
 
     public abstract JsonValue deepCopy(final boolean trackAccess);
 
-    public JsonValue unformatted() {
-        return this.deepCopy(false);
-    }
+    public abstract JsonValue unformatted();
 
     @Override
     public int hashCode() {

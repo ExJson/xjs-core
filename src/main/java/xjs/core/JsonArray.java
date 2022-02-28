@@ -1,6 +1,7 @@
 package xjs.core;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
@@ -31,8 +32,9 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
         return this.set(index, valueOf(value));
     }
 
-    public JsonArray set(final int index, final JsonValue value) {
-        this.references.get(index).set(value);
+    public JsonArray set(final int index, final @Nullable JsonValue value) {
+        this.references.get(index).update(og ->
+            nonnull(value).setDefaultMetadata(og));
         return this;
     }
 
@@ -163,7 +165,7 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
 
     @Override
     public JsonArray deepCopy(final boolean trackAccess) {
-        final JsonArray copy = new JsonArray();
+        final JsonArray copy = (JsonArray) new JsonArray().setDefaultMetadata(this);
         for (final JsonReference reference : this.references) {
             final JsonValue value = reference.visit();
             if (value.isContainer()) {
