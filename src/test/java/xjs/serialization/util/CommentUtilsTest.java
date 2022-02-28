@@ -1,11 +1,24 @@
 package xjs.serialization.util;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import xjs.core.CommentStyle;
+import xjs.serialization.JsonSerializationContext;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public final class CommentUtilsTest {
+
+    @BeforeAll
+    static void setup() {
+        JsonSerializationContext.setEol("\n");
+    }
+
+    @AfterAll
+    static void teardown() {
+        JsonSerializationContext.setEol(System.getProperty("line.separator"));
+    }
 
     @Test
     public void format_generatesHashComment() {

@@ -336,9 +336,12 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             final JsonValue value = reference.visit();
 
             if (value.isContainer()) {
-                copy.add(key, value.asContainer().unformatted());
+                final JsonContainer unformatted = value.asContainer().unformatted();
+                copy.addReference(key,
+                    new JsonReference(unformatted).setAccessed(reference.isAccessed()));
             } else {
-                copy.add(key, value);
+                copy.addReference(key,
+                    new JsonReference(value).setAccessed(reference.isAccessed()));
             }
         }
         return copy;

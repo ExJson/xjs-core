@@ -181,9 +181,10 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
         for (final JsonReference reference : this.references) {
             final JsonValue value = reference.visit();
             if (value.isContainer()) {
-                copy.add(value.asContainer().unformatted());
+                final JsonContainer unformatted = value.asContainer().unformatted();
+                copy.addReference(new JsonReference(unformatted).setAccessed(reference.isAccessed()));
             } else {
-                copy.add(value);
+                copy.addReference(new JsonReference(value).setAccessed(reference.isAccessed()));
             }
         }
         return copy;

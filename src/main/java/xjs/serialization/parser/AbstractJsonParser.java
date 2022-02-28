@@ -69,7 +69,7 @@ public abstract class AbstractJsonParser {
         while (this.current != quote) {
             if (this.current == '\\') {
                 this.pauseCapture();
-                this.readEscape();
+                this.readEscape(quote);
                 this.startCapture();
             } else if (this.current < 0x20) {
                 throw this.expected("valid string character");
@@ -82,8 +82,13 @@ public abstract class AbstractJsonParser {
         return string;
     }
 
-    protected void readEscape() throws IOException {
+    protected void readEscape(final char quote) throws IOException {
         this.read();
+        if (this.current == quote) {
+            this.captureBuffer.append(quote);
+            this.read();
+            return;
+        }
         switch (this.current) {
             case '"':
             case '/':

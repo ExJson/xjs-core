@@ -1,11 +1,9 @@
 package xjs.serialization.util;
 
 import xjs.core.CommentStyle;
+import xjs.serialization.JsonSerializationContext;
 
 public final class CommentUtils {
-
-    // Todo: Setup serialization context to store eol
-    private static final String EOL = "\n";
 
     private CommentUtils() {}
 
@@ -24,8 +22,9 @@ public final class CommentUtils {
             return formatBlockComment(style, lines);
         }
         final StringBuilder formatted = new StringBuilder();
+        final String eol = JsonSerializationContext.getEol();
         for (int i = 0; i < lines.length; i++) {
-            if (i > 0) formatted.append(EOL);
+            if (i > 0) formatted.append(eol);
 
             formatted.append(style.getPrefix());
             formatted.append(' ');
@@ -35,6 +34,7 @@ public final class CommentUtils {
     }
 
     public static String formatBlockComment(final CommentStyle style, final String... lines) {
+        final String eol = JsonSerializationContext.getEol();
         final StringBuilder formatted = new StringBuilder();
         if (lines.length == 1) {
             formatted.append(style.getPrefix());
@@ -44,11 +44,11 @@ public final class CommentUtils {
             return formatted.toString();
         }
         formatted.append(style.getPrefix());
-        formatted.append(EOL);
+        formatted.append(eol);
         for (final String line : lines) {
             formatted.append(" * ");
             formatted.append(line);
-            formatted.append(EOL);
+            formatted.append(eol);
         }
         formatted.append(" */");
         return formatted.toString();

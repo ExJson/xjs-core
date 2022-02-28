@@ -336,7 +336,11 @@ public class JsonReference extends JsonValue {
     }
 
     public JsonReference clone(final boolean trackAccess) {
-        final JsonReference clone = new JsonReference(this.referent).setLinesAbove(this.linesAbove);
+        final JsonReference clone = new JsonReference(this.referent)
+            .setLinesAbove(this.linesAbove)
+            .setLinesBetween(this.linesBetween)
+            .setFlags(this.flags)
+            .setComments(this.comments);
         return trackAccess ? clone.setAccessed(this.accessed) : clone;
     }
 
@@ -344,6 +348,7 @@ public class JsonReference extends JsonValue {
     public int hashCode() {
         int result = 1;
         result = 31 * result + this.referent.hashCode();
+        result = 31 * result + (this.accessed ? 1 : 0);
         result = 31 * result + this.linesAbove;
         result = 31 * result + this.linesBetween;
         result = 31 * result + this.flags;
@@ -362,6 +367,7 @@ public class JsonReference extends JsonValue {
         if (o instanceof JsonReference) {
             final JsonReference other = (JsonReference) o;
             return this.referent.equals(other.referent)
+                && this.accessed == other.accessed
                 && this.linesAbove == other.linesAbove
                 && this.linesBetween == other.linesBetween
                 && this.flags == other.flags

@@ -13,6 +13,7 @@ public final class JsonObjectTest {
     @Test
     public void add_insertsValue() {
         final JsonObject object = new JsonObject();
+        object.add("value", 1234);
         assertEquals(1234, object.get("value").asInt());
     }
 

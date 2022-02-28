@@ -6,6 +6,7 @@ import xjs.core.JsonObject;
 import xjs.core.JsonReference;
 import xjs.core.JsonValue;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -54,6 +55,7 @@ public final class JsonCollectorsTest {
             Map.of("1", 1, "2", 2, "3", 3)
                 .entrySet()
                 .stream()
+                .sorted(Map.Entry.comparingByKey())
                 .collect(JsonCollectors.toObject(JsonValue::valueOf));
         assertEquals(new JsonObject().add("1", 1).add("2", 2).add("3", 3), collected);
     }
