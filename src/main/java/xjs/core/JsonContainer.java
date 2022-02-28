@@ -43,7 +43,7 @@ public abstract class JsonContainer extends JsonValue {
         return true;
     }
 
-    public JsonContainer setCondensed() {
+    public JsonContainer condense() {
         for (final JsonReference reference : this.references) {
             reference.visit().setLinesAbove(0).setLinesBetween(0);
         }

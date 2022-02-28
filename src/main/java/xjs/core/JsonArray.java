@@ -113,8 +113,8 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
     }
 
     @Override
-    public JsonArray setCondensed() {
-        return (JsonArray) super.setCondensed();
+    public JsonArray condense() {
+        return (JsonArray) super.condense();
     }
 
     @Override

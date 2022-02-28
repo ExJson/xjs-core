@@ -235,8 +235,8 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     @Override
-    public JsonObject setCondensed() {
-        return (JsonObject) super.setCondensed();
+    public JsonObject condense() {
+        return (JsonObject) super.condense();
     }
 
     @Override

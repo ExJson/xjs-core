@@ -52,13 +52,13 @@ public final class JsonParserTest {
     }
 
     @Test
-    public void parse_readsEmptyObject() throws IOException {
-        assertEquals(new JsonObject(), new JsonParser("{}").parse().asObject().unformatted());
+    public void parse_readsEmptyArray() throws IOException {
+        assertEquals(new JsonArray(), new JsonParser("[]").parse().asArray().unformatted());
     }
 
     @Test
-    public void parse_readsEmptyArray() throws IOException {
-        assertEquals(new JsonArray(), new JsonParser("[]").parse().asArray().unformatted());
+    public void parse_readsEmptyObject() throws IOException {
+        assertEquals(new JsonObject(), new JsonParser("{}").parse().asObject().unformatted());
     }
 
     @Test
@@ -68,7 +68,7 @@ public final class JsonParserTest {
     }
 
     @Test
-    public void parse_readsMultiLineArray() throws IOException {
+    public void parse_readsMultilineArray() throws IOException {
         final JsonArray parsed = new JsonParser("[\n1,\n2,\n3\n]").parse().asArray();
         assertEquals(List.of(1, 2, 3), parsed.toList(JsonValue::asInt));
     }
@@ -80,7 +80,7 @@ public final class JsonParserTest {
     }
 
     @Test
-    public void parse_readsMultiLineObject() throws IOException {
+    public void parse_readsMultilineObject() throws IOException {
         final JsonObject parsed = new JsonParser("{\n\"1\":1,\n\"2\":2,\n\"3\":3\n}").parse().asObject();
         assertEquals(Map.of("1", 1, "2", 2, "3", 3), parsed.toMap(JsonValue::asInt));
     }

@@ -1,6 +1,5 @@
 package xjs.serialization.writer;
 
-import xjs.core.JsonReference;
 import xjs.core.JsonValue;
 import xjs.serialization.JsonSerializationContext;
 
@@ -22,6 +21,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
     protected final String eol;
     protected final String indent;
     protected final int emptyLines;
+    protected String separator;
 
     protected AbstractJsonWriter(final File file, final boolean format) throws IOException {
         this(new FileWriter(file), format);
@@ -38,6 +38,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.outputComments = true;
         this.indent = "  ";
         this.emptyLines = -1;
+        this.separator = format ? " " : "";
     }
 
     protected AbstractJsonWriter(final Writer writer, final JsonWriterOptions options) {
@@ -51,23 +52,68 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.outputComments = options.isOutputComments();
         this.indent = options.getIndent();
         this.emptyLines = options.getEmptyLines();
+        this.separator = options.getSeparator();
     }
 
-    public final void write(final JsonValue value) throws IOException {
+    public void write(final JsonValue value) throws IOException {
+        this.nl(0, true, value);
         this.write(value, 0);
     }
 
-    public abstract void write(final JsonValue value, final int level) throws IOException;
+    protected abstract void write(final JsonValue value, final int level) throws IOException;
+
+    protected void open(final boolean condensed, final char opener) throws IOException {
+        this.tw.write(opener);
+        if (this.format) {
+            if (condensed && this.allowCondense) {
+                this.tw.write(this.separator);
+            }
+        }
+    }
 
     protected void nl(final int level, final JsonValue value) throws IOException {
+        this.nl(level, false, value);
+    }
+
+    protected void nl(final int level, final boolean top, final JsonValue value) throws IOException {
         if (this.format) {
-            for (int i = 0; i < Math.max(0, value.getLinesAbove()); i++) {
-                this.tw.write(this.eol);
+            int lines = value.getLinesAbove();
+            if (lines < 0) {
+                lines = top ? 0 : 1;
             }
+            if (!top && !this.allowCondense) {
+                lines = Math.max(1, lines);
+            }
+            if (lines > 0) {
+                for (int i = 0; i < lines; i++) {
+                    this.tw.write(this.eol);
+                }
+                for (int i = 0; i < level; i++) {
+                    this.tw.write(this.indent);
+                }
+            }
+        }
+    }
+
+    protected void nl(final int level) throws IOException {
+        if (this.format) {
+            this.tw.write(this.eol);
             for (int i = 0; i < level; i++) {
                 this.tw.write(this.indent);
             }
         }
+    }
+
+    protected boolean isCondensed(final JsonValue value) {
+        if (this.allowCondense && value.isContainer()) {
+            for (final JsonValue v : value.asContainer().visitAll()) {
+                if (v.getLinesAbove() != 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     protected int linesAbove(final JsonValue value) {
@@ -77,9 +123,13 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         return 0;
     }
 
-    protected void separate(final int level, final JsonValue value) throws IOException {
+    protected void separate(int level, final JsonValue value) throws IOException {
         if (this.format) {
-            final int lines = Math.max(0, value.getLinesBetween());
+            int lines = Math.max(0, value.getLinesBetween());
+            if (lines == 0 && value.isContainer() && !this.bracesSameLine) {
+               lines = 1;
+               level -= 1;
+            }
             for (int i = 0; i < lines; i++) {
                 this.tw.write(this.eol);
             }
@@ -88,7 +138,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
                     this.tw.write(this.indent);
                 }
             } else {
-                this.tw.write(' ');
+                this.tw.write(this.separator);
             }
         }
     }
@@ -98,6 +148,26 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
             return Math.max(0, value.getLinesBetween());
         }
         return 0;
+    }
+
+    protected void delimit(final boolean following, final int lastAbove) throws IOException {
+        if (following) {
+            this.tw.write(',');
+            if (lastAbove == 0 && this.allowCondense) {
+                this.tw.write(this.separator);
+            }
+        }
+    }
+
+    protected void close(final boolean condensed, final int level, final char closer) throws IOException {
+        if (this.format) {
+            if (condensed && this.allowCondense) {
+                this.tw.write(this.separator);
+            } else {
+                this.nl(level);
+            }
+        }
+        this.tw.write(closer);
     }
 
     protected void writeInteger(final long integer) throws IOException {
