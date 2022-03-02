@@ -239,11 +239,6 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
         return false;
     }
 
-    @Override
-    public String toString() {
-        return "<Missing implementation>"; // todo
-    }
-
     private class ElementView implements View<Element> {
         @Override
         public @NotNull ElementIterator iterator() {

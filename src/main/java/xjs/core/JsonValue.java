@@ -1,8 +1,13 @@
 package xjs.core;
 
 import org.jetbrains.annotations.Nullable;
+import xjs.serialization.writer.JsonWriter;
+import xjs.serialization.writer.XjsWriter;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.util.Objects;
 
 public abstract class JsonValue implements Serializable {
@@ -268,5 +273,32 @@ public abstract class JsonValue implements Serializable {
             && this.linesBetween == other.linesBetween
             && this.flags == other.flags
             && Objects.equals(this.comments, other.comments);
+    }
+
+    @Override
+    public String toString() {
+        return this.toString(JsonFormat.JSON);
+    }
+
+    public String toString(final JsonFormat format) {
+        final StringWriter sw = new StringWriter();
+        try {
+            switch (format) {
+                case JSON:
+                    new JsonWriter(sw, false).write(this);
+                    break;
+                case JSON_FORMATTED:
+                    new JsonWriter(sw, true).write(this);
+                    break;
+                case XJS:
+                    new XjsWriter(sw, false).write(this);
+                    break;
+                case XJS_FORMATTED:
+                    new XjsWriter(sw, true).write(this);
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException("Encoding error", e);
+        }
+        return sw.toString();
     }
 }
