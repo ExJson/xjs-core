@@ -21,7 +21,7 @@ public abstract class JsonValue implements Serializable {
     protected JsonValue() {
         this.linesAbove = -1;
         this.linesBetween = -1;
-        this.flags = 0;
+        this.flags = JsonFlags.NULL;
         this.comments = null;
     }
 

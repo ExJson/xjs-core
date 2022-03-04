@@ -3,6 +3,8 @@ package xjs.core;
 /**
  * A handful of modifiers providing alternate behaviors and QOL parsing
  * changes for JEL expressions.
+ *
+ * Todo: move to xjs-jel
  */
 public final class JsonFlags {
 
