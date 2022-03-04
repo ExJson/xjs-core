@@ -37,7 +37,7 @@ public abstract class JsonValue implements Serializable {
     }
 
     public static JsonValue valueOf(final @Nullable String value) {
-        return value != null ? new JsonString(value) : JsonNull.instance();
+        return value != null ? JsonString.auto(value) : JsonNull.instance();
     }
 
     public static JsonValue nonnull(final @Nullable JsonValue value) {

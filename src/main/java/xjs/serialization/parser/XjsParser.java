@@ -212,7 +212,7 @@ public class XjsParser extends AbstractJsonParser {
         if (parsed != null) {
             return parsed;
         }
-        return new JsonString(value, JsonString.Type.IMPLICIT);
+        return new JsonString(value, StringType.IMPLICIT);
     }
 
     protected String buildImplicitText(final int start, final int end) {
@@ -250,11 +250,11 @@ public class XjsParser extends AbstractJsonParser {
                     return this.readMulti();
                 }
             } else if (end - 1 == ImplicitStringUtils.expectQuote(this.text, start, '\'')) {
-                return new JsonString(this.readQuoted('\''), JsonString.Type.SINGLE);
+                return new JsonString(this.readQuoted('\''), StringType.SINGLE);
             }
         } else if (this.current == '"') {
             if (end - 1 == ImplicitStringUtils.expectQuote(this.text, start, '"')) {
-                return new JsonString(this.readQuoted('"'), JsonString.Type.DOUBLE);
+                return new JsonString(this.readQuoted('"'), StringType.DOUBLE);
             }
         }
         return null;
@@ -285,7 +285,7 @@ public class XjsParser extends AbstractJsonParser {
                     if (sb.charAt(sb.length() - 1) == '\n') {
                         sb.deleteCharAt(sb.length() - 1);
                     }
-                    return new JsonString(sb.toString(), JsonString.Type.MULTI);
+                    return new JsonString(sb.toString(), StringType.MULTI);
                 } else {
                     continue;
                 }

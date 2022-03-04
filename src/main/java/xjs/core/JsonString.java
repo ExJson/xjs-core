@@ -3,18 +3,22 @@ package xjs.core;
 public class JsonString extends JsonValue {
 
     private final String value;
-    private final Type type;
+    private final StringType type;
 
     public JsonString(final String value) {
-        this(value, Type.NONE);
+        this(value, StringType.NONE);
     }
 
-    public JsonString(final String value, final Type type) {
+    public JsonString(final String value, final StringType type) {
         this.value = value;
         this.type = type;
     }
 
-    public Type getStringType() {
+    public static JsonString auto(final String value) {
+        return new JsonString(value, StringType.fast(value));
+    }
+
+    public StringType getStringType() {
         return this.type;
     }
 
@@ -120,11 +124,4 @@ public class JsonString extends JsonValue {
         return this.value;
     }
 
-    public enum Type {
-        SINGLE,
-        DOUBLE,
-        MULTI,
-        IMPLICIT,
-        NONE
-    }
 }
