@@ -428,11 +428,6 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return false;
     }
 
-    @Override
-    public String toString() {
-        return "<Missing implementation>"; // todo
-    }
-
     private class MemberIterator implements Iterator<Member> {
         final Iterator<String> keys = JsonObject.this.keys.iterator();
         final Iterator<JsonReference> references = references().iterator();

@@ -38,7 +38,7 @@ public class JsonParser extends AbstractJsonParser {
         return result;
     }
 
-    private JsonValue readValue() throws IOException {
+    protected JsonValue readValue() throws IOException {
         switch (this.current) {
             case 'n':
                 return this.readNull();
@@ -69,7 +69,7 @@ public class JsonParser extends AbstractJsonParser {
         }
     }
 
-    private JsonValue readNull() throws IOException {
+    protected JsonValue readNull() throws IOException {
         this.read();
         this.expect('u');
         this.expect('l');
@@ -77,7 +77,7 @@ public class JsonParser extends AbstractJsonParser {
         return JsonNull.instance();
     }
 
-    private JsonValue readTrue() throws IOException {
+    protected JsonValue readTrue() throws IOException {
         this.read();
         this.expect('r');
         this.expect('u');
@@ -85,7 +85,7 @@ public class JsonParser extends AbstractJsonParser {
         return JsonBoolean.jsonTrue();
     }
 
-    private JsonValue readFalse() throws IOException {
+    protected JsonValue readFalse() throws IOException {
         this.read();
         this.expect('a');
         this.expect('l');
@@ -94,11 +94,11 @@ public class JsonParser extends AbstractJsonParser {
         return JsonBoolean.jsonFalse();
     }
 
-    private JsonValue readString() throws IOException {
+    protected JsonValue readString() throws IOException {
         return new JsonString(this.readQuoted('"'));
     }
 
-    private JsonArray readArray() throws IOException {
+    protected JsonArray readArray() throws IOException {
         this.read();
         final JsonArray array = new JsonArray();
         this.skipWhitespace();
@@ -117,7 +117,7 @@ public class JsonParser extends AbstractJsonParser {
         return (JsonArray) array.setEmptyLinesTrailing(this.linesSkipped);
     }
 
-    private JsonObject readObject() throws IOException {
+    protected JsonObject readObject() throws IOException {
         this.read();
         final JsonObject object = new JsonObject();
         this.skipWhitespace();
@@ -144,7 +144,7 @@ public class JsonParser extends AbstractJsonParser {
         return (JsonObject) object.setEmptyLinesTrailing(this.linesSkipped);
     }
 
-    private String readKey() throws IOException {
+    protected String readKey() throws IOException {
         if (this.current != '"') {
             throw this.expected("key");
         }

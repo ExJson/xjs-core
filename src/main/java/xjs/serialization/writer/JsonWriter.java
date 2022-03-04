@@ -1,6 +1,5 @@
 package xjs.serialization.writer;
 
-import xjs.core.JsonArray;
 import xjs.core.JsonObject;
 import xjs.core.JsonValue;
 
@@ -52,9 +51,6 @@ public class JsonWriter extends AbstractJsonWriter {
                     following = true;
                 }
                 this.close(value.asArray(), condensed, level, ']');
-                break;
-            case INTEGER:
-                this.writeInteger(value.asLong());
                 break;
             case DECIMAL:
                 this.writeDecimal(value.asDouble());

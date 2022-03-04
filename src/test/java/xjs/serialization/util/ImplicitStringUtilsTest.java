@@ -250,6 +250,12 @@ public final class ImplicitStringUtilsTest {
     }
 
     @Test
+    public void escapeValue_doesNotEscapeNewline_whenBalanced() {
+        assertEquals("(l1\nl2)",
+            ImplicitStringUtils.escape("(l1\nl2)", StringContext.VALUE));
+    }
+
+    @Test
     public void escapeKey_doesNotEscapeNewline() {
         assertEquals("l1\nl2",
             ImplicitStringUtils.escape("l1\nl2", StringContext.KEY));

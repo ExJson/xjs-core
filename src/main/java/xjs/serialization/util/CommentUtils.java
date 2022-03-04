@@ -7,6 +7,10 @@ public final class CommentUtils {
 
     private CommentUtils() {}
 
+    public static String rewrite(final CommentStyle style, final String text) {
+        return format(style, strip(text));
+    }
+
     public static String strip(final String data) {
         final String noSingles = data.replaceAll("(?<=^|\n\r?)\\s*(//|#)\\s?", "");
         if (noSingles.contains("/*")) {

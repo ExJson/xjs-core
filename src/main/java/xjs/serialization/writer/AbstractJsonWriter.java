@@ -175,6 +175,28 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.tw.write(closer);
     }
 
+    protected void writeComment(final int level, final String comment) throws IOException {
+        if (this.outputComments) {
+            for (final String line : comment.split("\r?\n")) {
+                this.tw.write(line);
+                this.nl(level);
+            }
+        }
+    }
+
+    protected void writeEolComment(final int level, final String comment) throws IOException {
+        if (this.outputComments) {
+            if (comment.contains("\n")) {
+                for (final String line : comment.split("\r?\n")) {
+                    this.nl(level);
+                    this.tw.write(line);
+                }
+            } else {
+                this.tw.write(comment);
+            }
+        }
+    }
+
     protected void writeInteger(final long integer) throws IOException {
         this.tw.write(Long.toString(integer));
     }

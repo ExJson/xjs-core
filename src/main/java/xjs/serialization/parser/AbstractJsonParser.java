@@ -3,7 +3,6 @@ package xjs.serialization.parser;
 import org.jetbrains.annotations.NotNull;
 import xjs.core.JsonDecimal;
 import xjs.core.JsonInteger;
-import xjs.core.JsonReference;
 import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;
 
@@ -202,7 +201,16 @@ public abstract class AbstractJsonParser {
         if (reset) {
             this.linesSkipped = 0;
         }
-        while (this.isWhiteSpace()) {
+        while (this.isWhitespace()) {
+            this.read();
+        }
+    }
+
+    protected void skipToOffset(final int offset) throws IOException {
+        for (int i = 0; i < offset; i++) {
+            if (!this.isLineWhitespace()) {
+                return;
+            }
             this.read();
         }
     }
@@ -246,17 +254,21 @@ public abstract class AbstractJsonParser {
         final int end = this.current == -1 ? this.index : this.index - 1;
         final String captured;
         if (this.captureBuffer.length() > 0) {
-            this.captureBuffer.append(this.buffer, this.captureStart,  end - this.captureStart);
+            this.captureBuffer.append(this.buffer, this.captureStart, end - this.captureStart);
             captured = this.captureBuffer.toString();
             this.captureBuffer.setLength(0);
         } else {
-            captured=new String(this.buffer, this.captureStart,  end - this.captureStart);
+            captured = new String(this.buffer, this.captureStart, end - this.captureStart);
         }
         this.captureStart = -1;
         return captured;
     }
 
-    protected boolean isWhiteSpace() {
+    protected boolean isLineWhitespace() {
+        return this.current == ' ' || this.current == '\t';
+    }
+
+    protected boolean isWhitespace() {
         return this.current == ' '
             || this.current == '\t'
             || this.current == '\n'

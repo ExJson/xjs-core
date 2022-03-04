@@ -2,7 +2,7 @@ package xjs.core;
 
 /**
  * This class represents the specific type of comment to be used in conjunction with a {@link JsonValue}.
- * Comments can be placed by calling {@link JsonReference#setComment(CommentType, CommentStyle, String)}
+ * Comments can be placed by calling {@link CommentHolder#set(CommentType, CommentStyle, String)}
  * or another such variant.
  */
 public enum CommentType {

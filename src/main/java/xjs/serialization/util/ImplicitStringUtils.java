@@ -15,6 +15,10 @@ public final class ImplicitStringUtils {
         return text.substring(s, expect(text, s, ctx));
     }
 
+    public static boolean find(final String text, final StringContext ctx) {
+        return indexOf(text, 0, ctx) >= 0;
+    }
+
     public static int indexOf(final String text, final int s, final StringContext ctx) {
         if (ctx == StringContext.KEY) {
             return indexOf(text, s, ':', false, true);
