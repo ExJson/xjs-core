@@ -1,5 +1,6 @@
 package xjs.core;
 
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 import xjs.serialization.writer.JsonWriter;
 import xjs.serialization.writer.XjsWriter;
@@ -65,25 +66,31 @@ public abstract class JsonValue implements Serializable {
         return this;
     }
 
+    @MagicConstant(flagsFromClass = JsonFlags.class)
     public int getFlags() {
         return this.flags;
     }
 
-    public JsonValue setFlags(final int flags) {
+    public JsonValue setFlags(
+            final @MagicConstant(flagsFromClass = JsonFlags.class) int flags) {
         this.flags = flags;
         return this;
     }
 
-    public boolean hasFlag(final int flag) {
+    public boolean hasFlag(
+            final @MagicConstant(flagsFromClass = JsonFlags.class) int flag) {
         return (this.flags & flag) == flag;
     }
 
-    public JsonValue addFlag(final int flag) {
+    public JsonValue addFlag(
+            final @MagicConstant(flagsFromClass = JsonFlags.class) int flag) {
+        this.flags &= ~JsonFlags.NULL;
         this.flags |= flag;
         return this;
     }
 
-    public JsonValue removeFlag(final int flag) {
+    public JsonValue removeFlag(
+            final @MagicConstant(flagsFromClass = JsonFlags.class) int flag) {
         this.flags &= ~flag;
         return this;
     }
@@ -124,7 +131,7 @@ public abstract class JsonValue implements Serializable {
     public JsonValue setDefaultMetadata(final JsonValue metadata) {
         if (this.linesAbove < 0) this.linesAbove = metadata.linesAbove;
         if (this.linesBetween < 0) this.linesBetween = metadata.linesBetween;
-        if (this.flags == 0) this.flags = metadata.flags; // todo: JsonFlags#NULL
+        if (this.hasFlag(JsonFlags.NULL)) this.flags = metadata.flags;
         if (this.comments == null) this.comments = metadata.comments;
         return this;
     }
