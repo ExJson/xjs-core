@@ -53,15 +53,21 @@ public final class XjsParserTest extends CommonParserTest {
     }
 
     @Test
-    public void singleComma_inArray_impliesEmptyString() throws IOException {
+    public void singleComma_inArray_isEmptyImplicitString() throws IOException {
         assertEquals(new JsonArray().add("").add(""),
             this.parse("[,,]").unformatted());
     }
 
     @Test
-    public void singleComma_inObject_impliesEmptyString() throws IOException {
+    public void singleComma_inObject_isEmptyImplicitString() throws IOException {
         assertEquals(new JsonObject().add("k", "").add("r", ""),
             this.parse("k:,r:,").unformatted());
+    }
+
+    @Test
+    public void singleColon_inObject_isEmptyImplicitKey() throws IOException {
+        assertEquals(new JsonObject().add("", ""),
+            this.parse(":,").unformatted());
     }
 
     @Test

@@ -138,7 +138,7 @@ public final class ImplicitStringUtils {
     }
 
     private static int trimWhitespace(final String text, int e) {
-        while (e-- >= 0) { // while e < 0, if char at e - 1, then return e ???
+        while (--e >= 0) { // while e < 0, if char at e - 1, then return e ???
             if (!Character.isWhitespace(text.charAt(e))) {
                 return e + 1;
             }
