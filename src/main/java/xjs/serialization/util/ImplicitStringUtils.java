@@ -59,7 +59,7 @@ public final class ImplicitStringUtils {
             }
             i = getNextIndex(text, i, c);
         }
-        if (e == '}' || e == ']' || e == ')') throw expected(text, e, s);
+        if (e == '}' || e == ']' || e == ')') throw unclosed(text, e, s - 1);
         if (n || e == '\u0000') return text.length();
         throw endOfInput(text, s);
     }
@@ -108,7 +108,7 @@ public final class ImplicitStringUtils {
     }
 
     public static int expectMulti(final String text, final int s) {
-        int i = s + 1;
+        int i = s;
         while (i++ < text.length() - 2) {
             if (text.charAt(i) == '\'' && text.charAt(i + 1) == '\'' && text.charAt(i + 2) == '\'') {
                 return i + 2;
@@ -128,7 +128,7 @@ public final class ImplicitStringUtils {
             }
         }
         if (i == s || c != quote) {
-            throw expected(text, quote, s);
+            throw unclosed(text, quote, s);
         }
         return i;
     }
@@ -221,14 +221,14 @@ public final class ImplicitStringUtils {
         sb.append(quote);
     }
 
-    private static SyntaxException expected(final String text, final char c, final int index) {
+    private static SyntaxException unclosed(final String text, final char c, final int index) {
         final int[] lineColumn = getLineColumn(text, index);
-        return SyntaxException.expected(c, lineColumn[0], lineColumn[1]);
+        return new SyntaxException("Unclosed '" + getOpener(c) + "'", lineColumn[0], lineColumn[1]);
     }
 
     private static SyntaxException noMulti(final String text, final int index) {
         final int[] lineColumn = getLineColumn(text, index);
-        return SyntaxException.expected("triple quote (''')", lineColumn[0], lineColumn[1]);
+        return SyntaxException.expected("unclosed triple quote (''')", lineColumn[0], lineColumn[1]);
     }
 
     private static SyntaxException unexpected(final String text, final char c, final int index) {
@@ -244,6 +244,15 @@ public final class ImplicitStringUtils {
     private static SyntaxException endOfInput(final String text, final int index) {
         final int[] lineColumn = getLineColumn(text, index);
         return SyntaxException.unexpected("end of input", lineColumn[0], lineColumn[1]);
+    }
+
+    private static char getOpener(final char closer) {
+        switch (closer) {
+            case '}': return '{';
+            case ']': return '[';
+            case ')': return '(';
+        }
+        return closer;
     }
 
     private static int[] getLineColumn(final String text, final int index) {

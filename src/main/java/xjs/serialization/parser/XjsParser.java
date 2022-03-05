@@ -246,7 +246,7 @@ public class XjsParser extends AbstractJsonParser {
     protected @Nullable JsonValue tryReadQuoted(final int start, final int end) throws IOException{
         if (this.current == '\'') {
             if (this.peek(1) == '\'' && this.peek(2) == '\'') {
-                if (end - 1 == ImplicitStringUtils.expectMulti(this.text, start)) {
+                if (end - 1 == ImplicitStringUtils.expectMulti(this.text, start + 2)) {
                     return this.readMulti();
                 }
             } else if (end - 1 == ImplicitStringUtils.expectQuote(this.text, start, '\'')) {
@@ -282,7 +282,7 @@ public class XjsParser extends AbstractJsonParser {
                 triple++;
                 this.read();
                 if (triple == 3) {
-                    if (sb.charAt(sb.length() - 1) == '\n') {
+                    if (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\n') {
                         sb.deleteCharAt(sb.length() - 1);
                     }
                     return new JsonString(sb.toString(), StringType.MULTI);

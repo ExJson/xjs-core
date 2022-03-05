@@ -6,7 +6,9 @@ import org.junit.jupiter.params.provider.CsvSource;
 import xjs.core.CommentType;
 import xjs.core.JsonArray;
 import xjs.core.JsonObject;
+import xjs.core.JsonString;
 import xjs.core.JsonValue;
+import xjs.core.StringType;
 import xjs.exception.SyntaxException;
 import xjs.serialization.writer.JsonWriter;
 
@@ -71,6 +73,12 @@ public final class XjsParserTest extends CommonParserTest {
     }
 
     @Test
+    public void emptyFile_isImplicitlyString() throws IOException {
+        assertEquals(new JsonString("", StringType.IMPLICIT),
+            this.parse("").unformatted());
+    }
+
+    @Test
     public void parseValue_readsUntilEndOfLine() throws IOException {
         assertEquals(new JsonObject().add("k", "v").add("r", "t"),
             this.parse("k:v\nr:t").unformatted());
@@ -108,6 +116,11 @@ public final class XjsParserTest extends CommonParserTest {
     @Test
     public void parse_readsMultilineString() throws IOException {
         assertEquals("test", this.parse("'''test'''").asString());
+    }
+
+    @Test
+    public void parse_toleratesEmptyMultilineString() throws IOException {
+        assertEquals("", this.parse("''''''").asString());
     }
 
     @Test

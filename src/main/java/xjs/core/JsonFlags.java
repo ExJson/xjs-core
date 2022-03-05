@@ -51,6 +51,12 @@ public final class JsonFlags {
     public static final int META = 1 << 6;
 
     /**
+     * Indicates that a field is only used as part of a destructuring
+     * expression to create other values.
+     */
+    public static final int FROM = 1 << 7;
+
+    /**
      * This field does not have flags and is a valid candidate to be
      * overwritten.
      */

@@ -114,6 +114,7 @@ public class JsonString extends JsonValue {
         }
         if (o instanceof JsonString) {
             return this.value.equals(((JsonString) o).value)
+                && this.type.equals(((JsonString) o).type)
                 && this.metadataEquals((JsonString) o);
         }
         return false;
