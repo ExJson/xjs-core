@@ -9,10 +9,11 @@ public class JsonWriterOptions {
     private boolean nestedSameLine = false;
     private boolean omitRootBraces = true;
     private boolean outputComments = true;
+    private boolean compressed = true;
     private String eol = JsonSerializationContext.getEol();
     private String indent = "  ";
     private String separator = " ";
-    private int emptyLines = -1;
+    private int maxLines = Integer.MAX_VALUE;
 
     public boolean isAllowCondense() {
         return allowCondense;
@@ -59,6 +60,15 @@ public class JsonWriterOptions {
         return this;
     }
 
+    public boolean isCompressed() {
+        return this.compressed;
+    }
+
+    public JsonWriterOptions setCompressed(final boolean compressed) {
+        this.compressed = compressed;
+        return this;
+    }
+
     public String getEol() {
         return eol;
     }
@@ -95,12 +105,12 @@ public class JsonWriterOptions {
         return this;
     }
 
-    public int getEmptyLines() {
-        return emptyLines;
+    public int getMaxLines() {
+        return maxLines;
     }
 
-    public JsonWriterOptions setEmptyLines(final int emptyLines) {
-        this.emptyLines = emptyLines;
+    public JsonWriterOptions setMaxLines(final int maxLines) {
+        this.maxLines = maxLines;
         return this;
     }
 

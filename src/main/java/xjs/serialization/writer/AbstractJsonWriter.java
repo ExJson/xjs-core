@@ -19,9 +19,10 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
     protected final boolean nestedSameLine;
     protected final boolean omitRootBraces;
     protected final boolean outputComments;
+    protected final boolean compress;
     protected final String eol;
     protected final String indent;
-    protected final int emptyLines;
+    protected final int naxLines;
     protected String separator;
 
     protected AbstractJsonWriter(final File file, final boolean format) throws IOException {
@@ -36,9 +37,10 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.bracesSameLine = true;
         this.nestedSameLine = false;
         this.omitRootBraces = true;
-        this.outputComments = true;
+        this.compress = true;
+        this.outputComments = format;
         this.indent = "  ";
-        this.emptyLines = -1;
+        this.naxLines = Integer.MAX_VALUE;
         this.separator = format ? " " : "";
     }
 
@@ -51,8 +53,9 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.nestedSameLine = options.isNestedSameLine();
         this.omitRootBraces = options.isOmitRootBraces();
         this.outputComments = options.isOutputComments();
+        this.compress = options.isCompressed();
         this.indent = options.getIndent();
-        this.emptyLines = options.getEmptyLines();
+        this.naxLines = options.getMaxLines();
         this.separator = options.getSeparator();
     }
 
@@ -85,6 +88,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
             if (!top && !this.allowCondense) {
                 lines = Math.max(1, lines);
             }
+            lines = Math.min(lines, this.naxLines);
             if (lines > 0) {
                 for (int i = 0; i < lines; i++) {
                     this.tw.write(this.eol);
@@ -107,12 +111,11 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
 
     protected boolean isCondensed(final JsonValue value) {
         if (this.allowCondense && value.isContainer()) {
-            for (final JsonValue v : value.asContainer().visitAll()) {
-                if (v.getLinesAbove() != 0) {
-                    return false;
-                }
+            final JsonContainer c = value.asContainer();
+            if (!c.isEmpty()) {
+                // Intentionally shallow check for formatting purposes
+                return c.getReference(0).visit().getLinesAbove() == 0;
             }
-            return true;
         }
         return false;
     }
@@ -131,6 +134,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
                lines = 1;
                level -= 1;
             }
+            lines = Math.min(lines, this.naxLines);
             for (int i = 0; i < lines; i++) {
                 this.tw.write(this.eol);
             }
@@ -165,34 +169,21 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         if (this.format) {
             if (condensed && this.allowCondense) {
                 this.tw.write(this.separator);
-            } else if (c.getEmptyLinesTrailing() > 0 || c.size() > 0) {
-                for (int i = 0; i < Math.max(0, c.getEmptyLinesTrailing()) - 1; i++) {
-                    this.tw.write(this.eol);
-                }
-                this.nl(level);
+            } else {
+                this.writeLinesTrailing(c, level);
             }
         }
         this.tw.write(closer);
     }
 
-    protected void writeComment(final int level, final String comment) throws IOException {
-        if (this.outputComments) {
-            for (final String line : comment.split("\r?\n")) {
-                this.tw.write(line);
-                this.nl(level);
-            }
-        }
-    }
-
-    protected void writeEolComment(final int level, final String comment) throws IOException {
-        if (this.outputComments) {
-            if (comment.contains("\n")) {
-                for (final String line : comment.split("\r?\n")) {
-                    this.nl(level);
-                    this.tw.write(line);
+    protected void writeLinesTrailing(final JsonContainer c, final int level) throws IOException {
+        if (this.format) {
+            final int lines = Math.min(c.getEmptyLinesTrailing(), this.naxLines);
+            if (lines > 0 || (lines < 0 && c.size() > 0)) {
+                for (int i = 0; i < Math.max(0, c.getEmptyLinesTrailing()) - 1; i++) {
+                    this.tw.write(this.eol);
                 }
-            } else {
-                this.tw.write(comment);
+                this.nl(level);
             }
         }
     }

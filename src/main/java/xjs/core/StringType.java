@@ -93,7 +93,7 @@ public enum StringType {
      * </pre>
      *
      * @param text <b>Any</b> data represented as text.
-     * @return A appropriate string type for reprinting the data.
+     * @return An appropriate string type for reprinting the data.
      */
     public static StringType select(final String text) {
         if (ImplicitStringUtils.isBalanced(text)) {

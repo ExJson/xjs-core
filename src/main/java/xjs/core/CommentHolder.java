@@ -20,6 +20,16 @@ public class CommentHolder {
             && this.interiorData != null;
     }
 
+    public boolean has(final CommentType type) {
+        switch (type) {
+            case HEADER: return this.headerData != null;
+            case EOL: return this.eolData != null;
+            case FOOTER: return this.footerData != null;
+            case VALUE: return this.valueData != null;
+            default: return this.interiorData != null;
+        }
+    }
+
     public String get(final CommentType type) {
         return CommentUtils.strip(this.getData(type));
     }

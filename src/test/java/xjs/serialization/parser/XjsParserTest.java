@@ -27,6 +27,33 @@ public final class XjsParserTest extends CommonParserTest {
     }
 
     @Test
+    public void whatever() throws IOException {
+        final String json = """
+        
+        # Header
+        realistic data: 'part one'
+        
+        it is nice: 'to do it' # eol
+        
+        try a:
+          
+          # value
+          'comment'
+          
+        use a: {
+          nested: OBJECT
+          
+          for better testing: true
+        } # eol
+        
+        /**
+         * Brief note: I'm having some thoughts...
+         */
+        """;
+        this.parse(json);
+    }
+
+    @Test
     public void parse_readsUnquotedStrings() throws IOException {
         assertEquals("hello", this.parse("hello").asString());
     }
@@ -177,7 +204,7 @@ public final class XjsParserTest extends CommonParserTest {
     @ParameterizedTest
     @CsvSource({"/*value*/", "#value", "//value"})
     public void parse_preservesValueComment_betweenKeyValue(final String comment) throws IOException {
-        assertEquals(comment,
+        assertEquals(comment + "\n",
             this.parse("k:\n" + comment + "\nv").asObject().get(0).getComments().getData(CommentType.VALUE));
     }
 
@@ -205,33 +232,35 @@ public final class XjsParserTest extends CommonParserTest {
     @Test
     public void parse_preservesEmptyLines_ignoringComments() throws IOException {
         final String json = """
-              key:
-                value
-              
-              another:
-              
-                # comment
-                value
-                
-              k3: v3, k4: v4
-                
-                
-              # and
-              finally: value""";
+             
+             key:
+               value
+             
+             another:
+             
+               # comment
+               value
+               
+             k3: v3, k4: v4
+               
+               
+             # and
+             finally: value
+             """;
         final String expected = """
-            {
-              "key":
-                "value",
-              
-              "another":
-            
-                "value",
-            
-              "k3": "v3", "k4": "v4",
-            
-            
-              "finally": "value"
-            }""";
+             {
+               "key":
+                 "value",
+               
+               "another":
+             
+                 "value",
+             
+               "k3": "v3", "k4": "v4",
+             
+             
+               "finally": "value"
+             }""";
         final StringWriter sw = new StringWriter();
         final JsonWriter writer = new JsonWriter(sw, true);
         writer.write(this.parse(json));

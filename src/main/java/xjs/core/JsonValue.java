@@ -112,7 +112,7 @@ public abstract class JsonValue implements Serializable {
     }
 
     public boolean hasComment(final CommentType type) {
-        return this.comments != null && !this.comments.get(type).isEmpty();
+        return this.comments != null && this.comments.has(type);
     }
 
     public JsonValue setComment(final String text) {

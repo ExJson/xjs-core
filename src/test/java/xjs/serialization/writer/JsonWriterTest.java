@@ -72,7 +72,7 @@ public final class JsonWriterTest {
     }
 
     @Test
-    public void write_writesMultilineArray() {
+    public void write_printsMultilineArray() {
         assertEquals("[\n  1,\n  2,\n  3\n]", write(new JsonArray().add(1).add(2).add(3)));
     }
 

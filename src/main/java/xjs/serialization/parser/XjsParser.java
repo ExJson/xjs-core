@@ -58,13 +58,13 @@ public class XjsParser extends AbstractJsonParser {
     protected JsonValue readClosedRoot() throws IOException {
         this.read();
         this.skipWhitespace();
-        final String header = this.takeComment();
+        final String header = this.takeComment(true);
         final int linesAbove = this.linesSkipped;
         final JsonValue result =
             this.readValue().setLinesAbove(linesAbove);
         this.skipWhitespace();
         this.prependLinesSkippedToComment();
-        final String footer = this.takeComment();
+        final String footer = this.takeComment(false);
         if (!this.isEndOfText()) {
             throw this.unexpected((char) this.current);
         }
@@ -101,7 +101,7 @@ public class XjsParser extends AbstractJsonParser {
     }
 
     protected boolean readNextElement(final JsonArray array) throws IOException {
-        final String header = this.takeComment();
+        final String header = this.takeComment(true);
         final int linesAbove = this.linesSkipped;
         this.valueOffset = this.lineOffset;
 
@@ -112,7 +112,7 @@ public class XjsParser extends AbstractJsonParser {
         array.add(value);
 
         final boolean delimiter = this.readDelimiter();
-        this.appendComment(value, CommentType.EOL, this.takeComment());
+        this.appendComment(value, CommentType.EOL, this.takeComment(true));
         return delimiter;
     }
 
@@ -120,14 +120,13 @@ public class XjsParser extends AbstractJsonParser {
         final JsonObject object = new JsonObject();
         this.read();
         this.skipWhitespace();
-        this.linesSkipped++; // formatting
         do {
             this.skipWhitespace(false);
             if (this.isEndOfText()) {
                 break;
             }
         } while (this.readNextMember(object));
-        this.closeContainer(object);
+        this.closeContainer(object, false);
         if (!this.isEndOfText()) {
             throw this.unexpected("'" + (char) this.current + "' before end of file");
         }
@@ -152,14 +151,14 @@ public class XjsParser extends AbstractJsonParser {
     }
 
     protected boolean readNextMember(final JsonObject object) throws IOException {
-        final String header = this.takeComment();
+        final String header = this.takeComment(true);
         final int linesAbove = this.linesSkipped;
         this.valueOffset = this.lineOffset;
 
         final String key = this.readKey();
         this.separateKeyValue();
 
-        final String valueComment = this.takeComment();
+        final String valueComment = this.takeComment(false);
         final int linesBetween = this.linesSkipped;
 
         final JsonValue value = this.readValue();
@@ -171,7 +170,7 @@ public class XjsParser extends AbstractJsonParser {
         object.add(key, value);
 
         final boolean delimiter = this.readDelimiter();
-        this.appendComment(value, CommentType.EOL, this.takeComment());
+        this.appendComment(value, CommentType.EOL, true);
         return delimiter;
     }
 
@@ -193,10 +192,15 @@ public class XjsParser extends AbstractJsonParser {
     }
 
     protected JsonContainer closeContainer(final JsonContainer container) throws IOException {
-        this.appendComment(container, CommentType.INTERIOR);
+        return this.closeContainer(container, true);
+    }
+
+    protected JsonContainer closeContainer(final JsonContainer container, final boolean trim) throws IOException {
+        this.appendComment(container, CommentType.INTERIOR, trim);
+        container.setEmptyLinesTrailing(this.linesSkipped);
         this.skipLineWhitespace();
-        this.appendComment(container, CommentType.EOL);
-        return container.setEmptyLinesTrailing(this.linesSkipped);
+        this.appendComment(container, CommentType.EOL, true);
+        return container;
     }
 
     protected JsonValue readImplicit() throws IOException {
@@ -335,9 +339,6 @@ public class XjsParser extends AbstractJsonParser {
         final int linesAbove = this.linesSkipped;
         this.readAllComments();
         this.appendLinesSkippedToComment();
-//        if (this.index == this.text.length()) {
-//            this.read();
-//        }
         this.linesSkipped = linesAbove;
     }
 
@@ -423,7 +424,6 @@ public class XjsParser extends AbstractJsonParser {
     }
 
     protected boolean readDelimiter() throws IOException {
-        this.linesSkipped = 0;
         this.skipLineWhitespace();
         if (this.readIf(',')) {
             this.skipLineWhitespace();
@@ -435,6 +435,7 @@ public class XjsParser extends AbstractJsonParser {
     }
 
     protected void skipLineWhitespace() throws IOException {
+        this.linesSkipped = 0;
         while (this.isLineWhitespace()) {
             this.read();
         }
@@ -450,17 +451,21 @@ public class XjsParser extends AbstractJsonParser {
         }
     }
 
-    protected void appendComment(final JsonValue value, final CommentType type) {
+//    protected void appendComment(final JsonValue value, final CommentType type) {
+//        this.appendComment(value, type, true);
+//    }
+
+    protected void appendComment(final JsonValue value, final CommentType type, final boolean trim) {
         if (this.commentBuffer.length() > 0) {
-            value.getComments().setData(type, this.takeComment());
+            value.getComments().setData(type, this.takeComment(trim));
         }
     }
 
-    protected String takeComment() {
+    protected String takeComment(final boolean trim) {
         if (this.commentBuffer.length() == 0) {
             return "";
         }
-        if (this.commentBuffer.charAt(this.commentBuffer.length() - 1) == '\n') {
+        if (trim && this.commentBuffer.charAt(this.commentBuffer.length() - 1) == '\n') {
             this.commentBuffer.setLength(this.commentBuffer.length() - 1);
         }
         final String comment = this.commentBuffer.toString();

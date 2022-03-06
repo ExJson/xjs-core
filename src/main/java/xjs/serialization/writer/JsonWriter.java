@@ -23,10 +23,8 @@ public class JsonWriter extends AbstractJsonWriter {
 
     @Override
     public void write(final JsonValue value, final int level) throws IOException {
+        final boolean condensed = this.isCondensed(value);
         boolean following = false;
-        final boolean condensed = value.isContainer()
-            && value.asContainer().size() > 0
-            && value.asContainer().get(0).getLinesAbove() == 0;
 
         switch (value.getType()) {
             case OBJECT:
