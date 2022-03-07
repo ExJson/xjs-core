@@ -28,11 +28,6 @@ public class JsonString extends JsonValue {
     }
 
     @Override
-    public boolean isPrimitive() {
-        return true;
-    }
-
-    @Override
     public boolean isString() {
         return true;
     }
@@ -43,48 +38,8 @@ public class JsonString extends JsonValue {
     }
 
     @Override
-    public long intoLong() {
-        return this.value.length();
-    }
-
-    @Override
-    public int intoInt() {
-        return this.value.length();
-    }
-
-    @Override
     public double intoDouble() {
         return this.value.length();
-    }
-
-    @Override
-    public float intoFloat() {
-        return this.value.length();
-    }
-
-    @Override
-    public boolean intoBoolean() {
-        return this.value.length() > 0;
-    }
-
-    @Override
-    public String intoString() {
-        return this.value;
-    }
-
-    @Override
-    public JsonContainer intoContainer() {
-        return this.intoArray();
-    }
-
-    @Override
-    public JsonObject intoObject() {
-        return new JsonObject().add("value", this);
-    }
-
-    @Override
-    public JsonArray intoArray() {
-        return new JsonArray().add(this);
     }
 
     @Override

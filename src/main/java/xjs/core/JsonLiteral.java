@@ -29,11 +29,6 @@ public class JsonLiteral extends JsonValue {
     }
 
     @Override
-    public boolean isPrimitive() {
-        return true;
-    }
-
-    @Override
     public boolean isBoolean() {
         return this.value != Value.NULL;
     }
@@ -86,48 +81,8 @@ public class JsonLiteral extends JsonValue {
     }
 
     @Override
-    public long intoLong() {
-        return (long) this.value.number;
-    }
-
-    @Override
-    public int intoInt() {
-        return (int) this.value.number;
-    }
-
-    @Override
     public double intoDouble() {
         return this.value.number;
-    }
-
-    @Override
-    public float intoFloat() {
-        return (float) this.value.number;
-    }
-
-    @Override
-    public boolean intoBoolean() {
-        return this.value.number == 1;
-    }
-
-    @Override
-    public String intoString() {
-        return this.value.token;
-    }
-
-    @Override
-    public JsonContainer intoContainer() {
-        return new JsonArray().add(this);
-    }
-
-    @Override
-    public JsonObject intoObject() {
-        return new JsonObject().add("value", this);
-    }
-
-    @Override
-    public JsonArray intoArray() {
-        return new JsonArray().add(this);
     }
 
     @Override

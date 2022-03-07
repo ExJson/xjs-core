@@ -144,7 +144,7 @@ public abstract class JsonValue implements Serializable {
     public abstract JsonType getType();
 
     public boolean isPrimitive() {
-        return false;
+        return true;
     }
 
     public boolean isNumber() {
@@ -219,23 +219,39 @@ public abstract class JsonValue implements Serializable {
         throw new UnsupportedOperationException();
     }
 
-    public abstract long intoLong();
+    public long intoLong() {
+        return (long) this.intoDouble();
+    }
 
-    public abstract int intoInt();
+    public int intoInt() {
+        return (int) this.intoDouble();
+    }
 
     public abstract double intoDouble();
 
-    public abstract float intoFloat();
+    public float intoFloat() {
+        return (float) this.intoDouble();
+    }
 
-    public abstract boolean intoBoolean();
+    public boolean intoBoolean() {
+        return this.intoDouble() != 0;
+    }
 
-    public abstract String intoString();
+    public String intoString() {
+        return this.toString();
+    }
 
-    public abstract JsonContainer intoContainer();
+    public JsonContainer intoContainer() {
+        return this.intoArray();
+    }
 
-    public abstract JsonObject intoObject();
+    public JsonObject intoObject() {
+        return new JsonObject().add("value", this);
+    }
 
-    public abstract JsonArray intoArray();
+    public JsonArray intoArray() {
+        return new JsonArray().add(this);
+    }
 
     public JsonValue shallowCopy() {
         return this.deepCopy(false);

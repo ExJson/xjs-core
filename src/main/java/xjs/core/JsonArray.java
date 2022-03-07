@@ -140,11 +140,6 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
     }
 
     @Override
-    public JsonArray intoContainer() {
-        return (JsonArray) super.intoContainer();
-    }
-
-    @Override
     public JsonArray shallowCopy() {
         final JsonArray copy = new JsonArray();
         for (final JsonReference reference : this.references) {
@@ -205,6 +200,11 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
     @Override
     public JsonArray asArray() {
         return this;
+    }
+
+    @Override
+    public JsonArray intoContainer() {
+        return (JsonArray) super.intoContainer();
     }
 
     @Override

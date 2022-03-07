@@ -230,6 +230,11 @@ public abstract class JsonContainer extends JsonValue {
     }
 
     @Override
+    public boolean isPrimitive() {
+        return false;
+    }
+
+    @Override
     public final boolean isContainer() {
         return true;
     }
@@ -240,39 +245,20 @@ public abstract class JsonContainer extends JsonValue {
     }
 
     @Override
-    public long intoLong() {
-        return this.size();
-    }
-
-    @Override
-    public int intoInt() {
-        return this.size();
-    }
-
-    @Override
     public double intoDouble() {
         return this.size();
-    }
-
-    @Override
-    public float intoFloat() {
-        return this.size();
-    }
-
-    @Override
-    public boolean intoBoolean() {
-        return this.size() > 0;
-    }
-
-    @Override
-    public String intoString() {
-        return this.toString();
     }
 
     @Override
     public JsonContainer intoContainer() {
         return this;
     }
+
+    @Override
+    public abstract JsonObject intoObject();
+
+    @Override
+    public abstract JsonArray intoArray();
 
     public abstract JsonContainer shallowCopy();
 
