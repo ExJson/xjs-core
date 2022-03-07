@@ -68,7 +68,10 @@ public class JsonSerializationContext {
     public static void autoWrite(final File file, final JsonValue value) throws IOException {
         final String ext = getExtension(file);
         final Writer writer = new FileWriter(file);
-        WRITERS.get(ALIASES.getOrDefault(ext, ext)).write(writer, value, DEFAULT_FORMATTING.get());
+        WritingFunction f = WRITERS.get(ALIASES.getOrDefault(ext, ext));
+        if (f == null) f = WRITERS.get("xjs");
+
+        f.write(writer, value, DEFAULT_FORMATTING.get());
         writer.flush();
     }
 

@@ -107,7 +107,7 @@ public final class XjsWriterTest {
 
     @Test
     public void write_printsMultilineObject() {
-        assertEquals("\n1: 1\n2: 2\n3: 3\n",
+        assertEquals("1: 1\n2: 2\n3: 3",
             write(new JsonObject().add("1", 1).add("2", 2).add("3", 3)));
     }
 
@@ -118,7 +118,7 @@ public final class XjsWriterTest {
 
     @Test
     public void write_preservesWhitespaceBetween() {
-        assertEquals("\na:\n\n\n\n  1234\n",
+        assertEquals("a:\n\n\n\n  1234",
             write(new JsonObject().add("a", JsonValue.valueOf(1234).setLinesBetween(4))));
     }
 
@@ -156,7 +156,6 @@ public final class XjsWriterTest {
                         .condense())
                     .setLinesAbove(2));
         final String expected = """
-
             1:
               1
             2: 2
@@ -165,8 +164,7 @@ public final class XjsWriterTest {
               3
               4
               { 5: 5, 6: 6 }
-            ]
-            """;
+            ]""";
         assertEquals(expected, write(object));
     }
 
@@ -235,7 +233,7 @@ public final class XjsWriterTest {
         final JsonValue v = new JsonString("v", StringType.IMPLICIT);
         v.setComment(CommentType.VALUE, CommentStyle.BLOCK, "Value");
 
-        assertEquals("\nk: /* Value */ v\n", write(new JsonObject().add("k", v)));
+        assertEquals("k: /* Value */ v", write(new JsonObject().add("k", v)));
     }
 
     @Test
@@ -244,7 +242,7 @@ public final class XjsWriterTest {
         v.setComment(CommentType.VALUE, CommentStyle.BLOCK, "Value");
         v.setLinesBetween(1);
 
-        assertEquals("\nk:\n  /* Value */\n  v\n", write(new JsonObject().add("k", v)));
+        assertEquals("k:\n  /* Value */\n  v", write(new JsonObject().add("k", v)));
     }
 
     @Test
@@ -253,7 +251,7 @@ public final class XjsWriterTest {
         v.getComments().setData(CommentType.VALUE, "/* Value */\n");
         v.setLinesBetween(1);
 
-        assertEquals("\nk:\n  /* Value */\n  v\n", write(new JsonObject().add("k", v)));
+        assertEquals("k:\n  /* Value */\n  v", write(new JsonObject().add("k", v)));
     }
 
     @Test

@@ -86,7 +86,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         if (this.format) {
             int lines = value.getLinesAbove();
             if (lines < 0) {
-                lines = top ? 0 : this.linesAbove;
+                lines = top ? this.linesAbove - 1 : this.linesAbove;
             }
             if (!top && !this.allowCondense) {
                 lines = Math.max(1, lines);
@@ -181,9 +181,13 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
 
     protected void writeLinesTrailing(final JsonContainer c, final int level) throws IOException {
         if (this.format) {
-            final int lines = Math.min(c.getLinesTrailing(), this.maxLines);
-            if (lines > 0 || (lines < 0 && c.size() > 0)) {
-                for (int i = 0; i < Math.max(0, c.getLinesTrailing()) - 1; i++) {
+            int lines = c.getLinesTrailing();
+            if (lines < 0 && c.size() > 0) {
+                lines = level == -1 ? this.linesAbove - 1 : 1;
+            }
+            lines = Math.min(lines, this.maxLines);
+            if (lines > 0) {
+                for (int i = 0; i < lines - 1; i++) {
                     this.tw.write(this.eol);
                 }
                 this.nl(level);
