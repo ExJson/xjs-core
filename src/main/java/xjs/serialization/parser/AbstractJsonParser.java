@@ -261,7 +261,7 @@ public abstract class AbstractJsonParser {
     }
 
     protected boolean isLineWhitespace() {
-        return this.current == ' ' || this.current == '\t';
+        return this.current == ' ' || this.current == '\t' || this.current == '\r';
     }
 
     protected boolean isWhitespace() {

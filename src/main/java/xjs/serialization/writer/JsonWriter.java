@@ -31,7 +31,7 @@ public class JsonWriter extends AbstractJsonWriter {
                 this.open(condensed, '{');
                 for (final JsonObject.Member member : value.asObject()) {
                     this.delimit(following, member.visit().getLinesAbove());
-                    this.nl(level + 1, member.visit());
+                    this.nl(level + 1, !following, member.visit());
                     this.writeQuoted(member.getKey(), '"');
                     this.tw.write(':');
                     this.separate(level + 2, member.visit());
@@ -44,7 +44,7 @@ public class JsonWriter extends AbstractJsonWriter {
                 this.open(condensed, '[');
                 for (final JsonValue v : value.asArray().visitAll()) {
                     this.delimit(following, v.getLinesAbove());
-                    this.nl(level + 1, v);
+                    this.nl(level + 1, !following, v);
                     this.write(v, level + 1);
                     following = true;
                 }

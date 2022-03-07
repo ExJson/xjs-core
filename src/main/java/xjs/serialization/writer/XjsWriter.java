@@ -28,7 +28,7 @@ public class XjsWriter extends AbstractJsonWriter {
         if (value.isObject() && this.shouldWriteOpenRoot(value.asObject())) {
             this.writeOpenRoot(value.asObject());
         } else {
-            this.nl(0, true, value);
+            this.nl(-1, true, value);
             this.writeHeader(0, value);
             this.write(value, 0);
             this.writeEolComment(0, value, null);
@@ -119,7 +119,7 @@ public class XjsWriter extends AbstractJsonWriter {
             final JsonValue previous, final JsonValue value, final int level) throws IOException {
         this.delimit(previous, value);
         this.writeEolComment(level, previous, value);
-        this.nl(level + 1, value);
+        this.nl(level + 1, previous == null, value);
         this.writeHeader(level, value);
         this.write(value, level + 1);
     }

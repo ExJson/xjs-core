@@ -13,6 +13,7 @@ public class JsonWriterOptions {
     private String eol = JsonSerializationContext.getEol();
     private String indent = "  ";
     private String separator = " ";
+    private int minLines = 0;
     private int maxLines = Integer.MAX_VALUE;
     private int linesAbove = 1;
 
@@ -28,6 +29,7 @@ public class JsonWriterOptions {
         this.eol = source.eol;
         this.indent = source.indent;
         this.separator = source.separator;
+        this.minLines = source.minLines;
         this.maxLines = source.maxLines;
         this.linesAbove = source.linesAbove;
     }
@@ -119,6 +121,15 @@ public class JsonWriterOptions {
 
     public JsonWriterOptions setSeparator(final String separator) {
         this.separator = separator;
+        return this;
+    }
+
+    public int getMinLines() {
+        return this.minLines;
+    }
+
+    public JsonWriterOptions setMinLines(final int minLines) {
+        this.minLines = minLines;
         return this;
     }
 
