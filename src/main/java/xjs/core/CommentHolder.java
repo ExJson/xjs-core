@@ -2,6 +2,7 @@ package xjs.core;
 
 import xjs.serialization.util.CommentUtils;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 public class CommentHolder {
@@ -48,6 +49,10 @@ public class CommentHolder {
         this.setData(type, CommentUtils.format(style, text));
     }
 
+    public void set(final CommentType type, final CommentStyle style, final String text, final int lines) {
+        this.setData(type, CommentUtils.format(style, text) + createLines(lines));
+    }
+
     public void append(final CommentType type, final CommentStyle style, final String text) {
         final String data = this.getData(type);
         if (data.isEmpty()) {
@@ -74,6 +79,32 @@ public class CommentHolder {
             case VALUE: this.valueData = data; break;
             default: this.interiorData = data;
         }
+    }
+
+    public void setLinesAfter(final CommentType type, final int lines) {
+        switch (type) {
+            case HEADER: this.headerData = replaceLines(this.headerData, lines); break;
+            case EOL: this.eolData = replaceLines(this.eolData, lines); break;
+            case FOOTER: this.footerData = replaceLines(this.footerData, lines); break;
+            case VALUE: this.valueData = replaceLines(this.valueData, lines); break;
+            default: this.interiorData = replaceLines(this.interiorData, lines);
+        }
+    }
+
+    private static String replaceLines(final String data, final int lines) {
+        if (data == null) {
+            return lines > 0 ? createLines(lines) : null;
+        }
+        return data.replaceFirst("[\\s\\n]*$", createLines(lines));
+    }
+
+    private static String createLines(final int lines) {
+        if (lines == 0) {
+            return "";
+        }
+        final char[] newlines = new char[lines];
+        Arrays.fill(newlines, '\n');
+        return new String(newlines);
     }
 
     @Override

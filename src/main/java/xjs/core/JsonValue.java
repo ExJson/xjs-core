@@ -124,6 +124,11 @@ public abstract class JsonValue implements Serializable {
         return this;
     }
 
+    public JsonValue setComment(final CommentType type, final CommentStyle style, final String text, final int lines) {
+        this.getComments().set(type, style, text, lines);
+        return this;
+    }
+
     public String getComment(final CommentType type) {
         return this.getComments().get(type);
     }

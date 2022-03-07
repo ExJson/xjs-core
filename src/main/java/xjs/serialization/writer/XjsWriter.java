@@ -229,7 +229,7 @@ public class XjsWriter extends AbstractJsonWriter {
                 if (value.getLinesBetween() > 0) {
                     this.nl(level);
                 } else {
-                    this.tw.write(' ');
+                    this.tw.write(this.separator);
                 }
             }
         }
@@ -246,19 +246,24 @@ public class XjsWriter extends AbstractJsonWriter {
     }
 
     protected void writeInteriorComment(
-            final int level, final JsonValue value, final boolean condensed) throws IOException {
-        if (this.outputComments && value.hasComment(CommentType.INTERIOR)) {
-            final boolean empty = value.isContainer() && value.asContainer().isEmpty();
-            if (empty) {
-                this.tw.write(' ');
-            } else { // newline was printed for upper level
-                this.tw.write(this.indent);
+            final int level, final JsonContainer c, final boolean condensed) throws IOException {
+        if (this.outputComments && c.hasComment(CommentType.INTERIOR)) {
+            final String comment = c.getComments().getData(CommentType.INTERIOR);
+            final boolean fixIndent = !comment.endsWith("\n") && c.getLinesTrailing() > 0;
+            final boolean forceNewline = comment.contains("\n") && c.getLinesTrailing() < 1;
+
+            if (forceNewline) {
+                this.nl(level + 1);
+            } else if (fixIndent) {
+                this.tw.write(this.indent); // newline was printed for upper level
+            } else if (c.isEmpty()) {
+                this.tw.write(this.separator);
             }
-            this.writeComment(level + 1, value, CommentType.INTERIOR);
-            if (empty) {
-                this.tw.write(' ');
-            } else if (!(condensed && this.allowCondense)) {
+            this.writeComment(level + 1, comment);
+            if ((fixIndent || forceNewline) && !(condensed && this.allowCondense)) {
                 this.nl(level);
+            } else if (c.isEmpty()) {
+                this.tw.write(this.separator);
             }
         }
     }
@@ -298,7 +303,7 @@ public class XjsWriter extends AbstractJsonWriter {
             if (next != null && next.getLinesAbove() == 0 && this.allowCondense) {
                 comment = CommentUtils.rewrite(CommentStyle.BLOCK, comment) + " ";
             } else {
-                this.tw.write(' ');
+                this.tw.write(this.separator);
             }
             if (comment.contains("\n")) {
                 for (final String line : comment.split("\r?\n")) {
