@@ -2,6 +2,7 @@ package xjs.core;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -58,6 +59,21 @@ public final class JsonContainerTest {
     public void has_searchesByIndex() {
         final JsonContainer container = new JsonArray().add(1);
         assertTrue(container.has(0));
+    }
+
+    @Test
+    public void forEachRecursive_inspectsRecursively() {
+        final List<Integer> numbers = new ArrayList<>();
+        final JsonArray array = new JsonArray()
+            .add(new JsonArray().add(1).add(2).add(3))
+            .add(new JsonArray().add(4).add(5).add(6));
+
+        array.forEachRecursive(ref -> {
+           if (ref.get().isNumber()) {
+               numbers.add(ref.get().asInt());
+           }
+        });
+        assertEquals(List.of(1, 2, 3, 4, 5, 6), numbers);
     }
 
     @Test

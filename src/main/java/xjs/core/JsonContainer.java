@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -181,6 +182,16 @@ public abstract class JsonContainer extends JsonValue {
     }
 
     public abstract View<? extends Access> view();
+
+    public JsonContainer forEachRecursive(final Consumer<JsonReference> fn) {
+        this.references.forEach(ref -> {
+            fn.accept(ref);
+            if (ref.visit().isContainer()) {
+                ref.visit().asContainer().forEachRecursive(fn);
+            }
+        });
+        return this;
+    }
 
     public JsonContainer clear() {
         this.references.clear();
