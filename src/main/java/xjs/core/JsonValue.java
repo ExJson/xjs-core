@@ -151,14 +151,6 @@ public abstract class JsonValue implements Serializable {
         return false;
     }
 
-    public boolean isInteger() {
-        return false;
-    }
-
-    public boolean isDecimal() {
-        return false;
-    }
-
     public boolean isBoolean() {
         return false;
     }
@@ -189,14 +181,6 @@ public abstract class JsonValue implements Serializable {
 
     public boolean isNull() {
         return false;
-    }
-
-    public boolean isReference() {
-        return false;
-    }
-
-    public Number asNumber() {
-        throw new UnsupportedOperationException();
     }
 
     public long asLong() {
@@ -234,8 +218,6 @@ public abstract class JsonValue implements Serializable {
     public JsonArray asArray() {
         throw new UnsupportedOperationException();
     }
-
-    public abstract Number intoNumber();
 
     public abstract long intoLong();
 

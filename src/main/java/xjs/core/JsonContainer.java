@@ -240,11 +240,6 @@ public abstract class JsonContainer extends JsonValue {
     }
 
     @Override
-    public Number intoNumber() {
-        return this.size();
-    }
-
-    @Override
     public long intoLong() {
         return this.size();
     }

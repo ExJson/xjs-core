@@ -357,10 +357,9 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         while (keyIterator.hasNext() && referenceIterator.hasNext()) {
             final String key = keyIterator.next();
             final JsonReference reference = referenceIterator.next();
-            final JsonValue value = reference.visit();
 
             copy.addReference(key, reference.clone(true)
-                    .mutate(reference.visit().unformatted()));
+                .mutate(reference.visit().unformatted()));
         }
         return copy;
     }

@@ -54,11 +54,6 @@ public class JsonLiteral extends JsonValue {
     }
 
     @Override
-    public Number asNumber() {
-        return this.asDouble();
-    }
-
-    @Override
     public long asLong() {
         return (long) this.asDouble();
     }
@@ -88,11 +83,6 @@ public class JsonLiteral extends JsonValue {
             case FALSE: return false;
             default: return super.asBoolean();
         }
-    }
-
-    @Override
-    public Number intoNumber() {
-        return this.value.number;
     }
 
     @Override

@@ -43,11 +43,6 @@ public class JsonString extends JsonValue {
     }
 
     @Override
-    public Number intoNumber() {
-        return this.value.length();
-    }
-
-    @Override
     public long intoLong() {
         return this.value.length();
     }

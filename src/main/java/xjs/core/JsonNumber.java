@@ -14,13 +14,8 @@ public class JsonNumber extends JsonValue {
     }
 
     @Override
-    public boolean isDecimal() {
+    public boolean isNumber() {
         return true;
-    }
-
-    @Override
-    public Number asNumber() {
-        return this.value;
     }
 
     @Override
@@ -41,11 +36,6 @@ public class JsonNumber extends JsonValue {
     @Override
     public float asFloat() {
         return (float) this.value;
-    }
-
-    @Override
-    public Number intoNumber() {
-        return this.value;
     }
 
     @Override
