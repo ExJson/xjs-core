@@ -15,6 +15,21 @@ public class JsonWriterOptions {
     private String separator = " ";
     private int maxLines = Integer.MAX_VALUE;
 
+    public JsonWriterOptions() {}
+
+    public JsonWriterOptions(final JsonWriterOptions source) {
+        this.allowCondense = source.allowCondense;
+        this.bracesSameLine = source.bracesSameLine;
+        this.nestedSameLine = source.nestedSameLine;
+        this.omitRootBraces = source.omitRootBraces;
+        this.outputComments = source.outputComments;
+        this.compressed = source.compressed;
+        this.eol = source.eol;
+        this.indent = source.indent;
+        this.separator = source.separator;
+        this.maxLines = source.maxLines;
+    }
+
     public boolean isAllowCondense() {
         return allowCondense;
     }
