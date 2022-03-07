@@ -37,7 +37,7 @@ public abstract class JsonContainer extends JsonValue {
 
     public JsonContainer setLineLength(final int lineLength) {
         for (int i = 0; i < this.references.size(); i++) {
-            if ((i - 1 % lineLength) == 0) {
+            if ((i % lineLength) == 0) {
                 this.references.get(i).visit().setLinesAbove(1).setLinesBetween(0);
             } else {
                 this.references.get(i).visit().setLinesAbove(0).setLinesBetween(0);
