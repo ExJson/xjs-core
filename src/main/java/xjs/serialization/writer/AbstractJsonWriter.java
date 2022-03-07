@@ -23,6 +23,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
     protected final String eol;
     protected final String indent;
     protected final int maxLines;
+    protected final int linesAbove;
     protected String separator;
 
     protected AbstractJsonWriter(final File file, final boolean format) throws IOException {
@@ -41,6 +42,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.outputComments = format;
         this.indent = "  ";
         this.maxLines = Integer.MAX_VALUE;
+        this.linesAbove = format ? 1 : 0;
         this.separator = format ? " " : "";
     }
 
@@ -56,6 +58,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.compress = options.isCompressed();
         this.indent = options.getIndent();
         this.maxLines = options.getMaxLines();
+        this.linesAbove = options.getLinesAbove();
         this.separator = options.getSeparator();
     }
 
@@ -83,7 +86,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         if (this.format) {
             int lines = value.getLinesAbove();
             if (lines < 0) {
-                lines = top ? 0 : 1;
+                lines = top ? 0 : this.linesAbove;
             }
             if (!top && !this.allowCondense) {
                 lines = Math.max(1, lines);

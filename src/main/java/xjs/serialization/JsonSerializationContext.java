@@ -67,7 +67,9 @@ public class JsonSerializationContext {
 
     public static void autoWrite(final File file, final JsonValue value) throws IOException {
         final String ext = getExtension(file);
-        WRITERS.get(ALIASES.getOrDefault(ext, ext)).write(new FileWriter(file), value, DEFAULT_FORMATTING.get());
+        final Writer writer = new FileWriter(file);
+        WRITERS.get(ALIASES.getOrDefault(ext, ext)).write(writer, value, DEFAULT_FORMATTING.get());
+        writer.flush();
     }
 
     private static String getExtension(final File file) {

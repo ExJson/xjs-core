@@ -14,6 +14,7 @@ public class JsonWriterOptions {
     private String indent = "  ";
     private String separator = " ";
     private int maxLines = Integer.MAX_VALUE;
+    private int linesAbove = 1;
 
     public JsonWriterOptions() {}
 
@@ -28,10 +29,11 @@ public class JsonWriterOptions {
         this.indent = source.indent;
         this.separator = source.separator;
         this.maxLines = source.maxLines;
+        this.linesAbove = source.linesAbove;
     }
 
     public boolean isAllowCondense() {
-        return allowCondense;
+        return this.allowCondense;
     }
 
     public JsonWriterOptions setAllowCondense(final boolean allowCondense) {
@@ -40,7 +42,7 @@ public class JsonWriterOptions {
     }
 
     public boolean isBracesSameLine() {
-        return bracesSameLine;
+        return this.bracesSameLine;
     }
 
     public JsonWriterOptions setBracesSameLine(final boolean bracesSameLine) {
@@ -49,7 +51,7 @@ public class JsonWriterOptions {
     }
 
     public boolean isNestedSameLine() {
-        return nestedSameLine;
+        return this.nestedSameLine;
     }
 
     public JsonWriterOptions setNestedSameLine(final boolean nestedSameLine) {
@@ -58,7 +60,7 @@ public class JsonWriterOptions {
     }
 
     public boolean isOmitRootBraces() {
-        return omitRootBraces;
+        return this.omitRootBraces;
     }
 
     public JsonWriterOptions setOmitRootBraces(final boolean omitRootBraces) {
@@ -67,7 +69,7 @@ public class JsonWriterOptions {
     }
 
     public boolean isOutputComments() {
-        return outputComments;
+        return this.outputComments;
     }
 
     public JsonWriterOptions setOutputComments(final boolean outputComments) {
@@ -94,7 +96,7 @@ public class JsonWriterOptions {
     }
 
     public String getIndent() {
-        return indent;
+        return this.indent;
     }
 
     public JsonWriterOptions setIndent(final String indent) {
@@ -121,7 +123,7 @@ public class JsonWriterOptions {
     }
 
     public int getMaxLines() {
-        return maxLines;
+        return this.maxLines;
     }
 
     public JsonWriterOptions setMaxLines(final int maxLines) {
@@ -129,4 +131,12 @@ public class JsonWriterOptions {
         return this;
     }
 
+    public int getLinesAbove() {
+        return this.linesAbove;
+    }
+
+    public JsonWriterOptions setLinesAbove(final int linesAbove) {
+        this.linesAbove = linesAbove;
+        return this;
+    }
 }
