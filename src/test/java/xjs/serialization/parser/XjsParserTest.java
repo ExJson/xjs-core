@@ -27,33 +27,6 @@ public final class XjsParserTest extends CommonParserTest {
     }
 
     @Test
-    public void whatever() throws IOException {
-        final String json = """
-        
-        # Header
-        realistic data: 'part one'
-        
-        it is nice: 'to do it' # eol
-        
-        try a:
-          
-          # value
-          'comment'
-          
-        use a: {
-          nested: OBJECT
-          
-          for better testing: true
-        } # eol
-        
-        /**
-         * Brief note: I'm having some thoughts...
-         */
-        """;
-        this.parse(json);
-    }
-
-    @Test
     public void parse_readsUnquotedStrings() throws IOException {
         assertEquals("hello", this.parse("hello").asString());
     }

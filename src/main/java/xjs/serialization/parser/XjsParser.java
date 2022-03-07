@@ -197,7 +197,7 @@ public class XjsParser extends AbstractJsonParser {
 
     protected JsonContainer closeContainer(final JsonContainer container, final boolean trim) throws IOException {
         this.appendComment(container, CommentType.INTERIOR, trim);
-        container.setEmptyLinesTrailing(this.linesSkipped);
+        container.setLinesTrailing(this.linesSkipped);
         this.skipLineWhitespace();
         this.appendComment(container, CommentType.EOL, true);
         return container;
@@ -450,10 +450,6 @@ public class XjsParser extends AbstractJsonParser {
             value.getComments().setData(type, data);
         }
     }
-
-//    protected void appendComment(final JsonValue value, final CommentType type) {
-//        this.appendComment(value, type, true);
-//    }
 
     protected void appendComment(final JsonValue value, final CommentType type, final boolean trim) {
         if (this.commentBuffer.length() > 0) {
