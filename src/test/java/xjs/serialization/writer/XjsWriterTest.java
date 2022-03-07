@@ -196,6 +196,7 @@ public final class XjsWriterTest {
               /**
                * Interior
                */
+            
             ] # eol
             
             b: '})](*&(*%#&)!'
@@ -247,11 +248,44 @@ public final class XjsWriterTest {
     }
 
     @Test
+    public void writeValueComment_withLinesBetween_andLinesBelow_doesNotInsertExtraLines() {
+        final JsonValue v = new JsonString("v", StringType.IMPLICIT);
+        v.getComments().setData(CommentType.VALUE, "/* Value */\n");
+        v.setLinesBetween(1);
+
+        assertEquals("\nk:\n  /* Value */\n  v\n", write(new JsonObject().add("k", v)));
+    }
+
+    @Test
     public void write_printsInteriorComment() {
         final JsonValue v = new JsonArray();
         v.setComment(CommentType.INTERIOR, CommentStyle.MULTILINE_DOC, "Interior");
 
         assertEquals("[ /** Interior */ ]", write(v));
+    }
+
+    @Test
+    public void writeInteriorComment_withNewlineInComment_insertsLinesAround() {
+        final JsonValue v = new JsonArray();
+        v.setComment(CommentType.INTERIOR, CommentStyle.MULTILINE_DOC, "Interior\nLine 2");
+
+        assertEquals("[\n  /**\n   * Interior\n   * Line 2\n   */\n]", write(v));
+    }
+
+    @Test
+    public void writeInteriorComment_withNewlineAboveComment_insertsLineBelow() {
+        final JsonArray v = new JsonArray();
+        v.setLinesTrailing(1);
+        v.setComment(CommentType.INTERIOR, CommentStyle.MULTILINE_DOC, "Interior");
+
+        assertEquals("[\n  /** Interior */\n]", write(v));
+    }
+
+    @Test
+    public void oops() {
+        final JsonArray v = new JsonArray();
+        v.setComment(CommentType.INTERIOR, CommentStyle.MULTILINE_DOC, "hello\nhello", 1);
+        write(v);
     }
 
     private static String write(final JsonValue value) {
