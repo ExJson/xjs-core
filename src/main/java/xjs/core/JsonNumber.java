@@ -1,30 +1,20 @@
 package xjs.core;
 
-public class JsonInteger extends JsonValue {
+public class JsonNumber extends JsonValue {
 
-    private final long value;
+    private final double value;
 
-    public JsonInteger(final long value) {
+    public JsonNumber(final double value) {
         this.value = value;
     }
 
     @Override
     public JsonType getType() {
-        return JsonType.INTEGER;
+        return JsonType.NUMBER;
     }
 
     @Override
-    public boolean isPrimitive() {
-        return true;
-    }
-
-    @Override
-    public boolean isNumber() {
-        return true;
-    }
-
-    @Override
-    public boolean isInteger() {
+    public boolean isDecimal() {
         return true;
     }
 
@@ -35,7 +25,7 @@ public class JsonInteger extends JsonValue {
 
     @Override
     public long asLong() {
-        return this.value;
+        return (long) this.value;
     }
 
     @Override
@@ -45,7 +35,7 @@ public class JsonInteger extends JsonValue {
 
     @Override
     public double asDouble() {
-        return (double) this.value;
+        return this.value;
     }
 
     @Override
@@ -60,7 +50,7 @@ public class JsonInteger extends JsonValue {
 
     @Override
     public long intoLong() {
-        return this.value;
+        return (long) this.value;
     }
 
     @Override
@@ -70,7 +60,7 @@ public class JsonInteger extends JsonValue {
 
     @Override
     public double intoDouble() {
-        return (double) this.value;
+        return this.value;
     }
 
     @Override
@@ -104,18 +94,18 @@ public class JsonInteger extends JsonValue {
     }
 
     @Override
-    public JsonInteger deepCopy(final boolean trackAccess) {
-        return (JsonInteger) new JsonInteger(this.value).setDefaultMetadata(this);
+    public JsonNumber deepCopy(final boolean trackAccess) {
+        return (JsonNumber) new JsonNumber(this.value).setDefaultMetadata(this);
     }
 
     @Override
-    public JsonInteger unformatted() {
-        return new JsonInteger(this.value);
+    public JsonNumber unformatted() {
+        return new JsonNumber(this.value);
     }
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + Long.hashCode(this.value);
+        return 31 * super.hashCode() + Double.hashCode(this.value);
     }
 
     @Override
@@ -123,13 +113,9 @@ public class JsonInteger extends JsonValue {
         if (this == o) {
             return true;
         }
-        if (o instanceof JsonInteger) {
-            return this.value == ((JsonInteger) o).value
-                && this.metadataEquals((JsonInteger) o);
-        }
-        if (o instanceof JsonDecimal) {
-            return this.value == ((JsonDecimal) o).asLong()
-                && this.metadataEquals((JsonDecimal) o);
+        if (o instanceof JsonNumber) {
+            return this.value == ((JsonNumber) o).value
+                && this.metadataEquals((JsonNumber) o);
         }
         return false;
     }

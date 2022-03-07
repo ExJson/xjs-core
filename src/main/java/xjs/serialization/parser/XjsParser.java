@@ -314,15 +314,12 @@ public class XjsParser extends AbstractJsonParser {
 
     protected @Nullable JsonValue tryParseValue(final String value) {
         switch (value) {
-            case "true": return JsonBoolean.jsonTrue();
-            case "false": return JsonBoolean.jsonFalse();
-            case "null": return JsonNull.instance();
+            case "true": return JsonLiteral.jsonTrue();
+            case "false": return JsonLiteral.jsonFalse();
+            case "null": return JsonLiteral.jsonNull();
         }
         try {
-            return new JsonInteger(Long.parseLong(value));
-        } catch (final NumberFormatException ignored) {}
-        try {
-            return new JsonDecimal(Double.parseDouble(value));
+            return new JsonNumber(Double.parseDouble(value));
         } catch (final NumberFormatException ignored) {}
         return null;
     }

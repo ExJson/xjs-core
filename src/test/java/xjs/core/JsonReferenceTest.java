@@ -19,7 +19,7 @@ public final class JsonReferenceTest {
 
     @Test
     public void new_toleratesNullValues() {
-        assertEquals(JsonNull.instance(), new JsonReference(null).get());
+        assertEquals(JsonLiteral.jsonNull(), new JsonReference(null).get());
     }
 
     @Test

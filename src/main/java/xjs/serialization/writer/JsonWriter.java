@@ -50,8 +50,8 @@ public class JsonWriter extends AbstractJsonWriter {
                 }
                 this.close(value.asArray(), condensed, level, ']');
                 break;
-            case DECIMAL:
-                this.writeDecimal(value.asDouble());
+            case NUMBER:
+                this.writeNumber(value.asDouble());
                 break;
             case STRING:
                 this.writeQuoted(value.asString(), '"');

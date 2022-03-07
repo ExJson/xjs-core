@@ -31,7 +31,7 @@ public final class JsonValueTest {
 
     @Test
     public void valueOf_toleratesNullValues() {
-        assertEquals(JsonNull.instance(), JsonValue.valueOf(null));
+        assertEquals(JsonLiteral.jsonNull(), JsonValue.valueOf(null));
     }
 
     @Test
@@ -41,7 +41,7 @@ public final class JsonValueTest {
 
     @Test
     public void nonnull_wrapsWhenNull() {
-        assertEquals(JsonNull.instance(), JsonValue.nonnull(null));
+        assertEquals(JsonLiteral.jsonNull(), JsonValue.nonnull(null));
     }
 
     @Test

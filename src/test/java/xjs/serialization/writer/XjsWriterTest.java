@@ -281,13 +281,6 @@ public final class XjsWriterTest {
         assertEquals("[\n  /** Interior */\n]", write(v));
     }
 
-    @Test
-    public void oops() {
-        final JsonArray v = new JsonArray();
-        v.setComment(CommentType.INTERIOR, CommentStyle.MULTILINE_DOC, "hello\nhello", 1);
-        write(v);
-    }
-
     private static String write(final JsonValue value) {
         return write(value, new JsonWriterOptions());
     }

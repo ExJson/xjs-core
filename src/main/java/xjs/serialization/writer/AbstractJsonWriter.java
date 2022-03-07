@@ -188,11 +188,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         }
     }
 
-    protected void writeInteger(final long integer) throws IOException {
-        this.tw.write(Long.toString(integer));
-    }
-
-    protected void writeDecimal(final double decimal) throws IOException {
+    protected void writeNumber(final double decimal) throws IOException {
         final long integer = (long) decimal;
         if (integer == decimal) {
             this.tw.write(Long.toString(integer));

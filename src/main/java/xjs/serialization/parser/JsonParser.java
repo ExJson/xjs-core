@@ -74,7 +74,7 @@ public class JsonParser extends AbstractJsonParser {
         this.expect('u');
         this.expect('l');
         this.expect('l');
-        return JsonNull.instance();
+        return JsonLiteral.jsonNull();
     }
 
     protected JsonValue readTrue() throws IOException {
@@ -82,7 +82,7 @@ public class JsonParser extends AbstractJsonParser {
         this.expect('r');
         this.expect('u');
         this.expect('e');
-        return JsonBoolean.jsonTrue();
+        return JsonLiteral.jsonTrue();
     }
 
     protected JsonValue readFalse() throws IOException {
@@ -91,7 +91,7 @@ public class JsonParser extends AbstractJsonParser {
         this.expect('l');
         this.expect('s');
         this.expect('e');
-        return JsonBoolean.jsonFalse();
+        return JsonLiteral.jsonFalse();
     }
 
     protected JsonValue readString() throws IOException {

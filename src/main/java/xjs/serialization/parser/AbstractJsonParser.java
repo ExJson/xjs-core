@@ -1,8 +1,7 @@
 package xjs.serialization.parser;
 
 import org.jetbrains.annotations.NotNull;
-import xjs.core.JsonDecimal;
-import xjs.core.JsonInteger;
+import xjs.core.JsonNumber;
 import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;
 
@@ -137,13 +136,10 @@ public abstract class AbstractJsonParser {
         if (firstDigit != '0') {
             this.readAllDigits();
         }
-        final boolean decimal = this.readDecimal();
-        final boolean exponent = this.readExponent();
+        this.readDecimal();
+        this.readExponent();
 
-        if (decimal || exponent) {
-            return new JsonDecimal(Double.parseDouble(this.endCapture()));
-        }
-        return new JsonInteger(Long.parseLong(this.endCapture()));
+        return new JsonNumber(Double.parseDouble(this.endCapture()));
     }
 
     protected boolean readDecimal() throws IOException {

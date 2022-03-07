@@ -2,8 +2,7 @@ package xjs.core;
 
 public enum JsonType {
     STRING,
-    INTEGER,
-    DECIMAL,
+    NUMBER,
     OBJECT,
     ARRAY,
     BOOLEAN,

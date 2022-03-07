@@ -25,25 +25,25 @@ public abstract class JsonValue implements Serializable {
         this.comments = null;
     }
 
-    public static JsonInteger valueOf(final long value) {
-        return new JsonInteger(value);
+    public static JsonNumber valueOf(final long value) {
+        return new JsonNumber(value);
     }
 
-    public static JsonDecimal valueOf(final double value) {
-        return new JsonDecimal(value);
+    public static JsonNumber valueOf(final double value) {
+        return new JsonNumber(value);
     }
 
-    public static JsonBoolean valueOf(final boolean value) {
-        return JsonBoolean.get(value);
+    public static JsonLiteral valueOf(final boolean value) {
+        return value ? JsonLiteral.jsonTrue() : JsonLiteral.jsonFalse();
     }
 
     public static JsonValue valueOf(final @Nullable String value) {
-        return value != null ? JsonString.auto(value) : JsonNull.instance();
+        return value != null ? JsonString.auto(value) : JsonLiteral.jsonNull();
     }
 
     public static JsonValue nonnull(final @Nullable JsonValue value) {
         if (value == null) {
-            return JsonNull.instance();
+            return JsonLiteral.jsonNull();
         }
         return value;
     }
