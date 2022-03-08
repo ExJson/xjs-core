@@ -174,19 +174,17 @@ public final class ImplicitStringUtils {
 
     public static String escape(final String text, final char e, final boolean toNl) {
         final StringBuilder sb = new StringBuilder();
-        int bc = 0;
-        int bk = 0;
-        int pr = 0;
+        int level = 0;
 
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             switch (c) {
-                case '{': bc++; break;
-                case '[': bk++; break;
-                case '(': pr++; break;
-                case '}': bc--; break;
-                case ']': bk--; break;
-                case ')': pr--; break;
+                case '{':
+                case '[':
+                case '(': level++; break;
+                case '}':
+                case ']':
+                case ')': level--; break;
                 case '\r': i++; continue;
                 case '/':
                     sb.append(text, i, i = skipSlash(text, i));
@@ -199,10 +197,8 @@ public final class ImplicitStringUtils {
                 case '\'':
                 case '"': appendValidQuote(sb, text, i, c); break;
             }
-            if (bc == 0 && bk == 0 && pr == 0) {
-                if (c == e || (toNl && c == '\n')) {
-                    sb.append('\\');
-                }
+            if (level == 0 && (c == e || (toNl && c == '\n'))) {
+                sb.append('\\');
             }
             sb.append(c);
         }
