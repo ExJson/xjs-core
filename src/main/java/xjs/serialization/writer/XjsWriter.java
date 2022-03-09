@@ -28,7 +28,7 @@ public class XjsWriter extends AbstractJsonWriter {
         if (value.isObject() && this.shouldWriteOpenRoot(value.asObject())) {
             this.writeOpenRoot(value.asObject());
         } else {
-            this.nl(-1, true, value);
+            this.writeLinesAbove(-1, true, false, value);
             this.writeHeader(0, value);
             this.write(value, 0);
             this.writeEolComment(0, value, null);
@@ -44,13 +44,14 @@ public class XjsWriter extends AbstractJsonWriter {
     }
 
     protected void writeOpenRoot(final JsonObject object) throws IOException {
+        final boolean condensed = this.isCondensed(object);
         JsonValue previous = null;
         for (final JsonObject.Member member : object) {
-            this.writeNextMember(previous, member, -1);
+            this.writeNextMember(previous, member, condensed, -1);
             previous = member.visit();
         }
         this.writeEolComment(0, previous, null);
-        if (!this.isCondensed(object)) {
+        if (!condensed) {
             this.writeLinesTrailing(object, -1);
         }
         this.writeInteriorComment(0, object, false);
@@ -65,7 +66,7 @@ public class XjsWriter extends AbstractJsonWriter {
             case OBJECT:
                 this.open(condensed, '{');
                 for (final JsonObject.Member member : value.asObject()) {
-                    this.writeNextMember(previous, member, level);
+                    this.writeNextMember(previous, member, condensed, level);
                     previous = member.visit();
                 }
                 this.writeEolComment(level, previous, null);
@@ -75,7 +76,7 @@ public class XjsWriter extends AbstractJsonWriter {
                 final boolean voidStart = this.isVoidString(value.asArray(), 0);
                 this.open(condensed && !voidStart, '[');
                 for (final JsonValue v : value.asArray().visitAll()) {
-                    this.writeNextElement(previous, v, level);
+                    this.writeNextElement(previous, v, condensed, level);
                     previous = v;
                 }
                 final boolean voidEnd = this.isVoidString(value.asArray(), value.asArray().size() - 1);
@@ -101,10 +102,10 @@ public class XjsWriter extends AbstractJsonWriter {
     }
 
     protected void writeNextMember(
-            final JsonValue previous, final JsonObject.Member member, final int level) throws IOException {
+            final JsonValue previous, final JsonObject.Member member, final boolean condensed, final int level) throws IOException {
         this.delimit(previous, member.visit());
         this.writeEolComment(level, previous, member.visit());
-        this.nl(level + 1, previous == null, member.visit());
+        this.writeLinesAbove(level + 1, previous == null, condensed, member.visit());
         this.writeHeader(level, member.visit());
         this.writeString(member.getKey(), level);
         this.tw.write(':');
@@ -116,10 +117,10 @@ public class XjsWriter extends AbstractJsonWriter {
     }
 
     protected void writeNextElement(
-            final JsonValue previous, final JsonValue value, final int level) throws IOException {
+            final JsonValue previous, final JsonValue value, final boolean condensed, final int level) throws IOException {
         this.delimit(previous, value);
         this.writeEolComment(level, previous, value);
-        this.nl(level + 1, previous == null, value);
+        this.writeLinesAbove(level + 1, previous == null, condensed, value);
         this.writeHeader(level, value);
         this.write(value, level + 1);
     }

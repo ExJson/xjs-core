@@ -22,9 +22,9 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
     protected final boolean compress;
     protected final String eol;
     protected final String indent;
-    protected final int minLines;
-    protected final int maxLines;
-    protected final int linesAbove;
+    protected final int minSpacing;
+    protected final int maxSpacing;
+    protected final int lineSpacing;
     protected String separator;
 
     protected AbstractJsonWriter(final File file, final boolean format) throws IOException {
@@ -42,9 +42,9 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.compress = true;
         this.outputComments = format;
         this.indent = "  ";
-        this.minLines = 0;
-        this.maxLines = Integer.MAX_VALUE;
-        this.linesAbove = format ? 1 : 0;
+        this.minSpacing = 0;
+        this.maxSpacing = Integer.MAX_VALUE;
+        this.lineSpacing = format ? 1 : 0;
         this.separator = format ? " " : "";
     }
 
@@ -59,14 +59,14 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.outputComments = options.isOutputComments();
         this.compress = options.isCompressed();
         this.indent = options.getIndent();
-        this.minLines = options.getMinLines();
-        this.maxLines = options.getMaxLines();
-        this.linesAbove = options.getLinesAbove();
+        this.minSpacing = options.getMinSpacing();
+        this.maxSpacing = options.getMaxSpacing();
+        this.lineSpacing = options.getLineSpacing();
         this.separator = options.getSeparator();
     }
 
     public void write(final JsonValue value) throws IOException {
-        this.nl(-1, true, value);
+        this.writeLinesAbove(-1, true, false, value);
         this.write(value, 0);
     }
 
@@ -81,25 +81,38 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         }
     }
 
-    protected void nl(final int level, final boolean top, final JsonValue value) throws IOException {
+    protected void writeLinesAbove(
+            final int level, final boolean top, final boolean condensed, final JsonValue value) throws IOException {
         if (this.format) {
-            int lines = value.getLinesAbove();
-            if (lines < 0) {
-                lines = top && level < 1 ? this.linesAbove - 1 : this.linesAbove;
-            }
-            if (!(top && level < 1) && !this.allowCondense) {
-                lines = Math.max(1, lines);
-            }
-            lines = this.limitLines(lines, this.allowCondense && value.getLinesAbove() == 0, top);
+            final int lines =
+                this.getNumLinesAbove(value.getLinesAbove(), level, condensed, top);
             if (lines > 0) {
-                for (int i = 0; i < lines; i++) {
-                    this.tw.write(this.eol);
-                }
-                for (int i = 0; i < level; i++) {
-                    this.tw.write(this.indent);
-                }
+                this.nl(lines, level);
             }
         }
+    }
+
+    protected int getNumLinesAbove(final int lines, final int level, final boolean condensed, final boolean top) {
+        if (lines < 0) {
+            return this.getDefaultLinesAbove(level, top);
+        } else if (!(top && level < 1) && !this.allowCondense) {
+            return Math.max(1, lines);
+        } else if (level >= 0) {
+            return this.limitLines(lines, condensed, top);
+        }
+        return lines;
+    }
+
+    private int getDefaultLinesAbove(final int level, final boolean top) {
+        if (level < 0) {
+            return 0;
+        } else if (top) {
+            if (level > 0) {
+                return Math.max(1, this.lineSpacing - 1);
+            }
+            return this.lineSpacing - 1;
+        }
+        return this.lineSpacing;
     }
 
     protected void nl(final int level) throws IOException {
@@ -111,22 +124,26 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         }
     }
 
+    protected void nl(final int lines, final int level) throws IOException {
+        for (int i = 0; i < lines; i++) {
+            this.tw.write(this.eol);
+        }
+        for (int i = 0; i < level; i++) {
+            this.tw.write(this.indent);
+        }
+    }
+
     protected boolean isCondensed(final JsonValue value) {
         if (this.allowCondense && value.isContainer()) {
             final JsonContainer c = value.asContainer();
             if (!c.isEmpty()) {
-                // Intentionally shallow check for formatting purposes
-                return c.getReference(0).visit().getLinesAbove() == 0;
+                if (c.getReference(0).visit().getLinesAbove() != 0) {
+                    return false;
+                } // Intentionally shallow check for formatting purposes
+                return c.size() == 1 || c.getReference(c.size() - 1).visit().getLinesAbove() == 0;
             }
         }
         return false;
-    }
-
-    protected int linesAbove(final JsonValue value) {
-        if (this.format) {
-            return Math.max(0, value.getLinesAbove());
-        }
-        return 0;
     }
 
     protected void separate(int level, final JsonValue value) throws IOException {
@@ -137,25 +154,13 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
                level -= 1;
             }
             // Ignore min lines between keys and values.
-            lines = Math.min(lines, this.maxLines);
-            for (int i = 0; i < lines; i++) {
-                this.tw.write(this.eol);
-            }
+            lines = Math.min(lines, this.maxSpacing);
             if (lines > 0) {
-                for (int i = 0; i < level; i++) {
-                    this.tw.write(this.indent);
-                }
+                this.nl(lines, level);
             } else {
                 this.tw.write(this.separator);
             }
         }
-    }
-
-    protected int linesBetween(final JsonValue value) {
-        if (this.format) {
-            return Math.max(0, value.getLinesBetween());
-        }
-        return 0;
     }
 
     protected void delimit(final boolean following, final int nextAbove) throws IOException {
@@ -181,26 +186,34 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
 
     protected void writeLinesTrailing(final JsonContainer c, final int level) throws IOException {
         if (this.format) {
-            int lines = c.getLinesTrailing();
-            if (lines < 0 && c.size() > 0) {
-                lines = level == -1 ? this.linesAbove - 1 : 1;
-            }
-            lines = this.limitLines(lines, this.isCondensed(c), true);
+            final int lines = this.getLinesTrailing(c.getLinesTrailing(), c, level);
             if (lines > 0) {
-                for (int i = 0; i < lines - 1; i++) {
-                    this.tw.write(this.eol);
-                }
-                this.nl(level);
+                this.nl(lines, level);
             }
         }
     }
 
-    protected int limitLines(final int lines, final boolean condensed, final boolean topOrBottom) {
-        if (condensed) { // ignore min lines when condensed
-            return Math.min(lines, this.maxLines);
+    protected int getLinesTrailing(final int lines, final JsonContainer c, final int level) {
+        if (lines < 0 && c.size() > 0) {
+            return this.getDefaultLinesTrailing(level);
         }
-        final int sub = topOrBottom ? 1 : 0;
-        return Math.max(Math.min(lines, this.maxLines - sub), this.minLines - sub);
+        return this.limitLines(lines, this.isCondensed(c), true);
+    }
+
+    private int getDefaultLinesTrailing(final int level) {
+        if (level >= 0) {
+            return Math.max(1, this.lineSpacing - 1);
+        }
+        return this.lineSpacing - 1;
+    }
+
+    protected int limitLines(final int lines, final boolean condensed, final boolean topOrBottom) {
+        if (condensed) { // Condensed arrays are allowed to have 0 lines between values.
+            return Math.min(lines, this.maxSpacing);
+        } else if (topOrBottom) { // The top and bottom of each container should be slightly smaller.
+            return Math.max(Math.min(lines, this.maxSpacing - 1), this.minSpacing - 1);
+        }
+        return Math.max(Math.min(lines, this.maxSpacing), this.minSpacing);
     }
 
     protected void writeNumber(final double decimal) throws IOException {
@@ -216,10 +229,6 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
             res = Double.toString(decimal).replace("E", "e");
         }
         this.tw.write(res);
-    }
-
-    protected void writeBoolean(final boolean b) throws IOException {
-        this.tw.write(b ? "true" : "false");
     }
 
     protected void writeQuoted(final String text, final char quote) throws IOException {

@@ -148,6 +148,53 @@ public final class JsonWriterTest {
     }
 
     @Test
+    public void write_withLineSpacing_overridesDefaultSpacing() {
+        final JsonWriterOptions options = new JsonWriterOptions().setLineSpacing(2);
+        final JsonObject object =
+            new JsonObject()
+                .add("1", "2")
+                .add("3", "4")
+                .add("5", new JsonArray().add(6).add(7).add(8).condense())
+                .add("9", "0");
+        final String expected = """
+            {
+              "1": "2",
+              
+              "3": "4",
+              
+              "5": [ 6, 7, 8 ],
+              
+              "9": "0"
+            }""";
+        assertEquals(expected, write(object, options));
+    }
+
+    @Test
+    public void write_withMinAndMaxSpacing_overridesConfiguredSpacing_ignoringCondensed() throws IOException {
+        final JsonWriterOptions options = new JsonWriterOptions().setMinSpacing(2).setMaxSpacing(2);
+        final String input = """
+            {
+              "1": "2",
+              "3": "4",
+              "5": {
+                "6": [ 7, 8, 9 ]
+              }
+            }""";
+        final String expected = """
+            {
+              "1": "2",
+            
+              "3": "4",
+            
+              "5": {
+                "6": [ 7, 8, 9 ]
+              }
+            }""";
+        final JsonObject object = new JsonParser(input).parse().asObject();
+        assertEquals(expected, write(object, options));
+    }
+
+    @Test
     public void parse_thenRewrite_preservesComplexFormatting() throws IOException {
         final String expected = """
             {

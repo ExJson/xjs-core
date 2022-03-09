@@ -13,9 +13,9 @@ public class JsonWriterOptions {
     private String eol = JsonSerializationContext.getEol();
     private String indent = "  ";
     private String separator = " ";
-    private int minLines = 0;
-    private int maxLines = Integer.MAX_VALUE;
-    private int linesAbove = 1;
+    private int minSpacing = 0;
+    private int maxSpacing = Integer.MAX_VALUE;
+    private int lineSpacing = 1;
 
     public JsonWriterOptions() {}
 
@@ -29,9 +29,9 @@ public class JsonWriterOptions {
         this.eol = source.eol;
         this.indent = source.indent;
         this.separator = source.separator;
-        this.minLines = source.minLines;
-        this.maxLines = source.maxLines;
-        this.linesAbove = source.linesAbove;
+        this.minSpacing = source.minSpacing;
+        this.maxSpacing = source.maxSpacing;
+        this.lineSpacing = source.lineSpacing;
     }
 
     public boolean isAllowCondense() {
@@ -124,30 +124,30 @@ public class JsonWriterOptions {
         return this;
     }
 
-    public int getMinLines() {
-        return this.minLines;
+    public int getMinSpacing() {
+        return this.minSpacing;
     }
 
-    public JsonWriterOptions setMinLines(final int minLines) {
-        this.minLines = minLines;
+    public JsonWriterOptions setMinSpacing(final int minSpacing) {
+        this.minSpacing = minSpacing;
         return this;
     }
 
-    public int getMaxLines() {
-        return this.maxLines;
+    public int getMaxSpacing() {
+        return this.maxSpacing;
     }
 
-    public JsonWriterOptions setMaxLines(final int maxLines) {
-        this.maxLines = maxLines;
+    public JsonWriterOptions setMaxSpacing(final int maxSpacing) {
+        this.maxSpacing = maxSpacing;
         return this;
     }
 
-    public int getLinesAbove() {
-        return this.linesAbove;
+    public int getLineSpacing() {
+        return this.lineSpacing;
     }
 
-    public JsonWriterOptions setLinesAbove(final int linesAbove) {
-        this.linesAbove = linesAbove;
+    public JsonWriterOptions setLineSpacing(final int lineSpacing) {
+        this.lineSpacing = lineSpacing;
         return this;
     }
 }
