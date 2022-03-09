@@ -1,5 +1,6 @@
 package xjs.serialization;
 
+import xjs.core.CommentStyle;
 import xjs.core.JsonValue;
 import xjs.serialization.parser.JsonParser;
 import xjs.serialization.parser.XjsParser;
@@ -14,6 +15,8 @@ import java.io.Writer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
 public class JsonSerializationContext {
 
@@ -28,6 +31,9 @@ public class JsonSerializationContext {
 
     private static final AtomicReference<String> EOL =
         new AtomicReference<>(System.getProperty("line.separator"));
+
+    private static final AtomicReference<CommentStyle> DEFAULT_COMMENT_STYLE =
+        new AtomicReference<>(CommentStyle.LINE);
 
     private static final AtomicReference<JsonWriterOptions> DEFAULT_FORMATTING =
         new AtomicReference<>(new JsonWriterOptions());
@@ -52,12 +58,25 @@ public class JsonSerializationContext {
         EOL.set(eol);
     }
 
+    public static CommentStyle getDefaultCommentStyle() {
+        return DEFAULT_COMMENT_STYLE.get();
+    }
+
+    public static void setDefaultCommentStyle(final CommentStyle style) {
+        DEFAULT_COMMENT_STYLE.set(style);
+    }
+
     public static JsonWriterOptions getDefaultFormatting() {
         return new JsonWriterOptions(DEFAULT_FORMATTING.get());
     }
 
     public static void setDefaultFormatting(final JsonWriterOptions options) {
         DEFAULT_FORMATTING.set(options);
+    }
+
+    public static boolean isKnownFormat(final File file) {
+        final String ext = getExtension(file);
+        return PARSERS.containsKey(ext) || ALIASES.containsKey(ext);
     }
 
     public static JsonValue autoParse(final File file) throws IOException {
@@ -73,6 +92,14 @@ public class JsonSerializationContext {
 
         f.write(writer, value, DEFAULT_FORMATTING.get());
         writer.flush();
+    }
+
+    public static void viewFile(final File file, final Consumer<JsonValue> updater) throws IOException {
+        updateFile(file, json -> { updater.accept(json); return json; });
+    }
+
+    public static void updateFile(final File file, final UnaryOperator<JsonValue> updater) throws IOException {
+        autoWrite(file, updater.apply(autoParse(file)));
     }
 
     private static String getExtension(final File file) {

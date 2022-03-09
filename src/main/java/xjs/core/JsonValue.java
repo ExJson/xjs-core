@@ -2,6 +2,7 @@ package xjs.core;
 
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
+import xjs.serialization.JsonSerializationContext;
 import xjs.serialization.writer.JsonWriter;
 import xjs.serialization.writer.XjsWriter;
 
@@ -116,7 +117,7 @@ public abstract class JsonValue implements Serializable {
     }
 
     public JsonValue setComment(final String text) {
-        return this.setComment(CommentType.HEADER, CommentStyle.LINE, text);
+        return this.setComment(CommentType.HEADER, JsonSerializationContext.getDefaultCommentStyle(), text);
     }
 
     public JsonValue setComment(final CommentType type, final CommentStyle style, final String text) {
