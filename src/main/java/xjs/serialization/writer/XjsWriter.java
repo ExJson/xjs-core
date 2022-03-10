@@ -25,27 +25,21 @@ public class XjsWriter extends AbstractJsonWriter {
 
     @Override
     public void write(final JsonValue value) throws IOException {
-        if (value.isObject() && this.shouldWriteOpenRoot(value.asObject())) {
+        if (value.isObject() && this.omitRootBraces && !value.asObject().isEmpty()) {
             this.writeOpenRoot(value.asObject());
         } else {
             this.writeLinesAbove(-1, true, false, value);
             this.writeHeader(0, value);
             this.write(value, 0);
             this.writeEolComment(0, value, null);
-            this.writeFooterComment(0, value);
+            this.writeFooterComment(value);
         }
-    }
-
-    protected boolean shouldWriteOpenRoot(final JsonObject object) {
-        return this.omitRootBraces
-            && !object.isEmpty()
-            && !object.hasComment(CommentType.HEADER)
-            && !object.hasComment(CommentType.FOOTER);
     }
 
     protected void writeOpenRoot(final JsonObject object) throws IOException {
         final boolean condensed = this.isCondensed(object);
         JsonValue previous = null;
+        this.writeOpenHeader(object);
         for (final JsonObject.Member member : object) {
             this.writeNextMember(previous, member, condensed, -1);
             previous = member.visit();
@@ -54,7 +48,27 @@ public class XjsWriter extends AbstractJsonWriter {
         if (!condensed) {
             this.writeLinesTrailing(object, -1);
         }
-        this.writeInteriorComment(0, object, false);
+        this.writeInteriorComment(-1, object);
+        this.writeOpenFooter(object);
+    }
+
+    protected void writeOpenHeader(final JsonObject root) throws IOException {
+        if (this.outputComments && root.hasComment(CommentType.HEADER)) {
+            this.writeLinesAbove(-1, true, false, root);
+            this.writeComment(-1, root, CommentType.HEADER);
+            this.nl(-1);
+            this.nl(-1);
+        }
+    }
+
+    protected void writeOpenFooter(final JsonObject root) throws IOException {
+        if (this.outputComments && root.hasComment(CommentType.FOOTER)) {
+            if (root.getLinesTrailing() < 0) {
+                this.nl(-1);
+                this.nl(-1);
+            }
+            this.writeComment(-1, root, CommentType.FOOTER);
+        }
     }
 
     @Override
@@ -217,7 +231,7 @@ public class XjsWriter extends AbstractJsonWriter {
                 this.writeLinesTrailing(c, level);
             }
         }
-        this.writeInteriorComment(level, c, condensed);
+        this.writeInteriorComment(level, c);
         this.tw.write(closer);
     }
 
@@ -246,8 +260,7 @@ public class XjsWriter extends AbstractJsonWriter {
         }
     }
 
-    protected void writeInteriorComment(
-            final int level, final JsonContainer c, final boolean condensed) throws IOException {
+    protected void writeInteriorComment(final int level, final JsonContainer c) throws IOException {
         if (this.outputComments && c.hasComment(CommentType.INTERIOR)) {
             final String comment = c.getComments().getData(CommentType.INTERIOR);
 
@@ -267,10 +280,10 @@ public class XjsWriter extends AbstractJsonWriter {
         }
     }
 
-    protected void writeFooterComment(final int level, final JsonValue value) throws IOException {
+    protected void writeFooterComment(final JsonValue value) throws IOException {
         if (this.outputComments && value.hasComment(CommentType.FOOTER)) {
-            this.nl(level);
-            this.writeComment(level, value, CommentType.FOOTER);
+            this.nl(0);
+            this.writeComment(0, value, CommentType.FOOTER);
         }
     }
 

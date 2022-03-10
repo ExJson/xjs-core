@@ -120,17 +120,49 @@ public class XjsParser extends AbstractJsonParser {
         final JsonObject object = new JsonObject();
         this.read();
         this.skipWhitespace();
+        this.splitOpenHeader(object);
         do {
             this.skipWhitespace(false);
             if (this.isEndOfText()) {
                 break;
             }
         } while (this.readNextMember(object));
-        this.closeContainer(object, false);
+        this.appendComment(object, CommentType.FOOTER, false);
+        object.setLinesTrailing(this.linesSkipped);
         if (!this.isEndOfText()) {
             throw this.unexpected("'" + (char) this.current + "' before end of file");
         }
         return object;
+    }
+
+    protected void splitOpenHeader(final JsonObject root) {
+        if (this.commentBuffer.length() > 0) {
+            final String header = this.commentBuffer.toString();
+            final int end = this.getLastGap(header);
+            if (end > 0) {
+                root.getComments().setData(CommentType.HEADER, header.substring(0, end));
+                root.setLinesAbove(this.linesSkipped);
+                this.commentBuffer.delete(0, header.indexOf('\n', end + 1) + 1);
+                this.linesSkipped = 0;
+            }
+        }
+    }
+
+    private int getLastGap(final String s) {
+        for (int i = s.length() - 1; i > 0; i--) {
+            if (s.charAt(i) != '\n') {
+                continue;
+            }
+            while (i > 1) {
+                final char next = s.charAt(--i);
+                if (next == '\n') {
+                    return i;
+                } else if (next != ' ' && next != '\t' && next != '\r') {
+                    break;
+                }
+            }
+        }
+        return -1;
     }
 
     protected JsonObject readClosedObject() throws IOException {

@@ -199,7 +199,24 @@ public final class XjsParserTest extends CommonParserTest {
     @CsvSource({"/*comment*/", "#comment", "//comment"})
     public void parse_preservesNewlines_afterComments(final String comment) throws IOException {
         assertEquals(comment + "\n",
-            this.parse(comment + "\n\nk:v").asObject().get(0).getComments().getData(CommentType.HEADER));
+            this.parse("k1:v1\n" + comment + "\n\nk:v")
+                .asObject().get(1).getComments().getData(CommentType.HEADER));
+    }
+
+    @Test
+    public void parse_readsUntilLastEmptyLine_asHeader() throws IOException {
+        final String header = """
+            // header part 1
+            // header part 2
+            
+            // header part 3""";
+        final String json = """
+
+            // comment of "key"
+            key: value""";
+
+        final JsonValue parsed = this.parse(header + "\n" + json);
+        assertEquals(header, parsed.getComments().getData(CommentType.HEADER));
     }
 
     @Test
