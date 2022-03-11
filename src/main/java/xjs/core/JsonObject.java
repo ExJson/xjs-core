@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class JsonObject extends JsonContainer implements JsonContainer.View<JsonObject.Member> {
 
@@ -509,7 +510,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
         void remove(final int index) {
             for (int i = 0; i < this.indices.length; i++) {
-                final byte current = this.indices[i];
+                final int current = this.indices[i] & 0xff;
                 if (current == index + 1) {
                     this.indices[i] = 0;
                 } else if (current > index + 1) {
