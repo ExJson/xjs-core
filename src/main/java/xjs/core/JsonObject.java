@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class JsonObject extends JsonContainer implements JsonContainer.View<JsonObject.Member> {
 
@@ -38,26 +37,26 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     public JsonObject set(final String key, final long value) {
-        return this.set(key, valueOf(value));
+        return this.set(key, Json.value(value));
     }
 
     public JsonObject set(final String key, final double value) {
-        return this.set(key, valueOf(value));
+        return this.set(key, Json.value(value));
     }
 
     public JsonObject set(final String key, final boolean value) {
-        return this.set(key, valueOf(value));
+        return this.set(key, Json.value(value));
     }
 
     public JsonObject set(final String key, final String value) {
-        return this.set(key, valueOf(value));
+        return this.set(key, Json.value(value));
     }
 
     public JsonObject set(final String key, final @Nullable JsonValue value) {
         final int index = this.indexOf(key);
         if (index != -1) {
             this.references.get(index).update(og ->
-                nonnull(value).setDefaultMetadata(og));
+                Json.nonnull(value).setDefaultMetadata(og));
         } else {
             this.table.add(key, this.keys.size());
             this.keys.add(key);
@@ -86,19 +85,19 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     public JsonObject add(final String key, final long value) {
-        return this.add(key, valueOf(value));
+        return this.add(key, Json.value(value));
     }
 
     public JsonObject add(final String key, final double value) {
-        return this.add(key, valueOf(value));
+        return this.add(key, Json.value(value));
     }
 
     public JsonObject add(final String key, final boolean value) {
-        return this.add(key, valueOf(value));
+        return this.add(key, Json.value(value));
     }
 
     public JsonObject add(final String key, final String value) {
-        return this.add(key, valueOf(value));
+        return this.add(key, Json.value(value));
     }
 
     public JsonObject add(final String key, final @Nullable JsonValue value) {
@@ -109,23 +108,23 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     public JsonObject add(final String key, final long value, final String comment) {
-        return this.add(key, valueOf(value), comment);
+        return this.add(key, Json.value(value), comment);
     }
 
     public JsonObject add(final String key, final double value, final String comment) {
-        return this.add(key, valueOf(value), comment);
+        return this.add(key, Json.value(value), comment);
     }
 
     public JsonObject add(final String key, final boolean value, final String comment) {
-        return this.add(key, valueOf(value), comment);
+        return this.add(key, Json.value(value), comment);
     }
 
     public JsonObject add(final String key, final String value, final String comment) {
-        return this.add(key, valueOf(value), comment);
+        return this.add(key, Json.value(value), comment);
     }
 
     public JsonObject add(final String key, final @Nullable JsonValue value, final String comment) {
-        return this.add(key, JsonValue.nonnull(value).setComment(comment));
+        return this.add(key, Json.nonnull(value).setComment(comment));
     }
 
     public JsonObject addAll(final JsonObject object) {
@@ -149,7 +148,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             return this.add(key, value);
         }
         this.references.get(index).update(og ->
-            nonnull(value).setDefaultMetadata(og));
+            Json.nonnull(value).setDefaultMetadata(og));
         this.keys.set(index, key);
         this.table.clear();
         this.table.init(this.keys);
@@ -299,6 +298,10 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return map;
     }
 
+    public Map<String, Object> toMap() {
+        return this.toMap(JsonValue::unwrap);
+    }
+
     @Override
     public JsonObject intoContainer() {
         return (JsonObject) super.intoContainer();
@@ -368,6 +371,11 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     @Override
     public JsonType getType() {
         return JsonType.OBJECT;
+    }
+
+    @Override
+    public Map<String, Object> unwrap() {
+        return this.toMap();
     }
 
     @Override

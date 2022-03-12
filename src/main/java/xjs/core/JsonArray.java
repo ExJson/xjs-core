@@ -5,8 +5,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
+public class JsonArray extends JsonContainer implements JsonContainer.View<JsonValue> {
 
     private ElementView view;
 
@@ -17,24 +18,24 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
     }
 
     public JsonArray set(final int index, final long value) {
-        return this.set(index, valueOf(value));
+        return this.set(index, Json.value(value));
     }
 
     public JsonArray set(final int index, final double value) {
-        return this.set(index, valueOf(value));
+        return this.set(index, Json.value(value));
     }
 
     public JsonArray set(final int index, final boolean value) {
-        return this.set(index, valueOf(value));
+        return this.set(index, Json.value(value));
     }
 
     public JsonArray set(final int index, final String value) {
-        return this.set(index, valueOf(value));
+        return this.set(index, Json.value(value));
     }
 
     public JsonArray set(final int index, final @Nullable JsonValue value) {
         this.references.get(index).update(og ->
-            nonnull(value).setDefaultMetadata(og));
+            Json.nonnull(value).setDefaultMetadata(og));
         return this;
     }
 
@@ -44,19 +45,19 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
     }
 
     public JsonArray add(final long value) {
-        return this.add(valueOf(value));
+        return this.add(Json.value(value));
     }
 
     public JsonArray add(final double value) {
-        return this.add(valueOf(value));
+        return this.add(Json.value(value));
     }
 
     public JsonArray add(final boolean value) {
-        return this.add(valueOf(value));
+        return this.add(Json.value(value));
     }
 
     public JsonArray add(final String value) {
-        return this.add(valueOf(value));
+        return this.add(Json.value(value));
     }
 
     public JsonArray add(final JsonValue value) {
@@ -65,23 +66,23 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
     }
 
     public JsonArray add(final long value, final String comment) {
-        return this.add(valueOf(value), comment);
+        return this.add(Json.value(value), comment);
     }
 
     public JsonArray add(final double value, final String comment) {
-        return this.add(valueOf(value), comment);
+        return this.add(Json.value(value), comment);
     }
 
     public JsonArray add(final boolean value, final String comment) {
-        return this.add(valueOf(value), comment);
+        return this.add(Json.value(value), comment);
     }
 
     public JsonArray add(final String value, final String comment) {
-        return this.add(valueOf(value), comment);
+        return this.add(Json.value(value), comment);
     }
 
     public JsonArray add(final JsonValue value, final String comment) {
-        return this.add(JsonValue.nonnull(value).setComment(comment));
+        return this.add(Json.nonnull(value).setComment(comment));
     }
 
     public JsonArray addAll(final JsonContainer container) {
@@ -99,6 +100,10 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
     public JsonArray addReference(final JsonReference reference) {
         this.references.add(reference);
         return this;
+    }
+
+    public List<Object> toList() {
+        return this.stream().map(JsonValue::unwrap).collect(Collectors.toList());
     }
 
     @Override
@@ -185,6 +190,11 @@ public class JsonArray extends JsonContainer implements Iterable<JsonValue> {
     @Override
     public JsonType getType() {
         return JsonType.ARRAY;
+    }
+
+    @Override
+    public List<Object> unwrap() {
+        return this.toList();
     }
 
     @Override

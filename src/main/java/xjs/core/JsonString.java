@@ -28,6 +28,11 @@ public class JsonString extends JsonValue {
     }
 
     @Override
+    public String unwrap() {
+        return this.value;
+    }
+
+    @Override
     public boolean isString() {
         return true;
     }

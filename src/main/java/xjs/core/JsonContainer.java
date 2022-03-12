@@ -134,19 +134,19 @@ public abstract class JsonContainer extends JsonValue {
     }
 
     public boolean contains(final long value) {
-        return this.contains(valueOf(value));
+        return this.contains(Json.value(value));
     }
 
     public boolean contains(final double value) {
-        return this.contains(valueOf(value));
+        return this.contains(Json.value(value));
     }
 
     public boolean contains(final boolean value) {
-        return this.contains(valueOf(value));
+        return this.contains(Json.value(value));
     }
 
     public boolean contains(final @Nullable String value) {
-        return this.contains(valueOf(value));
+        return this.contains(Json.value(value));
     }
 
     public boolean contains(final JsonValue value) {

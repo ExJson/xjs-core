@@ -14,6 +14,11 @@ public class JsonNumber extends JsonValue {
     }
 
     @Override
+    public Number unwrap() {
+        return this.value;
+    }
+
+    @Override
     public boolean isNumber() {
         return true;
     }

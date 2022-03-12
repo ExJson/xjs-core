@@ -27,7 +27,7 @@ public final class JsonArrayTest {
     @Test
     public void addReference_insertsReference() {
         final JsonArray array = new JsonArray();
-        final JsonReference reference = new JsonReference(JsonValue.valueOf(1234));
+        final JsonReference reference = new JsonReference(Json.value(1234));
         array.addReference(reference);
         assertSame(reference, array.getReference(0));
     }
@@ -35,7 +35,7 @@ public final class JsonArrayTest {
     @Test
     public void addReference_doesNotTrackAccess() {
         final JsonArray array = new JsonArray();
-        final JsonReference reference = new JsonReference(JsonValue.valueOf(1234));
+        final JsonReference reference = new JsonReference(Json.value(1234));
         array.addReference(reference);
         assertFalse(array.getReference(0).isAccessed());
     }
@@ -50,7 +50,7 @@ public final class JsonArrayTest {
     @Test
     public void set_preservesMetadata() {
         final JsonArray array =
-            new JsonArray().add(JsonValue.valueOf(1).setLinesAbove(1));
+            new JsonArray().add(Json.value(1).setLinesAbove(1));
         array.set(0, 2);
         assertEquals(1, array.get(0).getLinesAbove());
     }
@@ -58,8 +58,8 @@ public final class JsonArrayTest {
     @Test
     public void set_canUpdateMetadata() {
         final JsonArray array =
-            new JsonArray().add(JsonValue.valueOf(1).setLinesAbove(1));
-        array.set(0, JsonValue.valueOf(2).setLinesAbove(0));
+            new JsonArray().add(Json.value(1).setLinesAbove(1));
+        array.set(0, Json.value(2).setLinesAbove(0));
         assertEquals(0, array.get(0).getLinesAbove());
     }
 

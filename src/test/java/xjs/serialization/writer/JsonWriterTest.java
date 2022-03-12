@@ -3,6 +3,7 @@ package xjs.serialization.writer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import xjs.core.Json;
 import xjs.core.JsonArray;
 import xjs.core.JsonObject;
 import xjs.core.JsonValue;
@@ -28,32 +29,32 @@ public final class JsonWriterTest {
 
     @Test
     public void write_printsTrue() {
-        assertEquals("true", write(JsonValue.valueOf(true)));
+        assertEquals("true", write(Json.value(true)));
     }
 
     @Test
     public void write_printsFalse() {
-        assertEquals("false", write(JsonValue.valueOf(false)));
+        assertEquals("false", write(Json.value(false)));
     }
 
     @Test
     public void write_printsNull() {
-        assertEquals("null", write(JsonValue.valueOf(null)));
+        assertEquals("null", write(Json.value(null)));
     }
 
     @Test
     public void write_printsInteger() {
-        assertEquals("1234", write(JsonValue.valueOf(1234)));
+        assertEquals("1234", write(Json.value(1234)));
     }
 
     @Test
     public void write_printsDecimal() {
-        assertEquals("12.34", write(JsonValue.valueOf(12.34)));
+        assertEquals("12.34", write(Json.value(12.34)));
     }
 
     @Test
     public void write_printsQuotedString() {
-        assertEquals("\"test\"", write(JsonValue.valueOf("test")));
+        assertEquals("\"test\"", write(Json.value("test")));
     }
 
     @Test
@@ -90,13 +91,13 @@ public final class JsonWriterTest {
 
     @Test
     public void write_preservesWhitespaceAbove() {
-        assertEquals("\n\ntrue", write(JsonValue.valueOf(true).setLinesAbove(2)));
+        assertEquals("\n\ntrue", write(Json.value(true).setLinesAbove(2)));
     }
 
     @Test
     public void write_preservesWhitespaceBetween() {
         assertEquals("{\n  \"a\":\n\n\n\n    1234\n}",
-            write(new JsonObject().add("a", JsonValue.valueOf(1234).setLinesBetween(4))));
+            write(new JsonObject().add("a", Json.value(1234).setLinesBetween(4))));
     }
 
     @Test
@@ -122,7 +123,7 @@ public final class JsonWriterTest {
     public void write_preservesComplexFormatting() {
         final JsonObject object =
             new JsonObject()
-                .add("1", JsonValue.valueOf(1).setLinesBetween(1))
+                .add("1", Json.value(1).setLinesBetween(1))
                 .add("2", 2)
                 .add("a", new JsonArray()
                     .add(3)

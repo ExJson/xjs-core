@@ -1,15 +1,11 @@
 package xjs.core;
 
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Nullable;
 import xjs.serialization.JsonSerializationContext;
 import xjs.serialization.writer.JsonWriter;
 import xjs.serialization.writer.XjsWriter;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.io.StringWriter;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.util.Objects;
 
 public abstract class JsonValue implements Serializable {
@@ -24,29 +20,6 @@ public abstract class JsonValue implements Serializable {
         this.linesBetween = -1;
         this.flags = JsonFlags.NULL;
         this.comments = null;
-    }
-
-    public static JsonNumber valueOf(final long value) {
-        return new JsonNumber(value);
-    }
-
-    public static JsonNumber valueOf(final double value) {
-        return new JsonNumber(value);
-    }
-
-    public static JsonLiteral valueOf(final boolean value) {
-        return value ? JsonLiteral.jsonTrue() : JsonLiteral.jsonFalse();
-    }
-
-    public static JsonValue valueOf(final @Nullable String value) {
-        return value != null ? JsonString.auto(value) : JsonLiteral.jsonNull();
-    }
-
-    public static JsonValue nonnull(final @Nullable JsonValue value) {
-        if (value == null) {
-            return JsonLiteral.jsonNull();
-        }
-        return value;
     }
 
     public int getLinesAbove() {
@@ -147,6 +120,8 @@ public abstract class JsonValue implements Serializable {
     }
 
     public abstract JsonType getType();
+
+    public abstract Object unwrap();
 
     public boolean isPrimitive() {
         return true;
@@ -288,6 +263,14 @@ public abstract class JsonValue implements Serializable {
             && this.linesBetween == other.linesBetween
             && this.flags == other.flags
             && Objects.equals(this.comments, other.comments);
+    }
+
+    public void write(final File file) throws IOException {
+        JsonSerializationContext.autoWrite(file, this);
+    }
+
+    public void write(final Writer writer) throws IOException {
+        new XjsWriter(writer, JsonSerializationContext.getDefaultFormatting()).write(this);
     }
 
     @Override

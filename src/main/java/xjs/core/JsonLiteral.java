@@ -29,6 +29,13 @@ public class JsonLiteral extends JsonValue {
     }
 
     @Override
+    public Object unwrap() {
+        if (this.value == Value.TRUE) return true;
+        if (this.value == Value.FALSE) return false;
+        return null;
+    }
+
+    @Override
     public boolean isBoolean() {
         return this.value != Value.NULL;
     }

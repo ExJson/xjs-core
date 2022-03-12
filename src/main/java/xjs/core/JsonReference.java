@@ -11,24 +11,24 @@ public class JsonReference{
     protected boolean accessed;
 
     public JsonReference(final @Nullable JsonValue referent) {
-        this.referent = JsonValue.nonnull(referent);
+        this.referent = Json.nonnull(referent);
         this.accessed = false;
     }
 
     public static JsonReference wrap(final long value) {
-        return new JsonReference(JsonValue.valueOf(value));
+        return new JsonReference(Json.value(value));
     }
 
     public static JsonReference wrap(final double value) {
-        return new JsonReference(JsonValue.valueOf(value));
+        return new JsonReference(Json.value(value));
     }
 
     public static JsonReference wrap(final boolean value) {
-        return new JsonReference(JsonValue.valueOf(value));
+        return new JsonReference(Json.value(value));
     }
 
     public static JsonReference wrap(final @Nullable String value) {
-        return new JsonReference(JsonValue.valueOf(value));
+        return new JsonReference(Json.value(value));
     }
 
     public @NotNull JsonValue get() {
@@ -37,7 +37,7 @@ public class JsonReference{
     }
 
     public JsonReference set(final @Nullable JsonValue referent) {
-        this.referent = JsonValue.nonnull(referent);
+        this.referent = Json.nonnull(referent);
         this.accessed = true;
         return this;
     }
@@ -51,7 +51,7 @@ public class JsonReference{
     }
 
     public JsonReference mutate(final @Nullable JsonValue referent) {
-        this.referent = JsonValue.nonnull(referent);
+        this.referent = Json.nonnull(referent);
         return this;
     }
 

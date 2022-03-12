@@ -13,7 +13,7 @@ public final class JsonReferenceTest {
 
     @Test
     public void new_wrapsValue() {
-        final JsonValue value = JsonValue.valueOf(1234);
+        final JsonValue value = Json.value(1234);
         assertSame(value, new JsonReference(value).get());
     }
 

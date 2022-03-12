@@ -1,10 +1,7 @@
 package xjs.transformer;
 
 import org.junit.jupiter.api.Test;
-import xjs.core.JsonArray;
-import xjs.core.JsonObject;
-import xjs.core.JsonReference;
-import xjs.core.JsonValue;
+import xjs.core.*;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -18,7 +15,7 @@ public final class JsonCollectorsTest {
     public void value_collectsArrayFromValues() {
         final JsonArray collected =
             Stream.of(1, 2, 3)
-                .map(JsonValue::valueOf)
+                .map(Json::value)
                 .collect(JsonCollectors.value());
         assertEquals(new JsonArray().add(1).add(2).add(3), collected);
     }
@@ -56,7 +53,7 @@ public final class JsonCollectorsTest {
                 .entrySet()
                 .stream()
                 .sorted(Map.Entry.comparingByKey())
-                .collect(JsonCollectors.toObject(JsonValue::valueOf));
+                .collect(JsonCollectors.toObject(Json::value));
         assertEquals(new JsonObject().add("1", 1).add("2", 2).add("3", 3), collected);
     }
 }

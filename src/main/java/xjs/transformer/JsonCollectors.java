@@ -40,7 +40,7 @@ public final class JsonCollectors {
     public static Collector<Object, JsonArray, JsonArray> any() {
         return Collector.of(
             JsonArray::new,
-            (array, any) -> array.add("todo"), // Todo: JsonValue#valueOf(Object)
+            (array, any) -> array.add(Json.any(any)),
             (left, right) -> { left.addAll(right); return left; },
             Collector.Characteristics.IDENTITY_FINISH
         );
@@ -55,10 +55,10 @@ public final class JsonCollectors {
         );
     }
 
-    public static Collector<Map.Entry<String, ?>, JsonObject, JsonObject> toObject() {
+    public static Collector<Map.Entry<?, ?>, JsonObject, JsonObject> toObject() {
         return Collector.of(
             JsonObject::new,
-            (object, entry) -> object.add(entry.getKey(), "todo"), // Todo: JsonValue#valueOf(Object)
+            (object, entry) -> object.add(entry.getKey().toString(), Json.any(entry.getValue())),
             (left, right) -> { left.addAll(right); return left; },
             Collector.Characteristics.IDENTITY_FINISH
         );

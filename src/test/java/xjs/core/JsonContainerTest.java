@@ -17,8 +17,8 @@ public final class JsonContainerTest {
     @Test
     public void size_reportsNumReferences() {
         final List<JsonReference> references =
-            List.of(new JsonReference(JsonValue.valueOf(1234)),
-                new JsonReference(JsonValue.valueOf(5678)));
+            List.of(new JsonReference(Json.value(1234)),
+                new JsonReference(Json.value(5678)));
 
         final JsonContainer container = new JsonArray(references);
         assertEquals(references.size(), container.size());
@@ -46,7 +46,7 @@ public final class JsonContainerTest {
     @Test
     public void contains_searchesByValue() {
         final JsonContainer container = new JsonArray().add(1);
-        assertTrue(container.contains(JsonValue.valueOf(1)));
+        assertTrue(container.contains(Json.value(1)));
     }
 
     @Test
@@ -105,8 +105,8 @@ public final class JsonContainerTest {
     @Test
     public void shallowCopy_addsExistingReferences() {
         final List<JsonReference> references =
-            List.of(new JsonReference(JsonValue.valueOf(1234)),
-                new JsonReference(JsonValue.valueOf(5678)));
+            List.of(new JsonReference(Json.value(1234)),
+                new JsonReference(Json.value(5678)));
 
         final JsonContainer container = new JsonArray(references);
         final JsonContainer copy = container.shallowCopy();
@@ -138,8 +138,8 @@ public final class JsonContainerTest {
     @Test
     public void deepCopy_clonesAllReferences() {
         final List<JsonReference> references =
-            List.of(new JsonReference(JsonValue.valueOf(1234)),
-                new JsonReference(JsonValue.valueOf(5678)));
+            List.of(new JsonReference(Json.value(1234)),
+                new JsonReference(Json.value(5678)));
 
         final JsonContainer container = new JsonArray(references);
         final JsonContainer copy = container.deepCopy(false);

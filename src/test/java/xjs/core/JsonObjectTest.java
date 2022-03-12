@@ -27,7 +27,7 @@ public final class JsonObjectTest {
     @Test
     public void addReference_insertsReference() {
         final JsonObject object = new JsonObject();
-        final JsonReference reference = new JsonReference(JsonValue.valueOf(1234));
+        final JsonReference reference = new JsonReference(Json.value(1234));
         object.addReference("value", reference);
         assertSame(reference, object.getReference("value"));
     }
@@ -35,7 +35,7 @@ public final class JsonObjectTest {
     @Test
     public void addReference_doesNotTrackAccess() {
         final JsonObject object = new JsonObject();
-        final JsonReference reference = new JsonReference(JsonValue.valueOf(1234));
+        final JsonReference reference = new JsonReference(Json.value(1234));
         object.addReference("value", reference);
         assertFalse(object.getReference("value").isAccessed());
     }
@@ -50,7 +50,7 @@ public final class JsonObjectTest {
     @Test
     public void set_preservesMetadata() {
         final JsonObject object =
-            new JsonObject().add("0", JsonValue.valueOf(1).setLinesAbove(1));
+            new JsonObject().add("0", Json.value(1).setLinesAbove(1));
         object.set("0", 2);
         assertEquals(1, object.get("0").getLinesAbove());
     }
@@ -58,8 +58,8 @@ public final class JsonObjectTest {
     @Test
     public void set_canUpdateMetadata() {
         final JsonObject object =
-            new JsonObject().add("0", JsonValue.valueOf(1).setLinesAbove(1));
-        object.set("0", JsonValue.valueOf(2).setLinesAbove(0));
+            new JsonObject().add("0", Json.value(1).setLinesAbove(1));
+        object.set("0", Json.value(2).setLinesAbove(0));
         assertEquals(0, object.get("0").getLinesAbove());
     }
 
