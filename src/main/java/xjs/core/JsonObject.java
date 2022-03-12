@@ -10,7 +10,7 @@ import java.util.function.Function;
 public class JsonObject extends JsonContainer implements JsonContainer.View<JsonObject.Member> {
 
     private final List<String> keys;
-    private final HashIndexTable table;
+    private final transient HashIndexTable table;
 
     public JsonObject() {
         this.keys = new ArrayList<>();
@@ -181,46 +181,12 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return index != -1 ? this.references.get(index).get() : null;
     }
 
-    public int getInt(final String key, final int defaultValue) {
-        final JsonValue value = this.get(key);
-        return value != null && value.isNumber() ? value.asInt() : defaultValue;
-    }
-
-    public long getLong(final String key, final long defaultValue) {
-        final JsonValue value = this.get(key);
-        return value != null && value.isNumber() ? value.asLong() : defaultValue;
-    }
-
-    public float getFloat(final String key, final float defaultValue) {
-        final JsonValue value = this.get(key);
-        return value != null && value.isNumber() ? value.asFloat() : defaultValue;
-    }
-
-    public double getDouble(final String key, final double defaultValue) {
-        final JsonValue value = this.get(key);
-        return value != null && value.isNumber() ? value.asDouble() : defaultValue;
-    }
-
-    public boolean getBoolean(final String key, final boolean defaultValue) {
-        final JsonValue value = this.get(key);
-        return value != null && value.isBoolean() ? value.asBoolean() : defaultValue;
-    }
-
-    public String getString(final String key, final String defaultValue) {
-        final JsonValue value = this.get(key);
-        return value != null && value.isString() ? value.asString() : defaultValue;
+    public <T extends JsonValue> Optional<T> getOptional(final String key, final JsonFilter<T> f) {
+        return this.getOptional(key).flatMap(f::applyOptional);
     }
 
     public Optional<JsonValue> getOptional(final String key) {
-        return Optional.of(this.get(key));
-    }
-
-    public <T extends JsonValue> Optional<T> getOptional(final String key, final Class<T> type) {
-        final JsonValue value = this.get(key);
-        if (type.isInstance(value)) {
-            return Optional.of(type.cast(value));
-        }
-        return Optional.empty();
+        return Optional.ofNullable(this.get(key));
     }
 
     public JsonReference getReference(final String key) {

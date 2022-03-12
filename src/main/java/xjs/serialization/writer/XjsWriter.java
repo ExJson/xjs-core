@@ -176,8 +176,7 @@ public class XjsWriter extends AbstractJsonWriter {
 
     protected StringType getValueType(final JsonValue value) {
         if (this.format) {
-            final StringType type = value instanceof JsonString
-                ? ((JsonString) value).getStringType() : StringType.NONE;
+            final StringType type = value.filter(JsonFilter.STRING_TYPE).orElse(StringType.NONE);
             return this.checkType(value.asString(), type);
         }
         if (this.compress) {

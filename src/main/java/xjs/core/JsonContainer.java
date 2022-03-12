@@ -74,34 +74,8 @@ public abstract class JsonContainer extends JsonValue {
         return this.references.get(index).get();
     }
 
-    public int getInt(final int index, final int defaultValue) {
-        final JsonValue value = this.references.get(index).get();
-        return value.isNumber() ? value.asInt() : defaultValue;
-    }
-
-    public long getLong(final int index, final long defaultValue) {
-        final JsonValue value = this.references.get(index).get();
-        return value.isNumber() ? value.asLong() : defaultValue;
-    }
-
-    public float getFloat(final int index, final float defaultValue) {
-        final JsonValue value = this.references.get(index).get();
-        return value.isNumber() ? value.asFloat() : defaultValue;
-    }
-
-    public double getDouble(final int index, final double defaultValue) {
-        final JsonValue value = this.references.get(index).get();
-        return value.isNumber() ? value.asDouble() : defaultValue;
-    }
-
-    public boolean getBoolean(final int index, final boolean defaultValue) {
-        final JsonValue value = this.references.get(index).get();
-        return value.isBoolean() ? value.asBoolean() : defaultValue;
-    }
-
-    public String getString(final int index, final String defaultValue) {
-        final JsonValue value = this.references.get(index).get();
-        return value.isString() ? value.asString() : defaultValue;
+    public <T> Optional<T> getOptional(final int index, final JsonFilter<T> filter) {
+        return this.getOptional(index).flatMap(filter::applyOptional);
     }
 
     public Optional<JsonValue> getOptional(final int index) {
@@ -351,7 +325,7 @@ public abstract class JsonContainer extends JsonValue {
             return this.reference.visit();
         }
 
-        public Access mutate(final JsonValue value) {
+        public Access mutate(final @Nullable JsonValue value) {
             this.reference.mutate(value);
             return this;
         }

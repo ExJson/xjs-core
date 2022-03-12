@@ -7,6 +7,8 @@ import xjs.serialization.writer.XjsWriter;
 
 import java.io.*;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 public abstract class JsonValue implements Serializable {
 
@@ -164,39 +166,50 @@ public abstract class JsonValue implements Serializable {
     }
 
     public long asLong() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Not a long: " + this);
     }
 
     public int asInt() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Not an int: " + this);
     }
 
     public double asDouble() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Not a double: " + this);
     }
 
     public float asFloat() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Not a float: " + this);
     }
 
     public boolean asBoolean() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Not a boolean: " + this);
     }
 
     public String asString() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Not a string: " + this);
     }
 
     public JsonContainer asContainer() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Not a container: " + this);
     }
 
     public JsonObject asObject() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Not an object: " + this);
     }
 
     public JsonArray asArray() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Not an array: " + this);
+    }
+
+    public <T> Optional<T> filter(final JsonFilter<T> filter) {
+        return filter.applyOptional(this);
+    }
+
+    public <V extends JsonValue> JsonValue when(final Class<V> type, final Consumer<V> f) {
+        if (type.isInstance(this)) {
+            f.accept(type.cast(this));
+        }
+        return this;
     }
 
     public long intoLong() {

@@ -22,9 +22,9 @@ public class JsonSerializationContext {
     private static final Map<String, ParsingFunction> PARSERS = new ConcurrentHashMap<>();
     private static final Map<String, WritingFunction> WRITERS = new ConcurrentHashMap<>();
     private static final Map<String, String> ALIASES = new ConcurrentHashMap<>();
-    private static volatile String eol = System.lineSeparator();
-    private static final ParsingFunction DEFAULT_PARSER = file -> new JsonParser(file).parse();
+    private static final ParsingFunction DEFAULT_PARSER = file -> new XjsParser(file).parse();
     private static final WritingFunction DEFAULT_WRITER = (w, v, o) -> new XjsWriter(w, o).write(v);
+    private static volatile String eol = System.lineSeparator();
     private static volatile CommentStyle defaultCommentStyle = CommentStyle.LINE;
     private static volatile JsonWriterOptions defaultFormatting = new JsonWriterOptions();
 
@@ -75,7 +75,7 @@ public class JsonSerializationContext {
 
     public static void autoWrite(final File file, final JsonValue value) throws IOException {
         final Writer writer = new FileWriter(file);
-        WRITERS.getOrDefault(getFormat(file), DEFAULT_WRITER).write(writer, value, getDefaultFormatting());
+        WRITERS.getOrDefault(getFormat(file), DEFAULT_WRITER).write(writer, value, defaultFormatting);
         writer.flush();
     }
 
