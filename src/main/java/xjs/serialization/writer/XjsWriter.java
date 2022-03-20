@@ -179,7 +179,7 @@ public class XjsWriter extends AbstractJsonWriter {
             final StringType type = value.filter(JsonFilter.STRING_TYPE).orElse(StringType.NONE);
             return this.checkType(value.asString(), type);
         }
-        if (this.compress) {
+        if (this.omitQuotes) {
             final String s = value.asString();
             if (!s.contains("\n") && ImplicitStringUtils.isBalanced(s)) {
                 return StringType.IMPLICIT;

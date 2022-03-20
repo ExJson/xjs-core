@@ -1,7 +1,9 @@
 package xjs.serialization;
 
 import xjs.core.CommentStyle;
+import xjs.core.Json;
 import xjs.core.JsonValue;
+import xjs.exception.SyntaxException;
 import xjs.serialization.parser.JsonParser;
 import xjs.serialization.parser.ParsingFunction;
 import xjs.serialization.parser.XjsParser;
@@ -11,12 +13,42 @@ import xjs.serialization.writer.WritingFunction;
 import xjs.serialization.writer.XjsWriter;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * A collection of settings and serializers for automatic parsing and writing.
+ *
+ * <p>This context may be used to configure the behavior of this library. For
+ * example, to configure the default comment style or newline character used
+ * by all provided serializers:
+ *
+ * <pre>{@code
+ *   JsonSerializationContext.setDefaultCommentStyle(CommentStyle.HASH);
+ *   JsonSerializationContext.setEol("\n");
+ * }</pre>
+ *
+ * <p>Or the formatting options used by all default serializers:
+ *
+ * <pre>{@code
+ *   JsonSerializationContext.setDefaultFormatting(
+ *     new JsonWriterOptions()
+ *       .setIndent("    ")
+ *       .setMaxSpacing(3))
+ * }</pre>
+ *
+ * <p>In addition, the context is provided as a way to configure the automatic
+ * format selection of {@link Json} and {@link JsonValue}:
+ *
+ * <pre>{@code
+ *   JsonSerializationContext.addParser("yaml", file -> new MyYamlParser(file).parse());
+ *   JsonSerializationContext.addWriter("yaml" (w, v, o) -> new MyYamlWriter(w, o).write(v));
+ * }</pre>
+ */
 public class JsonSerializationContext {
 
     private static final Map<String, ParsingFunction> PARSERS = new ConcurrentHashMap<>();
@@ -28,51 +60,136 @@ public class JsonSerializationContext {
     private static volatile CommentStyle defaultCommentStyle = CommentStyle.LINE;
     private static volatile JsonWriterOptions defaultFormatting = new JsonWriterOptions();
 
+    /**
+     * Adds or replaces a parser for the given format.
+     *
+     * <p>Note that parsing functions would ideally not get reused for multiple formats.
+     * For this purpose, use {@link #registerAlias}.
+     *
+     * @param format The file extension corresponding to this parser.
+     * @param parser A function of {@link File} -> {@link JsonValue} throwing IOException
+     */
     public static void addParser(final String format, final ParsingFunction parser) {
-        PARSERS.put(format, parser);
+        PARSERS.put(format.toLowerCase(), parser);
     }
 
+    /**
+     * Adds or replaces a writer for the given format.
+     *
+     * <p>Note that writing functions would ideally not get reused for multiple formats.
+     * For this purpose, use {@link #registerAlias}.
+     *
+     * @param format The file extension corresponding to the parser.
+     * @param writer A consumer of ({@link Writer}, {@link JsonValue}, {@link JsonWriterOptions})
+     */
     public static void addWriter(final String format, final WritingFunction writer) {
-        WRITERS.put(format, writer);
+        WRITERS.put(format.toLowerCase(), writer);
     }
 
+    /**
+     * Registers an alias for some other format to the context.
+     *
+     * <p>For example, to register <code>yml</code> as an alias of <code>yaml</code>:
+     *
+     * <pre>{@code
+     *   JsonSerializationContext.registerAlias("yml", "yaml");
+     * }</pre>
+     *
+     * @param alias  An alias for the expected format.
+     * @param format The expected format being configured.
+     */
     public static void registerAlias(final String alias, final String format) {
-        ALIASES.put(alias, format);
+        ALIASES.put(alias.toLowerCase(), format.toLowerCase());
     }
 
+    /**
+     * Gets the <em>default</em> newline character configured the provided serializers.
+     *
+     * @return The default newline character, usually {@link System#lineSeparator()}
+     */
     public static synchronized String getEol() {
         return eol;
     }
 
+    /**
+     * Sets the <em>default</em> newline character configured for the provided serializers.
+     *
+     * @param eol The default newline character, e.g. <code>\n</code>
+     */
     public static synchronized void setEol(final String eol) {
         JsonSerializationContext.eol = eol;
     }
 
+    /**
+     * Gets the <em>default</em> newline character used by {@link JsonValue#setComment(String)}.
+     *
+     * @return The configured {@link CommentStyle}.
+     */
     public static synchronized CommentStyle getDefaultCommentStyle() {
         return defaultCommentStyle;
     }
 
+    /**
+     * Sets the <em>default</em> newline character used by {@link JsonValue#setComment(String)}.
+     *
+     * @param style The configured {@link CommentStyle}.
+     */
     public static synchronized void setDefaultCommentStyle(final CommentStyle style) {
         defaultCommentStyle = style;
     }
 
+    /**
+     * Gets the <em>default</em> formatting options used by the provided serializers.
+     *
+     * @return The default {@link JsonWriterOptions}.
+     */
     public static synchronized JsonWriterOptions getDefaultFormatting() {
         return new JsonWriterOptions(defaultFormatting);
     }
 
+    /**
+     * Sets the <em>default</em> formatting options used by the provided serializers.
+     *
+     * @param options The default {@link JsonWriterOptions}.
+     */
     public static synchronized void setDefaultFormatting(final JsonWriterOptions options) {
         defaultFormatting = options;
     }
 
+    /**
+     * Indicates whether the given file is extended with a known format or alias.
+     *
+     * @param file The file being tested.
+     * @return <code>true</code>, if the extension is recognized by the context.
+     */
     public static boolean isKnownFormat(final File file) {
         final String ext = getExtension(file);
         return PARSERS.containsKey(ext) || ALIASES.containsKey(ext);
     }
 
+    /**
+     * Parses the given file automatically based on its extension.
+     *
+     * <p>This method is the delegate of {@link Json#parse(File)}.
+     *
+     * @param file The file being parsed as some kind of JSON file or superset.
+     * @return The {@link JsonValue} represented by the file.
+     * @throws IOException If the underlying {@link FileReader} throws an exception.
+     * @throws SyntaxException If the contents of the file are syntactically invalid.
+     */
     public static JsonValue autoParse(final File file) throws IOException {
         return PARSERS.getOrDefault(getFormat(file), DEFAULT_PARSER).parse(file);
     }
 
+    /**
+     * Writes the given file automatically based on its extension.
+     *
+     * <p>This method is the delegate of {@link JsonValue#write(File)}.
+     *
+     * @param file  The file being written as some kind of JSON file or superset.
+     * @param value The {@link JsonValue} to be represented by the file.
+     * @throws IOException If the underlying {@link FileWriter} throws an exception.
+     */
     public static void autoWrite(final File file, final JsonValue value) throws IOException {
         final Writer writer = new FileWriter(file);
         WRITERS.getOrDefault(getFormat(file), DEFAULT_WRITER).write(writer, value, defaultFormatting);
@@ -86,7 +203,7 @@ public class JsonSerializationContext {
 
     private static String getExtension(final File file) {
         final int index = file.getName().lastIndexOf('.');
-        return index < 0 ? "xjs" : file.getName().substring(index + 1);
+        return index < 0 ? "xjs" : file.getName().substring(index + 1).toLowerCase();
     }
 
     static {

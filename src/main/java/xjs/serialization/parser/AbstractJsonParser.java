@@ -7,6 +7,13 @@ import xjs.exception.SyntaxException;
 
 import java.io.*;
 
+/**
+ * The basic parser type to be used for all sorts of JSON formats.
+ *
+ * <p>Implementors should be aware that the exact field structure of this type
+ * may be redesigned in a future pre-release, as not every field shown here is
+ * used by all provided subclasses.
+ */
 public abstract class AbstractJsonParser {
 
     protected static final int MIN_BUFFER_SIZE = 10;
@@ -53,6 +60,14 @@ public abstract class AbstractJsonParser {
         this.captureStart = -1;
     }
 
+    /**
+     * Converts the output of the {@link Reader} being wrapped by this object into
+     * any type of {@link JsonValue}.
+     *
+     * @return A definite, non-null {@link JsonValue}.
+     * @throws IOException If the reader throws an {@link IOException}.
+     * @throws SyntaxException If the data is syntactically invalid.
+     */
     public abstract @NotNull JsonValue parse() throws IOException;
 
     protected void expect(final char c) throws IOException {

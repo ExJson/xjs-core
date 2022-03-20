@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.io.Writer;
 import java.math.BigDecimal;
 
+/**
+ * The basic writer type to be used for all sorts of JSON formats.
+ */
 public abstract class AbstractJsonWriter implements AutoCloseable {
 
     protected final boolean format;
@@ -19,7 +22,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
     protected final boolean nestedSameLine;
     protected final boolean omitRootBraces;
     protected final boolean outputComments;
-    protected final boolean compress;
+    protected final boolean omitQuotes;
     protected final String eol;
     protected final String indent;
     protected final int minSpacing;
@@ -39,7 +42,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.bracesSameLine = true;
         this.nestedSameLine = false;
         this.omitRootBraces = true;
-        this.compress = true;
+        this.omitQuotes = true;
         this.outputComments = format;
         this.indent = "  ";
         this.minSpacing = 0;
@@ -57,7 +60,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.nestedSameLine = options.isNestedSameLine();
         this.omitRootBraces = options.isOmitRootBraces();
         this.outputComments = options.isOutputComments();
-        this.compress = options.isCompressed();
+        this.omitQuotes = options.isOmitQuotes();
         this.indent = options.getIndent();
         this.minSpacing = options.getMinSpacing();
         this.maxSpacing = options.getMaxSpacing();
@@ -65,6 +68,13 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.separator = options.getSeparator();
     }
 
+    /**
+     * Appends a {@link JsonValue} of <em>any kind</em> into the writer being
+     * wrapped by this object.
+     *
+     * @param value The value being serialized.
+     * @throws IOException If the underlying writer throws an {@link IOException}.
+     */
     public void write(final JsonValue value) throws IOException {
         this.writeLinesAbove(-1, true, false, value);
         this.write(value, 0);

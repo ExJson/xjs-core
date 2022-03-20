@@ -1,111 +1,328 @@
 package xjs.core;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+/**
+ * Implementation of {@link JsonContainer} providing updaters by <em>index</em>.
+ *
+ * <p>For example, insert additional values into this container, callers may use
+ * {@link JsonArray#add} or one of its overloads.
+ *
+ * <pre>{@code
+ *   Json.array().add("Hello, World!");
+ * }</pre>
+ *
+ * <p>Alternatively, to update an <em>existing</em> value, callers may use
+ * {@link JsonArray#set} or one of its overloads.
+ *
+ * <pre>{@code
+ *   JsonArray().add(false).set(0, true);
+ * }</pre>
+ *
+ * <p>The default {@link JsonContainer.View view} of this container is a regular,
+ * {@link JsonReference#get accessing} view operating directly on the underlying
+ * {@link JsonValue values}. This means that the values in this container can be
+ * iterated or streamed to allow transformations via the {@link Stream} API.
+ *
+ * <p>For example, to filter the contents of this array into an array containing
+ * exclusively {@link JsonNumber numbers}:
+ *
+ * <pre>{@code
+ *   final JsonArray array = Json.array().add(1).add(2).add("3").add(4);
+ *   final JsonArray numbers = array.stream()
+ *     .filter(JsonValue::isNumber).collect(JsonCollectors.value());
+ *
+ *   assert Json.array(1, 2, 4).equals(numbers);
+ * }</pre>
+ *
+ * <p>However, this does imply that streaming or iterating over the values will flag
+ * their references as <b>being used</b>. In the previous example, the filtered value,
+ * <code>Json.value("3")</code>, will be flagged as needed by the application. This is
+ * significant for any application reporting unused values to the user.
+ *
+ * <p>To avoid this problem, users may call {@link JsonContainer#visitAll} and iterate
+ * over the return value instead.
+ *
+ * <pre>{@code
+ *   final JsonArray array = Json.array().add(1).add(2).add("3").add(4);
+ *
+ *   final JsonArray numbers = array.visitAll().stream()
+ *     .filter(JsonValue::isNumber).collect(JsonCollectors.value());
+ *
+ *   assert !array.getReference(2).isAccessed();
+ * }</pre>
+ */
 public class JsonArray extends JsonContainer implements JsonContainer.View<JsonValue> {
 
     private ElementView view;
 
+    /**
+     * Constructs a new JSON array containing no contents.
+     */
     public JsonArray() {}
 
+    /**
+     * Constructs a new JSON array containing the given references.
+     *
+     * @param references A list of existing {@link JsonReference references}.
+     */
     public JsonArray(final List<JsonReference> references) {
         super(references);
     }
 
+    /**
+     * Variant of {@link #set(int, JsonValue)} wrapping an integer value.
+     *
+     * @param index The index of the <b>existing</b> value being replaced.
+     * @param value The value being set at this index.
+     * @return <code>this</code>, for method chaining.
+     * @throws IndexOutOfBoundsException if the given index is out of bounds.
+     */
     public JsonArray set(final int index, final long value) {
         return this.set(index, Json.value(value));
     }
 
+    /**
+     * Variant of {@link #set(int, JsonValue)} wrapping a decimal value.
+     *
+     * @param index The index of the <b>existing</b> value being replaced.
+     * @param value The value being set at this index.
+     * @return <code>this</code>, for method chaining.
+     * @throws IndexOutOfBoundsException if the given index is out of bounds.
+     */
     public JsonArray set(final int index, final double value) {
         return this.set(index, Json.value(value));
     }
 
+    /**
+     * Variant of {@link #set(int, JsonValue)} wrapping a boolean value.
+     *
+     * @param index The index of the <b>existing</b> value being replaced.
+     * @param value The value being set at this index.
+     * @return <code>this</code>, for method chaining.
+     * @throws IndexOutOfBoundsException if the given index is out of bounds.
+     */
     public JsonArray set(final int index, final boolean value) {
         return this.set(index, Json.value(value));
     }
 
+    /**
+     * Variant of {@link #set(int, JsonValue)} wrapping a string value.
+     *
+     * @param index The index of the <b>existing</b> value being replaced.
+     * @param value The value being set at this index.
+     * @return <code>this</code>, for method chaining.
+     * @throws IndexOutOfBoundsException if the given index is out of bounds.
+     */
     public JsonArray set(final int index, final String value) {
         return this.set(index, Json.value(value));
     }
 
+    /**
+     * Replaces a value at the given index.
+     *
+     * <p>This is an {@link JsonReference#get accessing} operation.
+     *
+     * @param index The index of the <b>existing</b> value being replaced.
+     * @param value The value being set at this index.
+     * @return <code>this</code>, for method chaining.
+     * @throws IndexOutOfBoundsException if the given index is out of bounds.
+     */
     public JsonArray set(final int index, final @Nullable JsonValue value) {
         this.references.get(index).update(og ->
             Json.nonnull(value).setDefaultMetadata(og));
         return this;
     }
 
+    /**
+     * Sets the header comment for the value at the given index.
+     *
+     * <p>This is an {@link JsonReference#get accessing} operation.
+     *
+     * @param index   The index of the <b>existing</b> value being updated.
+     * @param comment The message of the generated comment.
+     * @return <code>this</code>, for method chaining.
+     * @throws IndexOutOfBoundsException if the given index is out of bounds.
+     */
     public JsonArray setComment(final int index, final String comment) {
         this.get(index).setComment(comment);
         return this;
     }
 
+    /**
+     * Variant of {@link #add(JsonValue)} wrapping an integer value.
+     *
+     * @param value The value being added into the container.
+     * @return <code>this</code>, for method chaining.
+     */
     public JsonArray add(final long value) {
         return this.add(Json.value(value));
     }
 
+    /**
+     * Variant of {@link #add(JsonValue)} wrapping a decimal value.
+     *
+     * @param value The value being added into the container.
+     * @return <code>this</code>, for method chaining.
+     */
     public JsonArray add(final double value) {
         return this.add(Json.value(value));
     }
 
+    /**
+     * Variant of {@link #add(JsonValue)} wrapping a boolean value.
+     *
+     * @param value The value being added into the container.
+     * @return <code>this</code>, for method chaining.
+     */
     public JsonArray add(final boolean value) {
         return this.add(Json.value(value));
     }
 
+    /**
+     * Variant of {@link #add(JsonValue)} wrapping a string value.
+     *
+     * @param value The value being added into the container.
+     * @return <code>this</code>, for method chaining.
+     */
     public JsonArray add(final String value) {
         return this.add(Json.value(value));
     }
 
+    /**
+     * Adds a {@link JsonValue} into this container.
+     *
+     * <p>This is a {@link JsonReference#visit visiting} operation.
+     *
+     * @param value The value being added into the container.
+     * @return <code>this</code>, for method chaining.
+     */
     public JsonArray add(final JsonValue value) {
         this.references.add(new JsonReference(value));
         return this;
     }
 
+    /**
+     * Variant of {@link #add(JsonValue, String)} wrapping an integer value.
+     *
+     * @param value   The value being added into the container.
+     * @param comment The message of the generated comment being appended.
+     * @return <code>this</code>, for method chaining.
+     */
     public JsonArray add(final long value, final String comment) {
         return this.add(Json.value(value), comment);
     }
 
+    /**
+     * Variant of {@link #add(JsonValue, String)} wrapping a decimal value.
+     *
+     * @param value   The value being added into the container.
+     * @param comment The message of the generated comment being appended.
+     * @return <code>this</code>, for method chaining.
+     */
     public JsonArray add(final double value, final String comment) {
         return this.add(Json.value(value), comment);
     }
 
+    /**
+     * Variant of {@link #add(JsonValue, String)} wrapping a boolean value.
+     *
+     * @param value   The value being added into the container.
+     * @param comment The message of the generated comment being appended.
+     * @return <code>this</code>, for method chaining.
+     */
     public JsonArray add(final boolean value, final String comment) {
         return this.add(Json.value(value), comment);
     }
 
+    /**
+     * Variant of {@link #add(JsonValue, String)} wrapping a string value.
+     *
+     * @param value   The value being added into the container.
+     * @param comment The message of the generated comment being appended.
+     * @return <code>this</code>, for method chaining.
+     */
     public JsonArray add(final String value, final String comment) {
         return this.add(Json.value(value), comment);
     }
 
+    /**
+     * Variant of {@link #add(JsonValue)} which appends a header comment to the
+     * given value.
+     *
+     * <p>This is a {@link JsonReference#visit visiting} operation.
+     *
+     * @param value   The value being added into the container.
+     * @param comment The message of the generated comment being appended.
+     * @return <code>this</code>, for method chaining.
+     */
     public JsonArray add(final JsonValue value, final String comment) {
         return this.add(Json.nonnull(value).setComment(comment));
     }
 
+    /**
+     * Adds each {@link JsonReference reference} from the given container into this
+     * array.
+     *
+     * <p>This is a {@link JsonReference#visit visiting} operation.
+     *
+     * @param container Some other container housing references to be copied.
+     * @return <code>this</code>, for method chaining.
+     */
     public JsonArray addAll(final JsonContainer container) {
-        for (final JsonReference reference : container.references) {
-            this.add(reference.get());
-        }
+        this.references.addAll(container.references);
         return this;
     }
 
-    public JsonArray addReference(final int index, final JsonReference reference) {
-        this.references.add(index, reference);
-        return this;
-    }
-
+    /**
+     * Adds a single {@link JsonReference reference} directly into this container.
+     *
+     * @param reference An existing reference being copied into this container.
+     * @return <code>this</code>, for method chaining.
+     */
     public JsonArray addReference(final JsonReference reference) {
         this.references.add(reference);
         return this;
     }
 
+    /**
+     * Adds a single {@link JsonReference reference} directly into this container
+     * when given a specific index for the value.
+     *
+     * @param index     The index at which to insert the given reference.
+     * @param reference An existing reference being copied into this container.
+     * @return <code>this</code>, for method chaining.
+     * @throws IndexOutOfBoundsException If the given index is out of bounds.
+     */
+    public JsonArray addReference(final int index, final JsonReference reference) {
+        this.references.add(index, reference);
+        return this;
+    }
+
+    /**
+     * Converts this array into a regular {@link List}, containing its
+     * {@link JsonValue#unwrap unwrapped} contents.
+     *
+     * @return A new {@link List} containing the unwrapped values.
+     */
     public List<Object> toList() {
         return this.stream().map(JsonValue::unwrap).collect(Collectors.toList());
     }
 
+    /**
+     * Returns a {@link View} of the elements in this array. The {@link Element
+     * View implementation} for {@link JsonArray} exposes the element's index
+     * in addition to the reference and value being wrapped.
+     *
+     * @return An {@link ElementView element view} of the contents in this array.
+     */
     @Override
     public View<Element> view() {
         if (this.view == null) {
@@ -114,36 +331,92 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
         return this.view;
     }
 
+    /**
+     * Formats this array to display the given number of elements on each line.
+     *
+     * <p>This operation is valid only when every expected value <b>already exists
+     * inside of the array</b>. It is provided for convenience here, but due to its
+     * nature, it may be moved into a dedicated JSON formatting utility in the future.
+     *
+     * @param lineLength The number of elements to output on each line.
+     * @return <code>this</code>, for method chaining.
+     * @apiNote Experimental - may get removed or be implemented differently in a future
+     *          release.
+     */
     @Override
+    @ApiStatus.Experimental
     public JsonArray setLineLength(final int lineLength) {
         return (JsonArray) super.setLineLength(lineLength);
     }
 
+    /**
+     * Formats this array to place each element on the same line.
+     *
+     * <p>This operation is valid only when every expected value <b>already exists
+     * inside of the array</b>. It is provided for convenience here, but due to its
+     * nature, it may be moved into a dedicated JSON formatting utility in the future.
+     *
+     * @return <code>this</code>, for method chaining.
+     * @apiNote Experimental - may get removed or be implemented differently in a future
+     *          release.
+     */
     @Override
+    @ApiStatus.Experimental
     public JsonArray condense() {
         return (JsonArray) super.condense();
     }
 
+    /**
+     * Clears every {@link JsonReference reference} from the underlying array.
+     *
+     * @return <code>this</code>, for method chaining.
+     */
     @Override
     public JsonArray clear() {
         return (JsonArray) super.clear();
     }
 
+    /**
+     * Removes a single value from this container by equality.
+     *
+     * @param value The value being purged from this container.
+     * @return <code>this</code>, for method chaining.
+     */
     @Override
     public JsonArray remove(final JsonValue value) {
         return (JsonArray) super.remove(value);
     }
 
+    /**
+     * Removes a collection or array of values from this container by equality.
+     *
+     * @param values The values being purged from this container.
+     * @return <code>this</code>, for method chaining.
+     */
     @Override
     public JsonArray removeAll(final Iterable<JsonValue> values) {
         return (JsonArray) super.removeAll(values);
     }
 
+    /**
+     * Recursively updates the access flags for every reference in this container.
+     *
+     * @param accessed Whether each reference should be marked as accessed.
+     * @return <code>this</code>, for method chaining.
+     */
     @Override
     public JsonArray setAllAccessed(final boolean accessed) {
         return (JsonArray) super.setAllAccessed(accessed);
     }
 
+    /**
+     * Generates a shallow copy of this container. This operation yields a new
+     * array containing the exact same references. Any other containers in this
+     * array will be shallow copied recursively, but regular values will simply
+     * be reused and are not safe to be mutually updated.
+     *
+     * @return A <em>shallow</em> copy of this array.
+     */
     @Override
     public JsonArray shallowCopy() {
         final JsonArray copy = new JsonArray();
@@ -158,11 +431,27 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
         return copy;
     }
 
+    /**
+     * Generates a deep copy of this container. This operation yields a new
+     * array containing the exact same references. Any other containers in this
+     * array will be deep copied recursively. However, the new object will be
+     * entirely flagged as {@link JsonReference#setAccessed unused}.
+     *
+     * @return a <em>deep</em> copy of this array.
+     */
     @Override
     public JsonArray deepCopy() {
         return this.deepCopy(false);
     }
 
+    /**
+     * Generates a deep copy of this container. This operation yields a new
+     * array containing the exact same references. Any other containers in this
+     * array will be deep copied recursively.
+     *
+     * @param trackAccess Whether to additionally copy access flags.
+     * @return a <em>deep</em> copy of this array.
+     */
     @Override
     public JsonArray deepCopy(final boolean trackAccess) {
         final JsonArray copy = (JsonArray) new JsonArray().setDefaultMetadata(this);
@@ -177,6 +466,12 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
         return copy;
     }
 
+    /**
+     * Generates a deep copy of this array without persisting any formatting
+     * info or similar metadata.
+     *
+     * @return a <em>deep</em>, unformatted copy of this array.
+     */
     @Override
     public JsonArray unformatted() {
         final JsonArray copy = new JsonArray();
@@ -187,46 +482,107 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
         return copy;
     }
 
+    /**
+     * Override indicating that this value is an array type.
+     *
+     * @return {@link JsonType#ARRAY}, always.
+     */
     @Override
-    public JsonType getType() {
+    public final JsonType getType() {
         return JsonType.ARRAY;
     }
 
+    /**
+     * Override returning a regular {@link List} representing this array.
+     *
+     * @return A new {@link List} containing recursively unwrapped values.
+     */
     @Override
     public List<Object> unwrap() {
         return this.toList();
     }
 
+    /**
+     * Override indicating that this value is an array type.
+     *
+     * @return <code>true</code>, always.
+     */
     @Override
-    public boolean isArray() {
+    public final boolean isArray() {
         return true;
     }
 
+    /**
+     * Override allowing this value to be cast into a {@link JsonContainer}.
+     *
+     * @return <code>this</code>, always.
+     */
     @Override
     public JsonArray asContainer() {
         return this;
     }
 
+    /**
+     * Override allowing this value to be cast into a {@link JsonArray}.
+     *
+     * @return <code>this</code>, always.
+     */
     @Override
     public JsonArray asArray() {
         return this;
     }
 
+    /**
+     * Override returning this value directly instead of constructing a new container.
+     *
+     * @return <code>this</code>, always.
+     */
     @Override
+    @ApiStatus.Experimental
     public JsonArray intoContainer() {
-        return (JsonArray) super.intoContainer();
+        return this;
     }
 
+    /**
+     * Transforms this array into a {@link JsonObject}. By default, this operation maps
+     * each value to the string equivalent of its index.
+     *
+     * <p>For example, when given the following array:
+     *
+     * <pre>{@code
+     *   [ a, b, c ]
+     * }</pre>
+     *
+     * <p>Calling this method will generate the following object:
+     *
+     * <pre>{@code
+     *   0: a, 1: b, 2: c
+     * }</pre>
+     *
+     * @return <code>this</code>, always.
+     */
     @Override
+    @ApiStatus.Experimental
     public JsonObject intoObject() {
         return new JsonObject(this.references);
     }
 
+    /**
+     * Override returning this value directly instead of constructing a new container.
+     *
+     * @return <code>this</code>, always.
+     */
     @Override
     public JsonArray intoArray() {
         return this;
     }
 
+    /**
+     * Generates a regular, {@link JsonReference#get accessing} iterator over the values
+     * in this array.
+     *
+     * @return A new accessing value iterator for the values in this container.
+     */
     @Override
     public Iterator<JsonValue> iterator() {
         return this.values().iterator();
@@ -277,19 +633,45 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
         }
     }
 
+    /**
+     * The JSON array counterpart to {@link Access}. In addition to exposing the
+     * underlying references within this container, Element exposes each value's
+     * <em>index</em>, as this is the primary accessor for array values.
+     */
     public static class Element extends Access {
         private final int index;
 
+        /**
+         * Constructs a new Element accessor when given an index and its reference.
+         *
+         * @param index     The index pointing to this value.
+         * @param reference The reference pointing to the value.
+         */
         public Element(final int index, final JsonReference reference) {
             super(reference);
             this.index = index;
         }
 
+        /**
+         * Constructs a new Element accessor when given its index and the raw value.
+         *
+         * <p>A new {@link JsonReference reference} will be generated to wrap this value.
+         *
+         * @param index The index pointing to this value.
+         * @param value The raw value being pointed to.
+         * @apiNote Experimental - constructor is unnecessary and may get removed.
+         */
+        @ApiStatus.Experimental
         public Element(final int index, final JsonValue value) {
             super(new JsonReference(value));
             this.index = index;
         }
 
+        /**
+         * Exposes this element's index to the caller.
+         *
+         * @return The index of the original value.
+         */
         public int getIndex() {
             return this.index;
         }

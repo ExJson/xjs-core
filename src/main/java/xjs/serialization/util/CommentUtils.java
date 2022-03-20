@@ -37,7 +37,7 @@ public final class CommentUtils {
         return formatted.toString();
     }
 
-    public static String formatBlockComment(final CommentStyle style, final String... lines) {
+    private static String formatBlockComment(final CommentStyle style, final String... lines) {
         final String eol = JsonSerializationContext.getEol();
         final StringBuilder formatted = new StringBuilder();
         if (lines.length == 1) {

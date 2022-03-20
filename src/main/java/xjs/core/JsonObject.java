@@ -1,5 +1,6 @@
 package xjs.core;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -17,6 +18,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         this.table = new HashIndexTable();
     }
 
+    @ApiStatus.Experimental
     public JsonObject(final List<JsonReference> references) {
         super(references);
         this.keys = listOfNumericKeys(references.size());
@@ -76,9 +78,13 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
         while (keyIterator.hasNext() && referenceIterator.hasNext()) {
             final String key = keyIterator.next();
+            final JsonReference reference = referenceIterator.next();
 
-            if (this.indexOf(key) == -1) {
-                this.add(key, referenceIterator.next().get());
+            final JsonValue replaced = this.get(key);
+            if (replaced == null) {
+                this.add(key, reference.get());
+            } else if (replaced instanceof JsonObject && reference.visit() instanceof JsonObject) {
+                replaced.asObject().setDefaults(reference.get().asObject());
             }
         }
         return this;
@@ -176,12 +182,13 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return this.indexOf(key) != -1;
     }
 
-    public JsonValue get(final String key) {
+    public @Nullable JsonValue get(final String key) {
         final int index = this.indexOf(key);
         return index != -1 ? this.references.get(index).get() : null;
     }
 
-    public <T extends JsonValue> Optional<T> getOptional(final String key, final JsonFilter<T> f) {
+    @ApiStatus.Experimental
+    public <T> Optional<T> getOptional(final String key, final JsonFilter<T> f) {
         return this.getOptional(key).flatMap(f::applyOptional);
     }
 
@@ -189,7 +196,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return Optional.ofNullable(this.get(key));
     }
 
-    public JsonReference getReference(final String key) {
+    public @Nullable JsonReference getReference(final String key) {
         final int index = this.indexOf(key);
         return index != -1 ? this.references.get(index) : null;
     }
@@ -335,7 +342,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     @Override
-    public JsonType getType() {
+    public final JsonType getType() {
         return JsonType.OBJECT;
     }
 
@@ -345,7 +352,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     @Override
-    public boolean isObject() {
+    public final boolean isObject() {
         return true;
     }
 
@@ -431,6 +438,13 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             this.key = key;
         }
 
+        /**
+         *
+         * @param key
+         * @param value
+         * @apiNote Experimental - constructor is unnecessary and may get removed.
+         */
+        @ApiStatus.Experimental
         public Member(final String key, final JsonValue value) {
             super(new JsonReference(value));
             this.key = key;

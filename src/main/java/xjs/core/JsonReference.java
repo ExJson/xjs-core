@@ -1,5 +1,6 @@
 package xjs.core;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,22 +16,6 @@ public class JsonReference{
         this.accessed = false;
     }
 
-    public static JsonReference wrap(final long value) {
-        return new JsonReference(Json.value(value));
-    }
-
-    public static JsonReference wrap(final double value) {
-        return new JsonReference(Json.value(value));
-    }
-
-    public static JsonReference wrap(final boolean value) {
-        return new JsonReference(Json.value(value));
-    }
-
-    public static JsonReference wrap(final @Nullable String value) {
-        return new JsonReference(Json.value(value));
-    }
-
     public @NotNull JsonValue get() {
         this.accessed = true;
         return this.referent;
@@ -42,6 +27,13 @@ public class JsonReference{
         return this;
     }
 
+    /**
+     *
+     * @param updater
+     * @return <code>this</code>, for method chaining.
+     * @apiNote Experimental - This method may get renamed at some point before release.
+     */
+    @ApiStatus.Experimental
     public JsonReference update(final UnaryOperator<JsonValue> updater) {
         return this.set(updater.apply(this.referent));
     }
@@ -50,11 +42,25 @@ public class JsonReference{
         return this.referent;
     }
 
+    /**
+     *
+     * @param referent
+     * @return <code>this</code>, for method chaining.
+     * @apiNote Experimental - This method may get renamed at some point before release.
+     */
+    @ApiStatus.Experimental
     public JsonReference mutate(final @Nullable JsonValue referent) {
         this.referent = Json.nonnull(referent);
         return this;
     }
 
+    /**
+     *
+     * @param updater
+     * @return <code>this</code>, for method chaining.
+     * @apiNote Experimental - This method may get renamed at some point before release.
+     */
+    @ApiStatus.Experimental
     public JsonReference apply(final UnaryOperator<JsonValue> updater) {
         return this.mutate(updater.apply(this.referent));
     }
