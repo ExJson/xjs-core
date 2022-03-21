@@ -64,13 +64,9 @@ public class JsonNumber extends JsonValue {
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o instanceof JsonNumber) {
-            return this.value == ((JsonNumber) o).value
-                && this.metadataEquals((JsonNumber) o);
+    public boolean matches(final JsonValue other) {
+        if (other instanceof JsonNumber) {
+            return this.value == ((JsonNumber) other).value;
         }
         return false;
     }

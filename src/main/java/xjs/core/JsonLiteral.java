@@ -108,13 +108,9 @@ public class JsonLiteral extends JsonValue {
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o instanceof JsonLiteral) {
-            return this.value == ((JsonLiteral) o).value
-                && super.metadataEquals((JsonLiteral) o);
+    public boolean matches(final JsonValue other) {
+        if (other instanceof JsonLiteral) {
+            return this.value == ((JsonLiteral) other).value;
         }
         return false;
     }

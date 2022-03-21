@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -14,14 +15,18 @@ public final class JsonObjectTest {
     public void add_insertsValue() {
         final JsonObject object = new JsonObject();
         object.add("value", 1234);
-        assertEquals(1234, object.get("value").asInt());
+        final JsonValue value = object.get("value");
+        assertNotNull(value);
+        assertEquals(1234, value.asInt());
     }
 
     @Test
     public void add_doesNotTrackAccess() {
         final JsonObject object = new JsonObject();
         object.add("value", 1234);
-        assertFalse(object.getReference("value").isAccessed());
+        final JsonReference reference = object.getReference("value");
+        assertNotNull(reference);
+        assertFalse(reference.isAccessed());
     }
 
     @Test
@@ -37,14 +42,16 @@ public final class JsonObjectTest {
         final JsonObject object = new JsonObject();
         final JsonReference reference = new JsonReference(Json.value(1234));
         object.addReference("value", reference);
-        assertFalse(object.getReference("value").isAccessed());
+        assertFalse(reference.isAccessed());
     }
 
     @Test
     public void set_updatesValue() {
         final JsonObject object = new JsonObject().add("value", 1);
         object.set("value", 2);
-        assertTrue(object.getReference("value").isAccessed());
+        final JsonReference reference = object.getReference("value");
+        assertNotNull(reference);
+        assertTrue(reference.isAccessed());
     }
 
     @Test
@@ -52,7 +59,9 @@ public final class JsonObjectTest {
         final JsonObject object =
             new JsonObject().add("0", Json.value(1).setLinesAbove(1));
         object.set("0", 2);
-        assertEquals(1, object.get("0").getLinesAbove());
+        final JsonValue value = object.get("0");
+        assertNotNull(value);
+        assertEquals(1, value.getLinesAbove());
     }
 
     @Test
@@ -60,7 +69,9 @@ public final class JsonObjectTest {
         final JsonObject object =
             new JsonObject().add("0", Json.value(1).setLinesAbove(1));
         object.set("0", Json.value(2).setLinesAbove(0));
-        assertEquals(0, object.get("0").getLinesAbove());
+        final JsonValue value = object.get("0");
+        assertNotNull(value);
+        assertEquals(0, value.getLinesAbove());
     }
 
     @Test

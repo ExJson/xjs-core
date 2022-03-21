@@ -594,15 +594,19 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
+    public boolean matches(final JsonValue other) {
+        if (!(other instanceof JsonArray)) {
+            return false;
         }
-        if (o instanceof JsonArray) {
-            return this.references.equals(((JsonArray) o).references)
-                && super.metadataEquals((JsonArray) o);
+        final JsonArray array = (JsonArray) other;
+        if (this.size() == array.size()) {
+            for (int i = 0; i < this.size(); i++) {
+                if (!this.references.get(i).visit().matches(array.references.get(i).visit())) {
+                    return false;
+                }
+            }
         }
-        return false;
+        return true;
     }
 
     private class ElementView implements View<Element> {

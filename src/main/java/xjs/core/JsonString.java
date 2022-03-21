@@ -63,13 +63,18 @@ public class JsonString extends JsonValue {
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
+    public boolean matches(final JsonValue other) {
+        if (other instanceof JsonString) {
+            return this.value.equals(((JsonString) other).value);
         }
-        if (o instanceof JsonString) {
-            return this.value.equals(((JsonString) o).value)
-                && this.metadataEquals((JsonString) o);
+        return false;
+    }
+
+    @Override
+    protected boolean matchesMetadata(final JsonValue other) {
+        if (other instanceof JsonString) {
+            return this.type.equals(((JsonString) other).type)
+                && super.matchesMetadata(other);
         }
         return false;
     }

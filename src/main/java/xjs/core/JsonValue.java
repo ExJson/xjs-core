@@ -754,6 +754,15 @@ public abstract class JsonValue implements Serializable {
     }
 
     /**
+     * Indicates whether the given data wraps the same <em>value</em>, thus
+     * ignoring its metadata.
+     *
+     * @param other The value being compared to.
+     * @return <code>true</code>, if the two values contain the same primary data.
+     */
+    public abstract boolean matches(final JsonValue other);
+
+    /**
      * Indicates whether the metadata associated with this value matches that
      * of the input.
      *
@@ -764,11 +773,23 @@ public abstract class JsonValue implements Serializable {
      *          aware that any exact methods required could potentially be
      *          impacted by such a change.
      */
-    protected boolean metadataEquals(final JsonValue other) {
+    protected boolean matchesMetadata(final JsonValue other) {
         return this.linesAbove == other.linesAbove
             && this.linesBetween == other.linesBetween
             && this.flags == other.flags
             && Objects.equals(this.comments, other.comments);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (this.getClass().equals(o.getClass())) {
+            final JsonValue other = (JsonValue) o;
+            return this.matches(other) && this.matchesMetadata(other);
+        }
+        return false;
     }
 
     /**

@@ -356,18 +356,11 @@ public abstract class JsonContainer extends JsonValue {
      *   assert Json.parse("[1, 2, 3]").asArray().unformatted().contains(1);
      * }</pre>
      *
-     * <p>Todo: add JsonValue#matches and conditionally use that, instead.
-     *
      * @param value The value being queried in this container.
      * @return <code>true</code>, if an exact match is found.
      */
     public boolean contains(final JsonValue value) {
-        for (final JsonReference reference : this.references) {
-            if (reference.visit().equals(value)) {
-                return true;
-            }
-        }
-        return false;
+        return this.indexOf(value) >= 0;
     }
 
     /**
@@ -473,19 +466,13 @@ public abstract class JsonContainer extends JsonValue {
     /**
      * Removes a single reference from this container if its contents match the given value.
      *
-     * <p>Todo: add JsonValue#matches and conditionally use that, instead.
-     *
      * @param value The value being compared against.
      * @return <code>this</code>, for method chaining.
      */
     public JsonContainer remove(final JsonValue value) {
-        final Iterator<JsonReference> iterator = this.references.iterator();
-        while (iterator.hasNext()) {
-            final JsonReference reference = iterator.next();
-            if (reference.visit().equals(value)) {
-                iterator.remove();
-                return this;
-            }
+        final int index = this.indexOf(value);
+        if (index >= 0) {
+            this.references.remove(index);
         }
         return this;
     }
@@ -522,14 +509,12 @@ public abstract class JsonContainer extends JsonValue {
     /**
      * Gets the index of the first matching element in the container, or else -1.
      *
-     * <p>Todo: add JsonValue#matches and conditionally use that, instead.
-     *
      * @param value The value being compared against.
      * @return The index of the first matching element, or else -1.
      */
     public int indexOf(final JsonValue value) {
         for (int i = 0; i < this.references.size(); i++) {
-            if (this.references.get(i).visit().equals(value)) {
+            if (this.references.get(i).visit().matches(value)) {
                 return i;
             }
         }
@@ -659,6 +644,15 @@ public abstract class JsonContainer extends JsonValue {
      * @return a <em>deep</em>, unformatted copy of this container.
      */
     public abstract JsonContainer unformatted();
+
+    /**
+     * Override indicating that subclasses must still implement this method.
+     *
+     * @param other The value being compared to.
+     * @return <code>true</code>, if the two values match.
+     */
+    @Override
+    public abstract boolean matches(final JsonValue other);
 
     /**
      * A {@link View view} of this container which {@link JsonReference#get accesses}

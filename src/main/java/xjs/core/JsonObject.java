@@ -67,6 +67,10 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return this;
     }
 
+    /**
+     * @throws NullPointerException if the value does not exist.
+     */
+    @SuppressWarnings("ConstantConditions")
     public JsonObject setComment(final String key, final String comment) {
         this.get(key).setComment(comment);
         return this;
@@ -396,17 +400,23 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
+    public boolean matches(final JsonValue other) {
+        if (!(other instanceof JsonObject)) {
+            return false;
         }
-        if (o instanceof JsonObject) {
-            final JsonObject other = (JsonObject) o;
-            return this.keys.equals(other.keys)
-                && this.references.equals(other.references)
-                && super.metadataEquals(other);
+        final JsonObject object = (JsonObject) other;
+        if (this.size() != object.size()) {
+            return false;
         }
-        return false;
+        if (!this.keys.equals((object.keys))) {
+            return false;
+        }
+        for (int i = 0; i < this.size(); i++) {
+            if (!this.references.get(i).visit().matches(object.references.get(i).visit())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private class MemberIterator implements Iterator<Member> {
