@@ -655,6 +655,45 @@ public abstract class JsonContainer extends JsonValue {
     public abstract boolean matches(final JsonValue other);
 
     /**
+     * Generates an immutable view of this container in which values may not be added
+     * or replaced.
+     *
+     * @return The frozen equivalent of this container.
+     */
+    public JsonContainer freeze() {
+        return this.freeze(false);
+    }
+
+    /**
+     * Generates an immutable view of this container in which values may not be added
+     * or replaced.
+     *
+     * @param recursive Whether to freeze this container recursively.
+     * @return The frozen equivalent of this container.
+     */
+    public abstract JsonContainer freeze(final boolean recursive);
+
+    /**
+     * Generates an immutable list of the references in this container.
+     *
+     * @param recursive Whether to freeze references recursively.
+     * @return The frozen list.
+     */
+    protected List<JsonReference> freezeReferences(final boolean recursive) {
+        final List<JsonReference> frozen =
+            this.references.stream()
+                .map(ref -> {
+                    final JsonReference clone = ref.clone(true);
+                    if (recursive && ref.visit().isContainer()) {
+                        ref.apply(value -> value.asContainer().freeze(true));
+                    }
+                    return clone.freeze();
+                })
+                .collect(Collectors.toList());
+        return Collections.unmodifiableList(frozen);
+    }
+
+    /**
      * A {@link View view} of this container which {@link JsonReference#get accesses}
      * each value as it gets returned to the consumer. This implies that every value
      * in the container is needed (i.e. not technically <em>ignored</em>) by the

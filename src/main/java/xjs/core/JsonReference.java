@@ -6,14 +6,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
-public class JsonReference{
+public class JsonReference {
 
     protected JsonValue referent;
     protected boolean accessed;
+    protected boolean mutable;
 
     public JsonReference(final @Nullable JsonValue referent) {
         this.referent = Json.nonnull(referent);
         this.accessed = false;
+        this.mutable = true;
     }
 
     public @NotNull JsonValue get() {
@@ -22,6 +24,7 @@ public class JsonReference{
     }
 
     public JsonReference set(final @Nullable JsonValue referent) {
+        this.checkMutable();
         this.referent = Json.nonnull(referent);
         this.accessed = true;
         return this;
@@ -50,6 +53,7 @@ public class JsonReference{
      */
     @ApiStatus.Experimental
     public JsonReference mutate(final @Nullable JsonValue referent) {
+        this.checkMutable();
         this.referent = Json.nonnull(referent);
         return this;
     }
@@ -72,6 +76,21 @@ public class JsonReference{
     public JsonReference setAccessed(final boolean accessed) {
         this.accessed = accessed;
         return this;
+    }
+
+    public boolean isMutable() {
+        return this.mutable;
+    }
+
+    public JsonReference freeze() {
+        this.mutable = false;
+        return this;
+    }
+
+    private void checkMutable() {
+        if (!this.mutable) {
+            throw new UnsupportedOperationException("Reference is immutable: " + this);
+        }
     }
 
     public JsonReference clone(final boolean trackAccess) {

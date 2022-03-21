@@ -97,4 +97,10 @@ public final class JsonReferenceTest {
         final JsonReference clone = reference.clone(true);
         assertEquals(reference.isAccessed(), clone.isAccessed());
     }
+
+    @Test
+    public void frozenReference_isImmutable() {
+        final JsonReference reference = new JsonReference(null).freeze();
+
+    }
 }

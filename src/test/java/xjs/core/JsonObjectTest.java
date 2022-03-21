@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class JsonObjectTest {
@@ -91,5 +92,13 @@ public final class JsonObjectTest {
     public void intoArray_dropsKeys() {
         final JsonObject object = new JsonObject().add("values", 1);
         assertEquals(new JsonArray().add(1), object.intoArray());
+    }
+
+    @Test
+    public void frozenObject_isImmutable() {
+        final JsonObject object = new JsonObject().add("key", "value").freeze();
+
+        assertThrows(UnsupportedOperationException.class, () -> object.add("k2", "v2"));
+        assertThrows(UnsupportedOperationException.class, () -> object.set("key", false));
     }
 }

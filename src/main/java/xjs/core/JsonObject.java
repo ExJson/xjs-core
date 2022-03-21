@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class JsonObject extends JsonContainer implements JsonContainer.View<JsonObject.Member> {
 
@@ -20,8 +21,12 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
     @ApiStatus.Experimental
     public JsonObject(final List<JsonReference> references) {
+        this(listOfNumericKeys(references.size()), references);
+    }
+
+    protected JsonObject(final List<String> keys, final List<JsonReference> references) {
         super(references);
-        this.keys = listOfNumericKeys(references.size());
+        this.keys = keys;
         this.table = new HashIndexTable();
         this.table.init(this.keys);
     }
@@ -417,6 +422,16 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             }
         }
         return true;
+    }
+
+    @Override
+    public JsonObject freeze() {
+        return (JsonObject) super.freeze();
+    }
+
+    @Override
+    public JsonObject freeze(final boolean recursive) {
+        return new JsonObject(this.keys, this.freezeReferences(recursive));
     }
 
     private class MemberIterator implements Iterator<Member> {

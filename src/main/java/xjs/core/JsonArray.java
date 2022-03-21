@@ -609,6 +609,16 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
         return true;
     }
 
+    @Override
+    public JsonArray freeze() {
+        return (JsonArray) super.freeze();
+    }
+
+    @Override
+    public JsonArray freeze(final boolean recursive) {
+        return new JsonArray(this.freezeReferences(recursive));
+    }
+
     private class ElementView implements View<Element> {
         @Override
         public @NotNull ElementIterator iterator() {
