@@ -1,7 +1,9 @@
 package xjs.core;
 
 import org.junit.jupiter.api.Test;
+import xjs.serialization.parser.JsonParser;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +55,24 @@ public final class JsonContainerTest {
     public void contains_canSearchByPrimitive() {
         final JsonContainer container = new JsonArray().add(1);
         assertTrue(container.contains(1));
+    }
+
+    @Test
+    public void contains_ignoresMetadata() throws IOException {
+        final JsonContainer container = new JsonParser("[1]").parse().asContainer();
+        assertTrue(container.contains(1));
+    }
+
+    @Test
+    public void indexOf_ignoresMetadata() throws IOException {
+        final JsonContainer container = new JsonParser("[1]").parse().asContainer();
+        assertEquals(0, container.indexOf(Json.value(1)));
+    }
+
+    @Test
+    public void remove_ignoresMetadata() throws IOException {
+        final JsonContainer container = new JsonParser("[1]").parse().asContainer();
+        assertTrue(container.remove(Json.value(1)).isEmpty());
     }
 
     @Test
@@ -132,8 +152,6 @@ public final class JsonContainerTest {
 
         assertFalse(copy.references().stream().anyMatch(JsonReference::isAccessed));
     }
-
-
 
     @Test
     public void deepCopy_clonesAllReferences() {

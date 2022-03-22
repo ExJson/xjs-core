@@ -102,8 +102,8 @@ public class JsonReference {
     public int hashCode() {
         int result = 1;
         result = 31 * result + this.referent.hashCode();
-        result = 31 * result + (this.accessed ? 1 : 0);
-
+        if (this.accessed) result *= 17;
+        if (this.mutable) result *= 31;
         return result;
     }
 
@@ -115,7 +115,8 @@ public class JsonReference {
         if (o instanceof JsonReference) {
             final JsonReference other = (JsonReference) o;
             return this.referent.equals(other.referent)
-                && this.accessed == other.accessed;
+                && this.accessed == other.accessed
+                && this.mutable == other.mutable;
         }
         return false;
     }

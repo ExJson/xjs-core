@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class JsonReferenceTest {
@@ -102,5 +103,6 @@ public final class JsonReferenceTest {
     public void frozenReference_isImmutable() {
         final JsonReference reference = new JsonReference(null).freeze();
 
+        assertThrows(UnsupportedOperationException.class, () -> reference.set(Json.value(1)));
     }
 }
