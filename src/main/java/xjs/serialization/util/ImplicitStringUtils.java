@@ -2,23 +2,171 @@ package xjs.serialization.util;
 
 import xjs.exception.SyntaxException;
 
+/**
+ * A collection of utilities for highlighting streams of miscellaneous tokens,
+ * written in the so-called "implicit" space. These tokens behave like any other
+ * container, comment, quoted string element, number, etc. and follow the same
+ * rules when given.
+ *
+ * <p>This includes:
+ *
+ * <ul>
+ *   <li>Single and double-quoted line strings</li>
+ *   <li>Triple-quoted or multiline strings</li>
+ *   <li>C-style line and hash comments</li>
+ *   <li>Block or multiline comments, and</li>
+ *   <li>Containers: <code>[]</code>, <code>{}</code>, and <code>()</code></li>
+ * </ul>
+ *
+ * <p>The syntax described here should be sufficient to support highlighting
+ * tokens in a variety of languages. Namely,
+ *
+ * <ul>
+ *   <li>JSON</li>
+ *   <li>Java</li>
+ *   <li>JavaScript</li>
+ *   <li>Python, and</li>
+ *   <li>Any other syntax built around similar token streams</li>
+ * </ul>
+ *
+ * <p>Callers should be aware that ImplicitStringUtils is <b>not</b> designed for
+ * evaluating and parsing these tokens. Rather, its goal is to <b>isolate</b> the
+ * tokens, so that they may be preserved and evaluated at some other time.
+ *
+ * <p>For example, to generate a substring highlighting the first key in a JSON
+ * object:
+ *
+ * <pre>{@code
+ *   final String json = "{ key: value }";
+ *   final String key = select(json, 1, StringContext.KEY);
+ *   assert "key".equals(key);
+ * }</pre>
+ *
+ * <p>Or, more verbosely, to get the index of a <code>&gt;</code>token in
+ * {@link #isBalanced unbalanced} space:
+ *
+ * <pre>{@code
+ *   final String tokens = "(a > b) > (c > d)";
+ *   final int index = indexOf(tokens, 0, '>', false, true);
+ *   assert 8 == index; // at the very center
+ * }</pre>
+ *
+ * <p>And finally, these utilities may be used to isolate and verify the contents
+ * of quoted strings and other similar tokens:
+ *
+ * <pre>{@code
+ *   final String quoted = " 'Hello, world!' ";
+ *   final String closer = expectQuote(quoted, 1, '\'');
+ *   assert 15 == closer;
+ * }</pre>
+ */
 public final class ImplicitStringUtils {
 
     private ImplicitStringUtils() {}
 
+    /**
+     * Indicates whether the given text is "balanced."
+     *
+     * <p>A stream of tokens is considered <em>balanced</em> when all of its
+     * containers, comments, and quotes are properly closed <b>in the correct
+     * order</b>.
+     *
+     * <p>For example, the following stream of tokens represents a parenthetical
+     * container housing a single-quoted string. The container and string are
+     * both closed:
+     *
+     * <pre>{@code
+     *   ('hello, world')
+     * }</pre>
+     *
+     * <p>These containers may be nested recursively. As such, the writer must
+     * pay careful attention to close the containers <b>in the correct order</b>.
+     * The following represents a series of nested containers, the whole of which
+     * may be considered <em>balanced</em>:
+     *
+     * <pre>{@code
+     *   (()[{}])
+     * }</pre>
+     *
+     * <p>The exact rules and supported types of balance-able tokens is outlined
+     * the header.
+     *
+     * @param text The text being inspected for balance.
+     * @return <code>true</code>, if this text is balanced.
+     */
     public static boolean isBalanced(final String text) {
         if (text.isEmpty()) return true;
         return indexOf(text, 0, '\u0000', false, false) >= 0;
     }
 
+    /**
+     * Generates a slice of text for the given string context (i.e. either a key
+     * or a value).
+     *
+     * <p>For example, to isolate the value in the following JSON object:
+     *
+     * <pre>{@code
+     *   { "key": "value" }
+     * }</pre>
+     *
+     * <p>Start after the key and select by context:
+     *
+     * <pre>{@code
+     *   final String value = select(json, 9, StringContext.VALUE);
+     *   assert "\"value\"".equals(value)
+     * }</pre>
+     *
+     * @param text The stream of tokens being evaluated.
+     * @param s    The starting index.
+     * @param ctx  The type of implicit space being evaluated (a key or a value)
+     * @return The substring of text representing these tokens.
+     * @throws SyntaxException If the text is not {@link #isBalanced balanced}.
+     */
     public static String select(final String text, final int s, final StringContext ctx) {
         return text.substring(s, expect(text, s, ctx));
     }
 
+    /**
+     * Indicates whether the first stream of tokens in the given text is valid
+     * for the expected context.
+     *
+     * <p>For example, to determine if a given token stream starts with either
+     * a key or a value:
+     *
+     * <pre>{@code
+     *   final String json = "key: value";
+     *   final boolean isKey = find(json, StringContext.KEY);
+     *   assert isKey;
+     * }</pre>
+     *
+     * @param text The stream of tokens being evaluated.
+     * @param ctx  The type of tokens expected at the beginning of the text.
+     * @return <code>true</code>, if the context is valid.
+     */
     public static boolean find(final String text, final StringContext ctx) {
         return indexOf(text, 0, ctx) >= 0;
     }
 
+    /**
+     * Locates the end of a token stream for the given string context.
+     *
+     * <p>For example, to get the index of the first unbalanced <code>:</code>:
+     *
+     * <pre>{@code
+     *   final String json = "{ key: value }";
+     *   final int index = indexOf(json, 1, StringContext.KEY);
+     *   assert 5 == index;
+     * }</pre>
+     *
+     * <p>Callers should be aware that trailing whitespace and comments will be
+     * trimmed from the output. <b>The return value indicates the end of the key
+     * up to any trailing tokens</b>.
+     *
+     * @param text The stream of tokens being evaluated.
+     * @param s    The starting index.
+     * @param ctx  The type of tokens expected at this index.
+     * @return The index at the end of these tokens, <b>or else -1</b>.
+     */
     public static int indexOf(final String text, final int s, final StringContext ctx) {
         if (ctx == StringContext.KEY) {
             return indexOf(text, s, ':', false, true);
@@ -26,6 +174,26 @@ public final class ImplicitStringUtils {
         return indexOf(text, s, ',', true, true);
     }
 
+    /**
+     * Locates the end of a token stream <em>up to</em> the expected character
+     * in {@link #isBalanced balanced} space.
+     *
+     * For example, to get the index of a <code>&gt;</code>token in unbalanced
+     * space:
+     *
+     * <pre>{@code
+     *   final String tokens = "(a > b) > (c > d)";
+     *   final int index = indexOf(tokens, 0, '>', false, true);
+     *   assert 8 == index; // at the very center
+     * }</pre>
+     *
+     * @param text The stream of tokens being evaluated.
+     * @param s    The starting index.
+     * @param e    The expected character.
+     * @param n    Whether to stop at the first unbalanced newline.
+     * @param u    Whether to stop when the text becomes unbalanced.
+     * @return The first index of this character in unbalanced space, or else -1.
+     */
     public static int indexOf(final String text, int s, final char e, final boolean n, final boolean u) {
         try {
             return expect(text, s, e, n, u);
@@ -34,6 +202,17 @@ public final class ImplicitStringUtils {
         }
     }
 
+    /**
+     * Variant of {@link #indexOf(String, int, StringContext)} which throws a
+     * {@link SyntaxException} with details about the error if the syntax of
+     * the input invalid.
+     *
+     * @param text The stream of tokens being evaluated.
+     * @param s    The starting index.
+     * @param ctx  The Type of tokens expected at this index.
+     * @return The index at the end of these tokens.
+     * @throws SyntaxException if the syntax of the input is invalid.
+     */
     public static int expect(final String text, final int s, final StringContext ctx) {
         if (ctx == StringContext.KEY) {
             return expect(text, s, ':', false, true);
@@ -41,6 +220,19 @@ public final class ImplicitStringUtils {
         return expect(text, s, ',', true, true);
     }
 
+    /**
+     * Variant of {@link #indexOf(String, int, char, boolean, boolean)} which
+     * throws a {@link SyntaxException} with details about the error if the
+     * syntax of the input invalid.
+     *
+     * @param text The stream of tokens being evaluated.
+     * @param s    The starting index.
+     * @param e    The expected character.
+     * @param n    Whether to stop at the first unbalanced newline.
+     * @param u    Whether to stop when the text becomes unbalanced.
+     * @return The first index of this character in unbalanced space.
+     * @throws SyntaxException If the syntax of the input is invalid.
+     */
     public static int expect(final String text, final int s, final char e, final boolean n, final boolean u) {
         int index = search(text, s, e, n, u);
         index = trimWhitespace(text, index);
@@ -107,6 +299,14 @@ public final class ImplicitStringUtils {
         return false;
     }
 
+    /**
+     * Locates the end of a triple-quoted (multiline) string.
+     *
+     * @param text The stream of tokens being evaluated.
+     * @param s    The starting index.
+     * @return The first index after the very last <code>'''</code>.
+     * @throws SyntaxException If the syntax at this location is invalid.
+     */
     public static int expectMulti(final String text, final int s) {
         int i = s;
         while (i++ < text.length() - 2) {
@@ -117,6 +317,15 @@ public final class ImplicitStringUtils {
         throw noMulti(text, i);
     }
 
+    /**
+     * Locates the end of a single-quoted (line) string.
+     *
+     * @param text  The stream of tokens being evaluated.
+     * @param s     The starting index.
+     * @param quote The type of quote being expected.
+     * @return The first index of <code>quote</code>, ignoring escapes.
+     * @throws SyntaxException If the syntax at this location is invalid.
+     */
     public static int expectQuote(final String text, final int s, final char quote) {
         int i = s;
         char c = '\u0000';
@@ -172,6 +381,49 @@ public final class ImplicitStringUtils {
         return escape(text, ',', true);
     }
 
+    /**
+     * Generates the escaped output of any {@link #isBalanced partially balanced}
+     * stream of tokens.
+     *
+     * <p>For example, when given the following text:
+     *
+     * <pre>{@code
+     *   There are two types of implicit space:
+     *     * keys
+     *     * values
+     * }</pre>
+     *
+     * <p>And escaping both <code>:</code> and newline characters:
+     *
+     * <pre>{@code
+     *   final String escaped = escape(text, ':', true);
+     * }</pre>
+     *
+     * <p>The following output is produced:
+     *
+     * <pre>{@code
+     *   There are two types of implicit space\:\
+     *     * keys\
+     *     * values
+     * }</pre>
+     *
+     * <p>Note that balanced text <em>must</em> be terminated, and thus such
+     * characters will <em>not</em> be escaped. For example, the following
+     * input will be unchanged in the output:
+     *
+     * <pre>{@code
+     *   (
+     *     1,
+     *     2,
+     *     3
+     *   )
+     * }</pre>
+     *
+     * @param text The raw tokens being escaped.
+     * @param e    Whichever character may denote the end of the tokens
+     * @param toNl Whether to escape newline characters.
+     * @return The escaped output of these tokens.
+     */
     public static String escape(final String text, final char e, final boolean toNl) {
         final StringBuilder sb = new StringBuilder();
         int level = 0;

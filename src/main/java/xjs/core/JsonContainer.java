@@ -495,15 +495,7 @@ public abstract class JsonContainer extends JsonValue {
      * @return <code>this</code>, for method chaining.
      */
     public JsonContainer setAllAccessed(final boolean accessed) {
-        for (final JsonReference reference : this.references) {
-            reference.setAccessed(accessed);
-
-            final JsonValue referent = reference.visit();
-            if (referent.isContainer()) {
-                referent.asContainer().setAllAccessed(accessed);
-            }
-        }
-        return this;
+        return this.forEachRecursive(ref -> ref.setAccessed(accessed));
     }
 
     /**

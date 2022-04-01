@@ -12,8 +12,8 @@ import java.util.stream.Stream;
 /**
  * Implementation of {@link JsonContainer} providing updaters by <em>index</em>.
  *
- * <p>For example, insert additional values into this container, callers may use
- * {@link JsonArray#add} or one of its overloads.
+ * <p>For example, to insert additional values into this container, callers may
+ * use {@link JsonArray#add} or one of its overloads.
  *
  * <pre>{@code
  *   Json.array().add("Hello, World!");
@@ -138,6 +138,19 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     public JsonArray set(final int index, final @Nullable JsonValue value) {
         this.references.get(index).update(og ->
             Json.nonnull(value).setDefaultMetadata(og));
+        return this;
+    }
+
+    /**
+     * Replaces a reference at the given index.
+     *
+     * @param index The index of the <b>existing</b> value being replaced.
+     * @param reference The reference being set at this index.
+     * @return <code>this</code>, for method chaining.
+     * @throws IndexOutOfBoundsException if the given index is out of bounds.
+     */
+    public JsonArray setReference(final int index, final JsonReference reference) {
+        this.references.set(index, reference);
         return this;
     }
 
@@ -293,6 +306,19 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     }
 
     /**
+     * Adds a single {@link JsonValue value} directly into this container when
+     * given a specific index.
+     *
+     * @param index The index at which to insert the given reference.
+     * @param value An existing value being copied into this container.
+     * @return <code>this</code>, for method chaining.
+     * @throws IndexOutOfBoundsException If the given index is out of bounds.
+     */
+    public JsonArray insert(final int index, final JsonValue value) {
+        return this.insertReference(index, new JsonReference(value).setAccessed(true));
+    }
+
+    /**
      * Adds a single {@link JsonReference reference} directly into this container
      * when given a specific index for the value.
      *
@@ -301,7 +327,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
      * @return <code>this</code>, for method chaining.
      * @throws IndexOutOfBoundsException If the given index is out of bounds.
      */
-    public JsonArray addReference(final int index, final JsonReference reference) {
+    public JsonArray insertReference(final int index, final JsonReference reference) {
         this.references.add(index, reference);
         return this;
     }
@@ -377,7 +403,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     }
 
     /**
-     * Removes a single value from this container by equality.
+     * Removes a single value from this container by value.
      *
      * @param value The value being purged from this container.
      * @return <code>this</code>, for method chaining.
