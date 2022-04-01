@@ -17,7 +17,7 @@ import java.util.function.Consumer;
  * Represents a JSON value. This may be a primitive value, such as a
  *
  * <ul>
- *   <li>{@link JsonNumber JSON number}, or a</li>,
+ *   <li>{@link JsonNumber JSON number}, or a</li>
  *   <li>{@link JsonString JSON string}</li>
  * </ul>
  *

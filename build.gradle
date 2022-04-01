@@ -58,10 +58,11 @@ jar {
     }
 }
 
-artifacts {
-    archives jar
-    archives sourcesJar
-    archives javadocJar
+javadoc {
+    options.tags = [ "apiNote:a:API note" ]
 }
 
-
+artifacts {
+    archives jar
+    archives javadocJar
+}

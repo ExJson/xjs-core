@@ -37,7 +37,7 @@ import java.util.function.UnaryOperator;
  *   assert Json.array(7, 5, 6).equals(a2);
  * }</pre>
  *
- * <h3>A note about future API design:</h3>
+ * <h2>A note about future API design:</h2>
  *
  * <p>In the future, this API will almost certainly change due to its odd ergonomic
  * behaviors. The distinction between {@link #get} and {@link #visit} in itself is
@@ -196,7 +196,7 @@ public class JsonReference {
         return this.mutate(updater.apply(this.referent));
     }
 
-    /**<
+    /**
      * Indicates whether this reference has been {@link #get accessed}.
      *
      * @return <code>true</code>, if the value has been accessed.
