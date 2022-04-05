@@ -5,6 +5,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import xjs.serialization.JsonSerializationContext;
 import xjs.serialization.writer.JsonWriter;
+import xjs.serialization.writer.JsonWriterOptions;
 import xjs.serialization.writer.XjsWriter;
 
 import java.io.*;
@@ -870,6 +871,22 @@ public abstract class JsonValue implements Serializable {
                 case XJS_FORMATTED:
                     new XjsWriter(sw, true).write(this);
             }
+        } catch (final IOException e) {
+            throw new UncheckedIOException("Encoding error", e);
+        }
+        return sw.toString();
+    }
+
+    /**
+     * Converts this value to a formatted XJS string using the given options.
+     *
+     * @param options Formatting options indicating how to output this value.
+     * @return This value as a formatted XJS string.
+     */
+    public String toString(final JsonWriterOptions options) {
+        final StringWriter sw = new StringWriter();
+        try {
+            new XjsWriter(sw, options).write(this);
         } catch (final IOException e) {
             throw new UncheckedIOException("Encoding error", e);
         }
