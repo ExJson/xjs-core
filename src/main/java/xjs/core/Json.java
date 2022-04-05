@@ -8,6 +8,8 @@ import xjs.transformer.JsonCollectors;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Map;
@@ -284,6 +286,17 @@ public final class Json {
         } catch (final IOException unreachable) {
             throw new IllegalStateException(unreachable);
         }
+    }
+
+    /**
+     * Parses a stream of JSON, XJS, or JSON-C text as bytes, returning a new value to
+     * represent it.
+     *
+     * @param xjs A reader providing the raw contents  in JSON, XJS, or JSON-C format.
+     * @return A new {@link JsonValue} representing the input.
+     */
+    public static JsonValue parse(final Reader xjs) throws IOException {
+        return new XjsParser(xjs).parse();
     }
 
     /**

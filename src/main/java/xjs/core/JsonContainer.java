@@ -666,6 +666,34 @@ public abstract class JsonContainer extends JsonValue {
     public abstract JsonContainer freeze(final boolean recursive);
 
     /**
+     * Generates a list of JSON path strings indicating which paths <em>have not</em>
+     * been used.
+     *
+     * @return A list of JSON path strings for each unused value.
+     */
+    public List<String> getUnusedPaths() {
+        return this.getUsedPaths(false);
+    }
+
+    /**
+     * Generates a list of JSON path strings indicating which paths <em>have</em>
+     * been used.
+     *
+     * @return A list of JSON path strings for each used value.
+     */
+    public List<String> getUsedPaths() {
+        return this.getUsedPaths(true);
+    }
+
+    /**
+     * Generates a list of JSON path strings indicating which paths have or have not
+     * been used.
+     *
+     * @return A list of JSON path strings for each used or unused value.
+     */
+    public abstract List<String> getUsedPaths(final boolean used);
+
+    /**
      * Generates an immutable list of the references in this container.
      *
      * @param recursive Whether to freeze references recursively.

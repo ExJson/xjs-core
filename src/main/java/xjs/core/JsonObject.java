@@ -781,6 +781,26 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return new JsonObject(this.keys, this.freezeReferences(recursive));
     }
 
+    @Override
+    public List<String> getUsedPaths(final boolean used) {
+        final List<String> paths = new ArrayList<>();
+        for (final Member member : this) {
+            if (member.getReference().isAccessed() != used) {
+                continue;
+            }
+            paths.add(member.getKey());
+            if (!member.visit().isContainer()) {
+                continue;
+            }
+            final String prefix = member.visit().isObject()
+                ? member.getKey() + "." : member.getKey();
+            for (final String inner : member.visit().asContainer().getUsedPaths(used)) {
+                paths.add(prefix + inner);
+            }
+        }
+        return paths;
+    }
+
     private class MemberIterator implements Iterator<Member> {
         final Iterator<String> keys = JsonObject.this.keys.iterator();
         final Iterator<JsonReference> references = references().iterator();

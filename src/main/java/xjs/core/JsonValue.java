@@ -318,6 +318,56 @@ public abstract class JsonValue implements Serializable {
     }
 
     /**
+     * Inserts the given message as a comment <em>above</em> the existing header
+     * comment.
+     *
+     * @param text The message to insert as a comment.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonValue prependComment(final String text) {
+        this.getComments().prepend(CommentType.HEADER, JsonSerializationContext.getDefaultCommentStyle(), text);
+        return this;
+    }
+
+    /**
+     * Inserts the given message as a comment <em>above</em> the existing comment
+     * at this position.
+     *
+     * @param type The type of comment being inserted.
+     * @param text The message to insert as a comment.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonValue prependComment(final CommentType type, final String text) {
+        this.getComments().prepend(type, JsonSerializationContext.getDefaultCommentStyle(), text);
+        return this;
+    }
+
+    /**
+     * Inserts the given message as a comment <em>below</em> the existing header
+     * comment.
+     *
+     * @param text The message to insert as a comment.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonValue appendComment(final String text) {
+        this.getComments().append(CommentType.HEADER, JsonSerializationContext.getDefaultCommentStyle(), text);
+        return this;
+    }
+
+    /**
+     * Inserts the given message as a comment <em>below</em> the existing comment
+     * at this position.
+     *
+     * @param type The type of comment being inserted.
+     * @param text The message to insert as a comment.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonValue appendComment(final CommentType type, final String text) {
+        this.getComments().append(type, JsonSerializationContext.getDefaultCommentStyle(), text);
+        return this;
+    }
+
+    /**
      * Gets the <em>message</em> of the comment for the given position.
      *
      * @param type The position of the comment being queried.

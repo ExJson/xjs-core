@@ -4,6 +4,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -414,6 +415,18 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     }
 
     /**
+     * Removes a single value from this container by index.
+     *
+     * @param index The value being purged from this container.
+     * @return <code>this</code>, for method chaining.
+     * @throws IndexOutOfBoundsException If the given index is not in this array.
+     */
+    public JsonArray remove(final int index) {
+        this.references.remove(index);
+        return this;
+    }
+
+    /**
      * Removes a collection or array of values from this container by equality.
      *
      * @param values The values being purged from this container.
@@ -644,6 +657,27 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     public JsonArray freeze(final boolean recursive) {
         return new JsonArray(this.freezeReferences(recursive));
     }
+
+    @Override
+    public List<String> getUsedPaths(final boolean used) {
+        final List<String> paths = new ArrayList<>();
+        for (final Element element : this.view()) {
+            if (element.getReference().isAccessed() != used) {
+                continue;
+            }
+            final String key = "[" + element.getIndex() + "]";
+            paths.add(key);
+            if (!element.visit().isContainer()) {
+                continue;
+            }
+            final String prefix = element.visit().isObject() ? key + "." : key;
+            for (final String inner : element.visit().asContainer().getUsedPaths(used)) {
+                paths.add(prefix + inner);
+            }
+        }
+        return paths;
+    }
+
 
     private class ElementView implements View<Element> {
         @Override
