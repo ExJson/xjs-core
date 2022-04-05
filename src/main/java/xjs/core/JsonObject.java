@@ -587,7 +587,10 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
     @Override
     public JsonObject clear() {
-        return (JsonObject) super.clear();
+        this.references.clear();
+        this.keys.clear();
+        this.table.clear();
+        return this;
     }
 
     @Override
