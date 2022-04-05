@@ -89,12 +89,6 @@ public final class JsonObjectTest {
     }
 
     @Test
-    public void intoArray_dropsKeys() {
-        final JsonObject object = new JsonObject().add("values", 1);
-        assertEquals(new JsonArray().add(1), object.intoArray());
-    }
-
-    @Test
     public void frozenObject_isImmutable() {
         final JsonObject object = new JsonObject().add("key", "value").freeze();
 

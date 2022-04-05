@@ -580,26 +580,6 @@ public abstract class JsonContainer extends JsonValue {
     }
 
     /**
-     * Override requiring all {@link JsonContainer} implementations to manually implement this
-     * behavior.
-     *
-     * @return Either <code>this</code> or a new {@link JsonObject}.
-     */
-    @Override
-    @ApiStatus.Experimental
-    public abstract JsonObject intoObject();
-
-    /**
-     * Override requiring all {@link JsonContainer} implementations to manually implement this
-     * behavior.
-     *
-     * @return Either <code>this</code> or a new {@link JsonArray}.
-     */
-    @Override
-    @ApiStatus.Experimental
-    public abstract JsonArray intoArray();
-
-    /**
      * Generates a shallow copy of this container. This operation yields a new
      * container housing the exact same references. Any other containers in this
      * object will be shallow copied recursively, but regular values will simply

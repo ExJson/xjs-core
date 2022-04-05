@@ -78,12 +78,6 @@ public final class JsonArrayTest {
     }
 
     @Test
-    public void intoObject_convertsIndicesIntoStrings() {
-        final JsonArray array = new JsonArray().add(1);
-        assertEquals(new JsonObject().add("0", 1), array.intoObject());
-    }
-
-    @Test
     public void frozenArray_isImmutable() {
         final JsonArray array = new JsonArray().add(1).freeze(false);
 

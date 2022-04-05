@@ -716,11 +716,6 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     @Override
-    public JsonObject asContainer() {
-        return this;
-    }
-
-    @Override
     public JsonObject asObject() {
         return this;
     }
@@ -728,11 +723,6 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     @Override
     public JsonObject intoObject() {
         return this;
-    }
-
-    @Override
-    public JsonArray intoArray() {
-        return new JsonArray(this.references);
     }
 
     @Override

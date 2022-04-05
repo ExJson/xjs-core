@@ -577,41 +577,6 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
      * @return <code>this</code>, always.
      */
     @Override
-    @ApiStatus.Experimental
-    public JsonArray intoContainer() {
-        return this;
-    }
-
-    /**
-     * Transforms this array into a {@link JsonObject}. By default, this operation maps
-     * each value to the string equivalent of its index.
-     *
-     * <p>For example, when given the following array:
-     *
-     * <pre>{@code
-     *   [ a, b, c ]
-     * }</pre>
-     *
-     * <p>Calling this method will generate the following object:
-     *
-     * <pre>{@code
-     *   0: a, 1: b, 2: c
-     * }</pre>
-     *
-     * @return <code>this</code>, always.
-     */
-    @Override
-    @ApiStatus.Experimental
-    public JsonObject intoObject() {
-        return new JsonObject(this.references);
-    }
-
-    /**
-     * Override returning this value directly instead of constructing a new container.
-     *
-     * @return <code>this</code>, always.
-     */
-    @Override
     public JsonArray intoArray() {
         return this;
     }
