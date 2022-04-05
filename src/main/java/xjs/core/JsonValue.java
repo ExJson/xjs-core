@@ -11,7 +11,6 @@ import java.io.*;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * Represents a JSON value. This may be a primitive value, such as a
@@ -572,31 +571,6 @@ public abstract class JsonValue implements Serializable {
     @ApiStatus.Experimental
     public <T> Optional<T> filter(final JsonFilter<T> filter) {
         return filter.applyOptional(this);
-    }
-
-    /**
-     * Performs a series of different actions depending on the type of
-     *
-     * <p>For example,
-     *
-     * <pre>{@code
-     *   value.when(JsonString.class, s -> log.info("it's a string: {}", s.unwrap())
-     *     .when(JsonNumber.class, n -> log.info("it's a number: {}", n.unwrap());
-     * }</pre>
-     *
-     * @param type The class of JSON value to check for.
-     * @param f    An action to perform if the type matches.
-     * @param <V>  The actual type of wrapper in the consumer.
-     * @return <code>this</code>, for method chaining.
-     * @apiNote Experimental - this method is currently still being tested
-     *          and will most likely get removed.
-     */
-    @ApiStatus.Experimental
-    public <V extends JsonValue> JsonValue when(final Class<V> type, final Consumer<V> f) {
-        if (type.isInstance(this)) {
-            f.accept(type.cast(this));
-        }
-        return this;
     }
 
     /**
