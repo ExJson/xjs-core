@@ -120,7 +120,7 @@ public class XjsWriter extends AbstractJsonWriter {
         this.delimit(previous, member.visit());
         this.writeEolComment(level, previous, member.visit());
         this.writeLinesAbove(level + 1, previous == null, condensed, member.visit());
-        this.writeHeader(level, member.visit());
+        this.writeHeader(level + 1, member.visit());
         this.writeString(member.getKey(), level);
         this.tw.write(':');
         if (!this.isVoidString(member.visit())) {
@@ -135,7 +135,7 @@ public class XjsWriter extends AbstractJsonWriter {
         this.delimit(previous, value);
         this.writeEolComment(level, previous, value);
         this.writeLinesAbove(level + 1, previous == null, condensed, value);
-        this.writeHeader(level, value);
+        this.writeHeader(level + 1, value);
         this.write(value, level + 1);
     }
 
