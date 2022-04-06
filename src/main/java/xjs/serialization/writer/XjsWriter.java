@@ -48,7 +48,6 @@ public class XjsWriter extends AbstractJsonWriter {
         if (!condensed) {
             this.writeLinesTrailing(object, -1);
         }
-        this.writeInteriorComment(-1, object);
         this.writeOpenFooter(object);
     }
 
@@ -62,12 +61,24 @@ public class XjsWriter extends AbstractJsonWriter {
     }
 
     protected void writeOpenFooter(final JsonObject root) throws IOException {
-        if (this.outputComments && root.hasComment(CommentType.FOOTER)) {
-            if (root.getLinesTrailing() < 0) {
-                this.nl(-1);
-                this.nl(-1);
+        if (this.outputComments) {
+            if (root.hasComment(CommentType.INTERIOR)) {
+                if (root.getLinesTrailing() < 0) {
+                    this.nl(-1);
+                }
+                this.writeComment(-1, root, CommentType.INTERIOR);
+                if (root.hasComment(CommentType.FOOTER)) {
+                    this.nl(-1);
+                    this.nl(-1);
+                    this.writeComment(-1, root, CommentType.FOOTER);
+                }
+            } else if (root.hasComment(CommentType.FOOTER)) {
+                if (root.getLinesTrailing() < 0) {
+                    this.nl(-1);
+                    this.nl(-1);
+                }
+                this.writeComment(-1, root, CommentType.FOOTER);
             }
-            this.writeComment(-1, root, CommentType.FOOTER);
         }
     }
 
@@ -251,9 +262,6 @@ public class XjsWriter extends AbstractJsonWriter {
 
     protected void writeHeader(final int level, final JsonValue value) throws IOException {
         if (this.outputComments && value.hasComment(CommentType.HEADER)) {
-            if (level > 0) {
-                this.nl(level);
-            }
             this.writeComment(level, value, CommentType.HEADER);
             this.nl(level);
         }

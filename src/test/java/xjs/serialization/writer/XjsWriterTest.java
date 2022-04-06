@@ -235,7 +235,7 @@ public final class XjsWriterTest {
             2: // Value
              
               2 # E0l
-              
+            /* header */
             z:
             
               /// Value
@@ -252,6 +252,18 @@ public final class XjsWriterTest {
                */
             
             ] # eol
+            
+            enter: {
+              level: {
+                two: [
+                  // header
+                  # header
+                  yes
+                  // header
+                  yes
+                ]
+              }
+            }
             
             b: '})](*&(*%#&)!'
             c: { : }
