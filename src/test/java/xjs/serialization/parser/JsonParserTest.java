@@ -1,6 +1,7 @@
 package xjs.serialization.parser;
 
 import org.junit.jupiter.api.Test;
+import xjs.core.JsonReference;
 import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;
 
@@ -35,7 +36,7 @@ public final class JsonParserTest extends CommonParserTest {
     }
 
     @Override
-    protected JsonValue parse(final String json) throws IOException {
+    protected JsonReference parse(final String json) throws IOException {
         return new JsonParser(json).parse();
     }
 }

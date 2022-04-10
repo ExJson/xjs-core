@@ -1,9 +1,17 @@
 package xjs.core;
 
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import xjs.serialization.JsonSerializationContext;
+import xjs.serialization.writer.XjsWriter;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Objects;
 import java.util.function.UnaryOperator;
 
 /**
@@ -62,6 +70,10 @@ import java.util.function.UnaryOperator;
 public class JsonReference {
 
     protected JsonValue referent;
+    protected int linesAbove;
+    protected int linesBetween;
+    protected int flags;
+    protected @Nullable CommentHolder comments;
     protected boolean accessed;
     protected boolean mutable;
 
@@ -77,6 +89,10 @@ public class JsonReference {
         this.referent = Json.nonnull(referent);
         this.accessed = false;
         this.mutable = true;
+        this.linesAbove = -1;
+        this.linesBetween = -1;
+        this.flags = JsonFlags.NULL;
+        this.comments = null;
     }
 
     /**
@@ -197,6 +213,301 @@ public class JsonReference {
     }
 
     /**
+     * Gets the number of newline characters <em>above</em> this value.
+     *
+     * <p>For example, in the following JSON data:
+     *
+     * <pre>{@code
+     *   {
+     *     "a": 1,
+     *
+     *     "b": 2
+     *   }
+     * }</pre>
+     *
+     * <p><code>b</code> has <em>2</em> newlines above it.
+     *
+     * @return The number of newline characters.
+     */
+    public int getLinesAbove() {
+        return this.linesAbove;
+    }
+
+    /**
+     * Sets the number of newline characters above this value.
+     *
+     * @param linesAbove The number of newline characters above the value.
+     * @return <code>this</code>, for method chaining.
+     * @see #getLinesAbove()
+     */
+    public JsonReference setLinesAbove(final int linesAbove) {
+        this.linesAbove = linesAbove;
+        return this;
+    }
+
+    /**
+     * Gets the number of newline characters between this value and its key, if
+     * applicable.
+     *
+     * <p>For example, the in the following JSON data:
+     *
+     * <pre>{@code
+     *   {
+     *     "k":
+     *       "v"
+     *   }
+     * }</pre>
+     *
+     * <p><code>k</code> has <em>1</em> line between.
+     *
+     * @return The number of newline characters between this value and its key.
+     */
+    public int getLinesBetween() {
+        return this.linesBetween;
+    }
+
+    /**
+     * Sets the number of newline characters between this value and its key, if
+     * applicable.
+     *
+     * @param linesBetween The number of newline characters between this value
+     *                     and its key.
+     * @return <code>this</code>, for method chaining.
+     * @see #getLinesBetween()
+     */
+    public JsonReference setLinesBetween(final int linesBetween) {
+        this.linesBetween = linesBetween;
+        return this;
+    }
+
+    /**
+     * Gets all field flags used by any JEL expressions.
+     *
+     * @return All flags configured for this field, as an integer.
+     */
+    @MagicConstant(flagsFromClass = JsonFlags.class)
+    public int getFlags() {
+        return this.flags;
+    }
+
+    /**
+     * Sets all field flags used by any JEL expressions.
+     *
+     * @param flags All flags configured for this field, as an integer.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonReference setFlags(
+            final @MagicConstant(flagsFromClass = JsonFlags.class) int flags) {
+        this.flags = flags;
+        return this;
+    }
+
+    /**
+     * Indicates whether any number of flags are set for this value.
+     *
+     * @param flag The flag or flags being queried.
+     * @return Whether each flag in the given integer is present.
+     */
+    public boolean hasFlag(
+            final @MagicConstant(flagsFromClass = JsonFlags.class) int flag) {
+        return (this.flags & flag) == flag;
+    }
+
+    /**
+     * Appends any number of flags to this value, to be used by JEL expressions.
+     *
+     * @param flag The flag or flags to be set.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonReference addFlag(
+            final @MagicConstant(flagsFromClass = JsonFlags.class) int flag) {
+        this.flags &= ~JsonFlags.NULL;
+        this.flags |= flag;
+        return this;
+    }
+
+    /**
+     * Removes any number of flags from this value.
+     *
+     * @param flag The flag or flags to be unset.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonReference removeFlag(
+            final @MagicConstant(flagsFromClass = JsonFlags.class) int flag) {
+        this.flags &= ~flag;
+        return this;
+    }
+
+    /**
+     * Gets a handle on the comments used by this value. This handle can be to
+     * append additional comments or view messages inside the comments already
+     * configured for this value.
+     *
+     * @return The {@link CommentHolder} used by this value.
+     */
+    public CommentHolder getComments() {
+        if (this.comments == null) {
+            return this.comments = new CommentHolder();
+        }
+        return this.comments;
+    }
+
+    /**
+     * Sets the entire handle on any comments appended to this value.
+     *
+     * @param comments The new comments and their data being appended.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonReference setComments(final @Nullable CommentHolder comments) {
+        this.comments = comments;
+        return this;
+    }
+
+    /**
+     * Indicates whether any comments have been appended to this value.
+     *
+     * @return <code>true</code>, if there are any comments.
+     */
+    public boolean hasComments() {
+        return this.comments != null && this.comments.hasAny();
+    }
+
+    /**
+     * Indicates whether a specific type of comment has been appended to this
+     * value.
+     *
+     * @param type The type of comment being queried.
+     * @return <code>true</code>, if the given type of comment does exist.
+     */
+    public boolean hasComment(final CommentType type) {
+        return this.comments != null && this.comments.has(type);
+    }
+
+    /**
+     * Sets the <em>message</em> of the header comment attached to this value.
+     *
+     * <p>For example, when appending <code>"Header"</code> to this value, it
+     * will be printed as follows:
+     *
+     * <pre>{@code
+     *   // Header
+     *   key: value
+     * }</pre>
+     *
+     * @param text The message being appended to this value.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonReference setComment(final String text) {
+        return this.setComment(CommentType.HEADER, JsonSerializationContext.getDefaultCommentStyle(), text);
+    }
+
+    /**
+     * Sets the <em>message</em> for the given type of comment attached to this
+     * value.
+     *
+     * @param type The type of comment being set.
+     * @param text The message of the comment.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonReference setComment(final CommentType type, final String text) {
+        return this.setComment(type, JsonSerializationContext.getDefaultCommentStyle(), text);
+    }
+
+    /**
+     * Sets the <em>message</em> for the given type of comment, while also
+     * selecting a specific style for the comment.
+     *
+     * <p>Callers should be aware that the <em>style</em> of this comment may
+     * not be valid, depending on the format. In this case, it will simply be
+     * overwritten, which may be expensive.
+     *
+     * @param type  The position of the comment being set.
+     * @param style The comment style being appended.
+     * @param text  The message of the comment being set.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonReference setComment(final CommentType type, final CommentStyle style, final String text) {
+        this.getComments().set(type, style, text);
+        return this;
+    }
+
+    /**
+     * Sets a comment for this value while appending a number of empty lines at
+     * the end.
+     *
+     * @param type  The position of the comment being set.
+     * @param style The comment style being appended.
+     * @param text  The message of the comment being set.
+     * @param lines The number of new line characters to append.
+     * @return <code>this</code>, for method chaining.
+     * @see CommentHolder#set(CommentType, CommentStyle, String, int)
+     */
+    public JsonReference setComment(final CommentType type, final CommentStyle style, final String text, final int lines) {
+        this.getComments().set(type, style, text, lines);
+        return this;
+    }
+
+    /**
+     * Inserts the given message as a comment <em>above</em> the existing header
+     * comment.
+     *
+     * @param text The message to insert as a comment.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonReference prependComment(final String text) {
+        this.getComments().prepend(CommentType.HEADER, JsonSerializationContext.getDefaultCommentStyle(), text);
+        return this;
+    }
+
+    /**
+     * Inserts the given message as a comment <em>above</em> the existing comment
+     * at this position.
+     *
+     * @param type The type of comment being inserted.
+     * @param text The message to insert as a comment.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonReference prependComment(final CommentType type, final String text) {
+        this.getComments().prepend(type, JsonSerializationContext.getDefaultCommentStyle(), text);
+        return this;
+    }
+
+    /**
+     * Inserts the given message as a comment <em>below</em> the existing header
+     * comment.
+     *
+     * @param text The message to insert as a comment.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonReference appendComment(final String text) {
+        this.getComments().append(CommentType.HEADER, JsonSerializationContext.getDefaultCommentStyle(), text);
+        return this;
+    }
+
+    /**
+     * Inserts the given message as a comment <em>below</em> the existing comment
+     * at this position.
+     *
+     * @param type The type of comment being inserted.
+     * @param text The message to insert as a comment.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonReference appendComment(final CommentType type, final String text) {
+        this.getComments().append(type, JsonSerializationContext.getDefaultCommentStyle(), text);
+        return this;
+    }
+
+    /**
+     * Gets the <em>message</em> of the comment for the given position.
+     *
+     * @param type The position of the comment being queried.
+     * @return The message of the comment.
+     */
+    public String getComment(final CommentType type) {
+        return this.getComments().get(type);
+    }
+
+    /**
      * Indicates whether this reference has been {@link #get accessed}.
      *
      * @return <code>true</code>, if the value has been accessed.
@@ -244,6 +555,21 @@ public class JsonReference {
     }
 
     /**
+     * Transfers all metadata from the given reference into this reference,
+     * <em>without</em> overwriting any custom settings.
+     *
+     * @param metadata The value containing metadata to be reused.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonReference setDefaultMetadata(final JsonReference metadata) {
+        if (this.linesAbove < 0) this.linesAbove = metadata.linesAbove;
+        if (this.linesBetween < 0) this.linesBetween = metadata.linesBetween;
+        if (this.hasFlag(JsonFlags.NULL)) this.flags = metadata.flags;
+        if (this.comments == null) this.comments = metadata.comments;
+        return this;
+    }
+
+    /**
      * Generates a mutable clone of this reference.
      *
      * @param trackAccess Whether to additionally persist access tracking.
@@ -254,12 +580,41 @@ public class JsonReference {
         return trackAccess ? clone.setAccessed(this.accessed) : clone;
     }
 
+    /**
+     * Writes this value to the disk, selecting which format to use based on
+     * the extension of this file.
+     *
+     * @param file The file being written into.
+     * @throws IOException If the involved {@link FileWriter} throws an exception.
+     */
+    public void write(final File file) throws IOException {
+        JsonSerializationContext.autoWrite(file, this);
+    }
+
+    /**
+     * Writes this value into the given writer.
+     *
+     * @param writer The writer being written into.
+     * @throws IOException If this writer throws an exception.
+     */
+    public void write(final Writer writer) throws IOException {
+        new XjsWriter(writer, JsonSerializationContext.getDefaultFormatting()).write(this);
+    }
+
     @Override
     public int hashCode() {
         int result = 1;
         result = 31 * result + this.referent.hashCode();
+        result = 31 * result + this.linesAbove;
+        result = 31 * result + this.linesBetween;
+        result = 31 * result + this.flags;
+
+        if (this.comments != null) {
+            result = 31 * result + this.comments.hashCode();
+        }
         if (this.accessed) result *= 17;
         if (this.mutable) result *= 31;
+
         return result;
     }
 
@@ -271,6 +626,10 @@ public class JsonReference {
         if (o instanceof JsonReference) {
             final JsonReference other = (JsonReference) o;
             return this.referent.equals(other.referent)
+                && this.linesAbove == other.linesAbove
+                && this.linesBetween == other.linesBetween
+                && this.flags == other.flags
+                && Objects.equals(this.comments, other.comments)
                 && this.accessed == other.accessed
                 && this.mutable == other.mutable;
         }

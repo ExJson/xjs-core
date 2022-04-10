@@ -58,21 +58,21 @@ public final class JsonObjectTest {
     @Test
     public void set_preservesMetadata() {
         final JsonObject object =
-            new JsonObject().add("0", Json.value(1).setLinesAbove(1));
+            new JsonObject().addReference("0", Json.value(1).intoReference().setLinesAbove(1));
         object.set("0", 2);
-        final JsonValue value = object.get("0");
-        assertNotNull(value);
-        assertEquals(1, value.getLinesAbove());
+        final JsonReference reference = object.getReference("0");
+        assertNotNull(reference);
+        assertEquals(1, reference.getLinesAbove());
     }
 
     @Test
     public void set_canUpdateMetadata() {
         final JsonObject object =
-            new JsonObject().add("0", Json.value(1).setLinesAbove(1));
-        object.set("0", Json.value(2).setLinesAbove(0));
-        final JsonValue value = object.get("0");
-        assertNotNull(value);
-        assertEquals(0, value.getLinesAbove());
+            new JsonObject().addReference("0", Json.value(1).intoReference().setLinesAbove(1));
+        object.setReference("0", Json.value(2).intoReference().setLinesAbove(0));
+        final JsonReference reference = object.getReference("0");
+        assertNotNull(reference);
+        assertEquals(0, reference.getLinesAbove());
     }
 
     @Test

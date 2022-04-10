@@ -3,10 +3,7 @@ package xjs.serialization.writer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import xjs.core.Json;
-import xjs.core.JsonArray;
-import xjs.core.JsonObject;
-import xjs.core.JsonValue;
+import xjs.core.*;
 import xjs.serialization.JsonSerializationContext;
 import xjs.serialization.parser.JsonParser;
 
@@ -91,13 +88,13 @@ public final class JsonWriterTest {
 
     @Test
     public void write_preservesWhitespaceAbove() {
-        assertEquals("\n\ntrue", write(Json.value(true).setLinesAbove(2)));
+        assertEquals("\n\ntrue", write(Json.value(true).intoReference().setLinesAbove(2)));
     }
 
     @Test
     public void write_preservesWhitespaceBetween() {
         assertEquals("{\n  \"a\":\n\n\n\n    1234\n}",
-            write(new JsonObject().add("a", Json.value(1234).setLinesBetween(4))));
+            write(new JsonObject().addReference("a", Json.value(1234).intoReference().setLinesBetween(4))));
     }
 
     @Test
@@ -123,15 +120,16 @@ public final class JsonWriterTest {
     public void write_preservesComplexFormatting() {
         final JsonObject object =
             new JsonObject()
-                .add("1", Json.value(1).setLinesBetween(1))
+                .addReference("1", Json.value(1).intoReference().setLinesBetween(1))
                 .add("2", 2)
-                .add("a", new JsonArray()
+                .addReference("a", new JsonArray()
                     .add(3)
                     .add(4)
                     .add(new JsonObject()
                         .add("5", 5)
                         .add("6", 6)
                         .condense())
+                    .intoReference()
                     .setLinesAbove(2));
         final String expected = """
             {
@@ -191,7 +189,7 @@ public final class JsonWriterTest {
                 "6": [ 7, 8, 9 ]
               }
             }""";
-        final JsonObject object = new JsonParser(input).parse().asObject();
+        final JsonReference object = new JsonParser(input).parse();
         assertEquals(expected, write(object, options));
     }
 
@@ -217,15 +215,23 @@ public final class JsonWriterTest {
     }
 
     private static String write(final JsonValue value) {
-        return write(value, new JsonWriterOptions());
+        return write(value.intoReference());
+    }
+
+    private static String write(final JsonReference reference) {
+        return write(reference, new JsonWriterOptions());
+    }
+
+    private static String write(final JsonValue value, final JsonWriterOptions options) {
+        return write(value.intoReference(), options);
     }
     
-    private static String write(final JsonValue value, final JsonWriterOptions options) {
+    private static String write(final JsonReference reference, final JsonWriterOptions options) {
         final StringWriter sw = new StringWriter();
         final JsonWriter writer =
             options != null ? new JsonWriter(sw, options) : new JsonWriter(sw, false);
         try {
-            writer.write(value);
+            writer.write(reference);
         } catch (final Exception e) {
             e.printStackTrace();
         }

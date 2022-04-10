@@ -25,12 +25,12 @@ public class JsonParser extends AbstractJsonParser {
         super(reader, buffer);
     }
 
-    public @NotNull JsonValue parse() throws IOException {
+    public @NotNull JsonReference parse() throws IOException {
         this.read();
         this.skipWhitespace();
         final int linesAbove = this.linesSkipped;
-        final JsonValue result =
-            this.readValue().setLinesAbove(linesAbove);
+        final JsonReference result =
+            this.readValue().intoReference().setLinesAbove(linesAbove);
         this.skipWhitespace();
         if (!this.isEndOfText()) {
             throw this.unexpected((char) this.current);
@@ -108,7 +108,8 @@ public class JsonParser extends AbstractJsonParser {
         do {
             this.skipWhitespace(false);
             final int linesAbove = this.linesSkipped;
-            array.add(this.readValue().setLinesAbove(linesAbove));
+            array.addReference(
+                this.readValue().intoReference().setLinesAbove(linesAbove));
             this.skipWhitespace();
         } while (this.readIf(','));
         if (!this.readIf(']')) {
@@ -132,8 +133,9 @@ public class JsonParser extends AbstractJsonParser {
             this.expect(':');
             this.skipWhitespace();
             final int linesBetween = this.linesSkipped;
-            object.add(key,
+            object.addReference(key,
                 this.readValue()
+                    .intoReference()
                     .setLinesAbove(linesAbove)
                     .setLinesBetween(linesBetween));
             this.skipWhitespace();

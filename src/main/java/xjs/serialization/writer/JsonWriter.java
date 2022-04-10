@@ -1,6 +1,7 @@
 package xjs.serialization.writer;
 
 import xjs.core.JsonObject;
+import xjs.core.JsonReference;
 import xjs.core.JsonValue;
 
 import java.io.File;
@@ -22,33 +23,34 @@ public class JsonWriter extends AbstractJsonWriter {
     }
 
     @Override
-    public void write(final JsonValue value, final int level) throws IOException {
-        final boolean condensed = this.isCondensed(value);
+    public void write(final JsonReference reference, final int level) throws IOException {
+        final JsonValue value = reference.visit();
+        final boolean condensed = this.isCondensed(reference);
         boolean following = false;
 
         switch (value.getType()) {
             case OBJECT:
                 this.open(condensed, '{');
                 for (final JsonObject.Member member : value.asObject()) {
-                    this.delimit(following, member.visit().getLinesAbove());
-                    this.writeLinesAbove(level + 1, !following, condensed, member.visit());
+                    this.delimit(following, member.getReference().getLinesAbove());
+                    this.writeLinesAbove(level + 1, !following, condensed, member.getReference());
                     this.writeQuoted(member.getKey(), '"');
                     this.tw.write(':');
-                    this.separate(level + 2, member.visit());
-                    this.write(member.visit(), level + 1);
+                    this.separate(level + 2, member.getReference());
+                    this.write(member.getReference(), level + 1);
                     following = true;
                 }
-                this.close(value.asObject(), condensed, level, '}');
+                this.close(reference, condensed, level, '}');
                 break;
             case ARRAY:
                 this.open(condensed, '[');
-                for (final JsonValue v : value.asArray().visitAll()) {
-                    this.delimit(following, v.getLinesAbove());
-                    this.writeLinesAbove(level + 1, !following, condensed, v);
-                    this.write(v, level + 1);
+                for (final JsonReference r : value.asArray().references()) {
+                    this.delimit(following, r.getLinesAbove());
+                    this.writeLinesAbove(level + 1, !following, condensed, r);
+                    this.write(r, level + 1);
                     following = true;
                 }
-                this.close(value.asArray(), condensed, level, ']');
+                this.close(reference, condensed, level, ']');
                 break;
             case NUMBER:
                 this.writeNumber(value.asDouble());

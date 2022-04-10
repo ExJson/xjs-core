@@ -2,6 +2,7 @@ package xjs.serialization;
 
 import xjs.core.CommentStyle;
 import xjs.core.Json;
+import xjs.core.JsonReference;
 import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;
 import xjs.serialization.parser.JsonParser;
@@ -121,7 +122,7 @@ public class JsonSerializationContext {
     }
 
     /**
-     * Gets the <em>default</em> newline character used by {@link JsonValue#setComment(String)}.
+     * Gets the <em>default</em> newline character used by {@link JsonReference#setComment(String)}.
      *
      * @return The configured {@link CommentStyle}.
      */
@@ -130,7 +131,7 @@ public class JsonSerializationContext {
     }
 
     /**
-     * Sets the <em>default</em> newline character used by {@link JsonValue#setComment(String)}.
+     * Sets the <em>default</em> newline character used by {@link JsonReference#setComment(String)}.
      *
      * @param style The configured {@link CommentStyle}.
      */
@@ -173,11 +174,11 @@ public class JsonSerializationContext {
      * <p>This method is the delegate of {@link Json#parse(File)}.
      *
      * @param file The file being parsed as some kind of JSON file or superset.
-     * @return The {@link JsonValue} represented by the file.
+     * @return The formatted {@link JsonValue} represented by the file.
      * @throws IOException If the underlying {@link FileReader} throws an exception.
      * @throws SyntaxException If the contents of the file are syntactically invalid.
      */
-    public static JsonValue autoParse(final File file) throws IOException {
+    public static JsonReference autoParse(final File file) throws IOException {
         return PARSERS.getOrDefault(getFormat(file), DEFAULT_PARSER).parse(file);
     }
 
@@ -187,12 +188,12 @@ public class JsonSerializationContext {
      * <p>This method is the delegate of {@link JsonValue#write(File)}.
      *
      * @param file  The file being written as some kind of JSON file or superset.
-     * @param value The {@link JsonValue} to be represented by the file.
+     * @param reference The formatted {@link JsonValue} to be represented by the file.
      * @throws IOException If the underlying {@link FileWriter} throws an exception.
      */
-    public static void autoWrite(final File file, final JsonValue value) throws IOException {
+    public static void autoWrite(final File file, final JsonReference reference) throws IOException {
         final Writer writer = new FileWriter(file);
-        WRITERS.getOrDefault(getFormat(file), DEFAULT_WRITER).write(writer, value, defaultFormatting);
+        WRITERS.getOrDefault(getFormat(file), DEFAULT_WRITER).write(writer, reference, defaultFormatting);
         writer.flush();
     }
 

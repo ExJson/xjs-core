@@ -48,18 +48,8 @@ public class JsonString extends JsonValue {
     }
 
     @Override
-    public JsonString deepCopy(final boolean trackAccess) {
-        return (JsonString) new JsonString(this.value, this.type).setDefaultMetadata(this);
-    }
-
-    @Override
-    public JsonString unformatted() {
-        return new JsonString(this.value, this.type);
-    }
-
-    @Override
     public int hashCode() {
-        return 31 * super.hashCode() + this.value.hashCode();
+        return this.value.hashCode() + 31 * this.type.hashCode();
     }
 
     @Override
@@ -71,10 +61,10 @@ public class JsonString extends JsonValue {
     }
 
     @Override
-    protected boolean matchesMetadata(final JsonValue other) {
+    public boolean equals(final Object other) {
         if (other instanceof JsonString) {
-            return this.type.equals(((JsonString) other).type)
-                && super.matchesMetadata(other);
+            final JsonString s = (JsonString) other;
+            return this.value.equals(s.value) && this.type.equals(s.type);
         }
         return false;
     }

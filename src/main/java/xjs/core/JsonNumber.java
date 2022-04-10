@@ -49,22 +49,12 @@ public class JsonNumber extends JsonValue {
     }
 
     @Override
-    public JsonNumber deepCopy(final boolean trackAccess) {
-        return (JsonNumber) new JsonNumber(this.value).setDefaultMetadata(this);
-    }
-
-    @Override
-    public JsonNumber unformatted() {
-        return new JsonNumber(this.value);
-    }
-
-    @Override
     public int hashCode() {
-        return 31 * super.hashCode() + Double.hashCode(this.value);
+        return Double.hashCode(this.value);
     }
 
     @Override
-    public boolean matches(final JsonValue other) {
+    public boolean equals(final Object other) {
         if (other instanceof JsonNumber) {
             return this.value == ((JsonNumber) other).value;
         }

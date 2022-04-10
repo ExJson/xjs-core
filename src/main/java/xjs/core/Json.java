@@ -8,7 +8,6 @@ import xjs.transformer.JsonCollectors;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -265,11 +264,11 @@ public final class Json {
      * be registered via the {@link JsonSerializationContext}.
      *
      * @param file A file containing JSON data.
-     * @return A new {@link JsonValue} representing the contents of this file.
+     * @return A new formatted {@link JsonValue} representing the contents of this file.
      * @throws IOException If the file cannot be read.
      * @throws SyntaxException If the file is syntactically invalid.
      */
-    public static JsonValue parse(final File file) throws IOException {
+    public static JsonReference parse(final File file) throws IOException {
         return JsonSerializationContext.autoParse(file);
     }
 
@@ -278,9 +277,9 @@ public final class Json {
      * represent it.
      *
      * @param xjs The raw string contents in JSON, XJS, or JSON-C format.
-     * @return A new {@link JsonValue} representing the input.
+     * @return A new formatted {@link JsonValue} representing the input.
      */
-    public static JsonValue parse(final String xjs) {
+    public static JsonReference parse(final String xjs) {
         try {
             return new XjsParser(xjs).parse();
         } catch (final IOException unreachable) {
@@ -293,9 +292,9 @@ public final class Json {
      * represent it.
      *
      * @param xjs A reader providing the raw contents  in JSON, XJS, or JSON-C format.
-     * @return A new {@link JsonValue} representing the input.
+     * @return A new formatted {@link JsonValue} representing the input.
      */
-    public static JsonValue parse(final Reader xjs) throws IOException {
+    public static JsonReference parse(final Reader xjs) throws IOException {
         return new XjsParser(xjs).parse();
     }
 
@@ -316,8 +315,8 @@ public final class Json {
      * @throws IOException If an IO error occurs when reading or writing the file.
      * @throws SyntaxException If the contents of the file are syntactically invalid.
      */
-    public static void view(final File file, final Consumer<JsonValue> f) throws IOException {
-        update(file, value -> { f.accept(value); return value; });
+    public static void view(final File file, final Consumer<JsonReference> f) throws IOException {
+        update(file, reference -> { f.accept(reference); return reference; });
     }
 
     /**
@@ -336,7 +335,7 @@ public final class Json {
      * @throws IOException If an IO error occurs when reading or writing the file.
      * @throws SyntaxException If the contents of the file are syntactically invalid.
      */
-    public static void update(final File file, final UnaryOperator<JsonValue> f) throws IOException {
+    public static void update(final File file, final UnaryOperator<JsonReference> f) throws IOException {
         f.apply(parse(file)).write(file);
     }
 }

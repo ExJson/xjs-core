@@ -2,6 +2,7 @@ package xjs.serialization.parser;
 
 import org.jetbrains.annotations.NotNull;
 import xjs.core.JsonNumber;
+import xjs.core.JsonReference;
 import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;
 
@@ -62,13 +63,25 @@ public abstract class AbstractJsonParser {
 
     /**
      * Converts the output of the {@link Reader} being wrapped by this object into
-     * any type of {@link JsonValue}.
+     * any type of {@link JsonReference}.
      *
-     * @return A definite, non-null {@link JsonValue}.
+     * @return A definite, non-null {@link JsonReference}.
      * @throws IOException If the reader throws an {@link IOException}.
      * @throws SyntaxException If the data is syntactically invalid.
      */
-    public abstract @NotNull JsonValue parse() throws IOException;
+    public abstract @NotNull JsonReference parse() throws IOException;
+
+    /**
+     * Convenience variant of {@link #parse} which returns the unformatted
+     * {@link JsonValue} directly.
+     *
+     * @return An unformatted {@link JsonValue}.
+     * @throws IOException If the reader throws an {@link IOException}.
+     * @throws SyntaxException If the data is syntactically invalid.
+     */
+    public @NotNull JsonValue parseValue() throws IOException {
+        return this.parse().get();
+    }
 
     protected void expect(final char c) throws IOException {
         if (!this.readIf(c)) {

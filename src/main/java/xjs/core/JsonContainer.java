@@ -147,9 +147,9 @@ public abstract class JsonContainer extends JsonValue {
     public JsonContainer setLineLength(final int lineLength) {
         for (int i = 0; i < this.references.size(); i++) {
             if ((i % lineLength) == 0) {
-                this.references.get(i).visit().setLinesAbove(1).setLinesBetween(0);
+                this.references.get(i).setLinesAbove(1).setLinesBetween(0);
             } else {
-                this.references.get(i).visit().setLinesAbove(0).setLinesBetween(0);
+                this.references.get(i).setLinesAbove(0).setLinesBetween(0);
             }
         }
         return this;
@@ -169,7 +169,7 @@ public abstract class JsonContainer extends JsonValue {
     @ApiStatus.Experimental
     public JsonContainer condense() {
         for (final JsonReference reference : this.references) {
-            reference.visit().setLinesAbove(0).setLinesBetween(0);
+            reference.setLinesAbove(0).setLinesBetween(0);
         }
         return this;
     }
@@ -616,15 +616,6 @@ public abstract class JsonContainer extends JsonValue {
      * @return a <em>deep</em>, unformatted copy of this container.
      */
     public abstract JsonContainer unformatted();
-
-    /**
-     * Override indicating that subclasses must still implement this method.
-     *
-     * @param other The value being compared to.
-     * @return <code>true</code>, if the two values match.
-     */
-    @Override
-    public abstract boolean matches(final JsonValue other);
 
     /**
      * Generates an immutable view of this container in which values may not be added

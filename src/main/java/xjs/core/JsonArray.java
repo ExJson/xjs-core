@@ -137,8 +137,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
      * @throws IndexOutOfBoundsException if the given index is out of bounds.
      */
     public JsonArray set(final int index, final @Nullable JsonValue value) {
-        this.references.get(index).update(og ->
-            Json.nonnull(value).setDefaultMetadata(og));
+        this.references.get(index).set(value);
         return this;
     }
 
@@ -158,7 +157,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     /**
      * Sets the header comment for the value at the given index.
      *
-     * <p>This is an {@link JsonReference#get accessing} operation.
+     * <p>This is an {@link JsonReference#get visiting} operation.
      *
      * @param index   The index of the <b>existing</b> value being updated.
      * @param comment The message of the generated comment.
@@ -166,7 +165,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
      * @throws IndexOutOfBoundsException if the given index is out of bounds.
      */
     public JsonArray setComment(final int index, final String comment) {
-        this.get(index).setComment(comment);
+        this.getReference(index).setComment(comment);
         return this;
     }
 
@@ -219,8 +218,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
      * @return <code>this</code>, for method chaining.
      */
     public JsonArray add(final JsonValue value) {
-        this.references.add(new JsonReference(value));
-        return this;
+        return this.addReference(new JsonReference(value));
     }
 
     /**
@@ -278,7 +276,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
      * @return <code>this</code>, for method chaining.
      */
     public JsonArray add(final JsonValue value, final String comment) {
-        return this.add(Json.nonnull(value).setComment(comment));
+        return this.addReference(new JsonReference(value).setComment(comment));
     }
 
     /**
@@ -493,7 +491,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
      */
     @Override
     public JsonArray deepCopy(final boolean trackAccess) {
-        final JsonArray copy = (JsonArray) new JsonArray().setDefaultMetadata(this);
+        final JsonArray copy = new JsonArray();
         for (final JsonReference reference : this.references) {
             final JsonValue value = reference.visit();
             if (value.isContainer()) {
@@ -515,8 +513,11 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     public JsonArray unformatted() {
         final JsonArray copy = new JsonArray();
         for (final JsonReference reference : this.references) {
-            copy.addReference(reference.clone(true)
-                .mutate(reference.visit().unformatted()));
+            final JsonReference cloned = reference.clone(true);
+            if (reference.visit().isContainer()) {
+                cloned.mutate(reference.visit().asContainer().unformatted());
+            }
+            copy.addReference(cloned);
         }
         return copy;
     }
@@ -594,7 +595,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + this.references.hashCode();
+        return this.references.hashCode();
     }
 
     @Override

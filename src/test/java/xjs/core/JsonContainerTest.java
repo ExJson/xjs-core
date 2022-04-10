@@ -59,19 +59,19 @@ public final class JsonContainerTest {
 
     @Test
     public void contains_ignoresMetadata() throws IOException {
-        final JsonContainer container = new JsonParser("[1]").parse().asContainer();
+        final JsonContainer container = new JsonParser("[1]").parseValue().asContainer();
         assertTrue(container.contains(1));
     }
 
     @Test
     public void indexOf_ignoresMetadata() throws IOException {
-        final JsonContainer container = new JsonParser("[1]").parse().asContainer();
+        final JsonContainer container = new JsonParser("[1]").parseValue().asContainer();
         assertEquals(0, container.indexOf(Json.value(1)));
     }
 
     @Test
     public void remove_ignoresMetadata() throws IOException {
-        final JsonContainer container = new JsonParser("[1]").parse().asContainer();
+        final JsonContainer container = new JsonParser("[1]").parseValue().asContainer();
         assertTrue(container.remove(Json.value(1)).isEmpty());
     }
 

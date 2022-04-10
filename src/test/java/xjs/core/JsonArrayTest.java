@@ -50,17 +50,17 @@ public final class JsonArrayTest {
     @Test
     public void set_preservesMetadata() {
         final JsonArray array =
-            new JsonArray().add(Json.value(1).setLinesAbove(1));
+            new JsonArray().addReference(Json.value(1).intoReference().setLinesAbove(1));
         array.set(0, 2);
-        assertEquals(1, array.get(0).getLinesAbove());
+        assertEquals(1, array.getReference(0).getLinesAbove());
     }
 
     @Test
     public void set_canUpdateMetadata() {
         final JsonArray array =
-            new JsonArray().add(Json.value(1).setLinesAbove(1));
-        array.set(0, Json.value(2).setLinesAbove(0));
-        assertEquals(0, array.get(0).getLinesAbove());
+            new JsonArray().addReference(Json.value(1).intoReference().setLinesAbove(1));
+        array.setReference(0, Json.value(2).intoReference().setLinesAbove(0));
+        assertEquals(0, array.getReference(0).getLinesAbove());
     }
 
     @Test

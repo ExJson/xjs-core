@@ -3,6 +3,7 @@ package xjs.serialization.parser;
 import org.junit.jupiter.api.Test;
 import xjs.core.JsonArray;
 import xjs.core.JsonObject;
+import xjs.core.JsonReference;
 import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;
 
@@ -17,70 +18,70 @@ public abstract class CommonParserTest {
 
     @Test
     public final void parse_readsTrue() throws IOException {
-        assertTrue(this.parse("true").isTrue());
+        assertTrue(this.parseValue("true").isTrue());
     }
 
     @Test
     public final void parse_readsFalse() throws IOException {
-        assertTrue(this.parse("false").isFalse());
+        assertTrue(this.parseValue("false").isFalse());
     }
 
     @Test
     public final void parse_readsNull() throws IOException {
-        assertTrue(this.parse("null").isNull());
+        assertTrue(this.parseValue("null").isNull());
     }
 
     @Test
     public final void parse_readsInteger() throws IOException {
-        assertEquals(1234, this.parse("1234").asInt());
+        assertEquals(1234, this.parseValue("1234").asInt());
     }
 
     @Test
     public final void parse_readsDecimal() throws IOException {
-        assertEquals(12.34, this.parse("12.34").asDouble());
+        assertEquals(12.34, this.parseValue("12.34").asDouble());
     }
 
     @Test
     public final void parse_readsExponent() throws IOException {
-        assertEquals(12.3e4, this.parse("12.3e4").asDouble());
+        assertEquals(12.3e4, this.parseValue("12.3e4").asDouble());
     }
 
     @Test
     public final void parse_readsQuotedString() throws IOException {
-        assertEquals("Hello, World!", this.parse("\"Hello, World!\"").asString());
+        assertEquals("Hello, World!", this.parseValue("\"Hello, World!\"").asString());
     }
 
     @Test
     public final void parse_readsEmptyArray() throws IOException {
-        assertEquals(new JsonArray(), this.parse("[]").asArray().unformatted());
+        assertEquals(new JsonArray(), this.parseValue("[]").asArray().unformatted());
     }
 
     @Test
     public final void parse_readsEmptyObject() throws IOException {
-        assertEquals(new JsonObject(), this.parse("{}").asObject().unformatted());
+        assertEquals(new JsonObject(), this.parseValue("{}").asObject().unformatted());
     }
 
     @Test
     public final void parse_readsCondensedArray() throws IOException {
-        final JsonArray parsed = this.parse("[1,2,3]").asArray();
+        final JsonArray parsed = this.parseValue("[1,2,3]").asArray();
         assertEquals(List.of(1, 2, 3), parsed.toList(JsonValue::asInt));
     }
 
     @Test
     public final void parse_readsMultilineArray() throws IOException {
-        final JsonArray parsed = this.parse("[\n1,\n2,\n3\n]").asArray();
+        final JsonArray parsed = this.parseValue("[\n1,\n2,\n3\n]").asArray();
         assertEquals(List.of(1, 2, 3), parsed.toList(JsonValue::asInt));
     }
 
     @Test
     public final void parse_readsCondensedObject() throws IOException {
-        final JsonObject parsed = this.parse("{\"1\":1,\"2\":2,\"3\":3}").asObject();
+        final JsonObject parsed = this.parseValue("{\"1\":1,\"2\":2,\"3\":3}").asObject();
         assertEquals(Map.of("1", 1, "2", 2, "3", 3), parsed.toMap(JsonValue::asInt));
     }
 
     @Test
     public final void parse_readsMultilineObject() throws IOException {
-        final JsonObject parsed = this.parse("{\n\"1\":1,\n\"2\":2,\n\"3\":3\n}").asObject();
+        final JsonObject parsed = this.parseValue("{\n\"1\":1,\n\"2\":2,\n\"3\":3\n}").asObject();
         assertEquals(Map.of("1", 1, "2", 2, "3", 3), parsed.toMap(JsonValue::asInt));
     }
 
@@ -91,14 +92,14 @@ public abstract class CommonParserTest {
 
     @Test
     public final void parse_preservesWhitespaceBetween() throws IOException {
-        assertEquals(3, this.parse("{\"\":\n\n\n\"\"}")
-            .asObject().get(0).getLinesBetween());
+        assertEquals(3, this.parseValue("{\"\":\n\n\n\"\"}")
+            .asObject().getReference(0).getLinesBetween());
     }
 
     @Test
     public final void parse_parsesRecursively() throws IOException {
         assertEquals(new JsonArray().add(1).add(new JsonArray()),
-            this.parse("[1,[]]").asArray().unformatted());
+            this.parseValue("[1,[]]").asArray().unformatted());
     }
 
     @Test
@@ -119,5 +120,9 @@ public abstract class CommonParserTest {
             () -> this.parse("\"\\y\""));
     }
 
-    protected abstract JsonValue parse(final String json) throws IOException;
+    protected abstract JsonReference parse(final String json) throws IOException;
+
+    protected JsonValue parseValue(final String json) throws IOException {
+        return this.parse(json).get();
+    }
 }

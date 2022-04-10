@@ -2,6 +2,10 @@ package xjs.core;
 
 public class JsonLiteral extends JsonValue {
 
+    private static final JsonLiteral TRUE = new JsonLiteral(Value.TRUE);
+    private static final JsonLiteral FALSE = new JsonLiteral(Value.FALSE);
+    private static final JsonLiteral NULL = new JsonLiteral(Value.NULL);
+
     private final Value value;
 
     private JsonLiteral(final Value value) {
@@ -9,15 +13,15 @@ public class JsonLiteral extends JsonValue {
     }
 
     public static JsonLiteral jsonTrue() {
-        return new JsonLiteral(Value.TRUE);
+        return TRUE;
     }
 
     public static JsonLiteral jsonFalse() {
-        return new JsonLiteral(Value.FALSE);
+        return FALSE;
     }
 
     public static JsonLiteral jsonNull() {
-        return new JsonLiteral(Value.NULL);
+        return NULL;
     }
 
     @Override
@@ -56,29 +60,6 @@ public class JsonLiteral extends JsonValue {
     }
 
     @Override
-    public long asLong() {
-        return (long) this.asDouble();
-    }
-
-    @Override
-    public int asInt() {
-        return (int) this.asDouble();
-    }
-
-    @Override
-    public double asDouble() {
-        if (this.value != Value.NULL) {
-            return this.value.number;
-        }
-        return super.asDouble();
-    }
-
-    @Override
-    public float asFloat() {
-        return (float) this.asDouble();
-    }
-
-    @Override
     public boolean asBoolean() {
         switch (this.value) {
             case TRUE: return true;
@@ -93,22 +74,12 @@ public class JsonLiteral extends JsonValue {
     }
 
     @Override
-    public JsonLiteral deepCopy(final boolean trackAccess) {
-        return (JsonLiteral) new JsonLiteral(this.value).setDefaultMetadata(this);
-    }
-
-    @Override
-    public JsonValue unformatted() {
-        return new JsonLiteral(this.value);
-    }
-
-    @Override
     public int hashCode() {
-        return 31 * super.hashCode() + 17 * this.value.ordinal();
+        return this.value.hashCode();
     }
 
     @Override
-    public boolean matches(final JsonValue other) {
+    public boolean equals(final Object other) {
         if (other instanceof JsonLiteral) {
             return this.value == ((JsonLiteral) other).value;
         }

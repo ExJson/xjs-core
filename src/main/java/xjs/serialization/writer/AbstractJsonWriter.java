@@ -1,6 +1,7 @@
 package xjs.serialization.writer;
 
 import xjs.core.JsonContainer;
+import xjs.core.JsonReference;
 import xjs.core.JsonValue;
 import xjs.serialization.JsonSerializationContext;
 
@@ -69,18 +70,26 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
     }
 
     /**
-     * Appends a {@link JsonValue} of <em>any kind</em> into the writer being
+     * Appends a formatted {@link JsonValue} of <em>any kind</em> into the writer being
      * wrapped by this object.
      *
-     * @param value The value being serialized.
+     * @param reference The formatted value being serialized.
      * @throws IOException If the underlying writer throws an {@link IOException}.
      */
-    public void write(final JsonValue value) throws IOException {
-        this.writeLinesAbove(-1, true, false, value);
-        this.write(value, 0);
+    public void write(final JsonReference reference) throws IOException {
+        this.writeLinesAbove(-1, true, false, reference);
+        this.write(reference, 0);
     }
 
-    protected abstract void write(final JsonValue value, final int level) throws IOException;
+    public void write(final JsonValue value) throws IOException {
+        if (value.isContainer()) {
+            this.write(value.asContainer().unformatted().intoReference());
+        } else {
+            this.write(value.intoReference());
+        }
+    }
+
+    protected abstract void write(final JsonReference reference, final int level) throws IOException;
 
     protected void open(final boolean condensed, final char opener) throws IOException {
         this.tw.write(opener);
@@ -92,10 +101,10 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
     }
 
     protected void writeLinesAbove(
-            final int level, final boolean top, final boolean condensed, final JsonValue value) throws IOException {
+            final int level, final boolean top, final boolean condensed, final JsonReference reference) throws IOException {
         if (this.format) {
             final int lines =
-                this.getNumLinesAbove(value.getLinesAbove(), level, condensed, top);
+                this.getNumLinesAbove(reference.getLinesAbove(), level, condensed, top);
             if (lines > 0) {
                 this.nl(lines, level);
             }
@@ -143,23 +152,23 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         }
     }
 
-    protected boolean isCondensed(final JsonValue value) {
-        if (this.allowCondense && value.isContainer()) {
-            final JsonContainer c = value.asContainer();
+    protected boolean isCondensed(final JsonReference value) {
+        if (this.allowCondense && value.visit().isContainer()) {
+            final JsonContainer c = value.visit().asContainer();
             if (!c.isEmpty()) {
-                if (c.getReference(0).visit().getLinesAbove() != 0) {
+                if (c.getReference(0).getLinesAbove() != 0) {
                     return false;
                 } // Intentionally shallow check for formatting purposes
-                return c.size() == 1 || c.getReference(c.size() - 1).visit().getLinesAbove() == 0;
+                return c.size() == 1 || c.getReference(c.size() - 1).getLinesAbove() == 0;
             }
         }
         return false;
     }
 
-    protected void separate(int level, final JsonValue value) throws IOException {
+    protected void separate(int level, final JsonReference reference) throws IOException {
         if (this.format) {
-            int lines = Math.max(0, value.getLinesBetween());
-            if (lines == 0 && value.isContainer() && !this.bracesSameLine) {
+            int lines = Math.max(0, reference.getLinesBetween());
+            if (lines == 0 && reference.visit().isContainer() && !this.bracesSameLine) {
                lines = 1;
                level -= 1;
             }
@@ -183,7 +192,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
     }
 
     protected void close(
-            final JsonContainer c, final boolean condensed, final int level, final char closer) throws IOException {
+            final JsonReference c, final boolean condensed, final int level, final char closer) throws IOException {
         if (this.format) {
             if (condensed && this.allowCondense) {
                 this.tw.write(this.separator);
@@ -194,17 +203,17 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.tw.write(closer);
     }
 
-    protected void writeLinesTrailing(final JsonContainer c, final int level) throws IOException {
+    protected void writeLinesTrailing(final JsonReference c, final int level) throws IOException {
         if (this.format) {
-            final int lines = this.getLinesTrailing(c.getLinesTrailing(), c, level);
+            final int lines = this.getLinesTrailing(c.visit().asContainer().getLinesTrailing(), c, level);
             if (lines > 0) {
                 this.nl(lines, level);
             }
         }
     }
 
-    protected int getLinesTrailing(final int lines, final JsonContainer c, final int level) {
-        if (lines < 0 && c.size() > 0) {
+    protected int getLinesTrailing(final int lines, final JsonReference c, final int level) {
+        if (lines < 0 && c.visit().asContainer().size() > 0) {
             return this.getDefaultLinesTrailing(level);
         }
         return this.limitLines(lines, this.isCondensed(c), true);

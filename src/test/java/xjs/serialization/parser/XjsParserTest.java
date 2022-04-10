@@ -3,12 +3,7 @@ package xjs.serialization.parser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import xjs.core.CommentType;
-import xjs.core.JsonArray;
-import xjs.core.JsonObject;
-import xjs.core.JsonString;
-import xjs.core.JsonValue;
-import xjs.core.StringType;
+import xjs.core.*;
 import xjs.exception.SyntaxException;
 import xjs.serialization.writer.JsonWriter;
 
@@ -23,77 +18,77 @@ public final class XjsParserTest extends CommonParserTest {
     @Test
     public void parse_ignoresTrailingCommas() throws IOException {
         assertEquals(new JsonArray().add(1).add(2).add(3),
-            this.parse("[1,2,3,]").unformatted());
+            this.parseValue("[1,2,3,]"));
     }
 
     @Test
     public void parse_readsUnquotedStrings() throws IOException {
-        assertEquals("hello", this.parse("hello").asString());
+        assertEquals("hello", this.parseValue("hello").asString());
     }
 
     @Test
     public void parse_readsUnquotedKeys() throws IOException {
-        assertEquals("key", this.parse("{key:value}").asObject().keys().get(0));
+        assertEquals("key", this.parseValue("{key:value}").asObject().keys().get(0));
     }
 
     @Test
     public void parse_readsMultipleUnquotedKeys() throws IOException {
         assertEquals(new JsonObject().add("k1", "v1").add("k2", "v2"),
-            this.parse("{k1:v1,k2:v2}").unformatted());
+            this.parseValue("{k1:v1,k2:v2}"));
     }
 
     @Test
     public void parse_readsOpenRoot() throws IOException {
         assertEquals(new JsonObject().add("a", 1).add("b", 2),
-            this.parse("a:1,b:2").unformatted());
+            this.parseValue("a:1,b:2"));
     }
 
     @Test
     public void parse_readsMultipleUnquotedValues() throws IOException {
         assertEquals(new JsonArray().add("a").add("b").add("c"),
-            this.parse("[a,b,c]").unformatted());
+            this.parseValue("[a,b,c]"));
     }
 
     @Test
     public void singleComma_inArray_isEmptyImplicitString() throws IOException {
         assertEquals(new JsonArray().add("").add(""),
-            this.parse("[,,]").unformatted());
+            this.parseValue("[,,]"));
     }
 
     @Test
     public void singleComma_inObject_isEmptyImplicitString() throws IOException {
         assertEquals(new JsonObject().add("k", "").add("r", ""),
-            this.parse("k:,r:,").unformatted());
+            this.parseValue("k:,r:,"));
     }
 
     @Test
     public void singleColon_inObject_isEmptyImplicitKey() throws IOException {
         assertEquals(new JsonObject().add("", ""),
-            this.parse(":,").unformatted());
+            this.parseValue(":,"));
     }
 
     @Test
     public void emptyFile_isImplicitlyString() throws IOException {
         assertEquals(new JsonString("", StringType.IMPLICIT),
-            this.parse("").unformatted());
+            this.parseValue(""));
     }
 
     @Test
     public void parseValue_readsUntilEndOfLine() throws IOException {
         assertEquals(new JsonObject().add("k", "v").add("r", "t"),
-            this.parse("k:v\nr:t").unformatted());
+            this.parseValue("k:v\nr:t"));
     }
 
     @Test
     public void parseKey_readsUntilColon() throws IOException {
         assertEquals(new JsonObject().add("k\n1\n2\n3", "v"),
-            this.parse("k\n1\n2\n3:v").unformatted());
+            this.parseValue("k\n1\n2\n3:v"));
     }
 
     @Test
     public void parseValue_readsUntilTextIsBalanced() throws IOException {
         assertEquals(new JsonObject().add("k", "(\n1\n2\n3\n)"),
-            this.parse("k:(\n1\n2\n3\n)").unformatted());
+            this.parseValue("k:(\n1\n2\n3\n)"));
     }
 
     @Test
@@ -105,32 +100,32 @@ public final class XjsParserTest extends CommonParserTest {
     @Test
     public void parseValue_continuesReadingAfterEscape() throws IOException {
         assertEquals(new JsonObject().add("k", "v\nv"),
-            this.parse("k:v\\\nv").unformatted());
+            this.parseValue("k:v\\\nv"));
     }
 
     @Test
     public void parse_readsSingleQuotedString() throws IOException {
-        assertEquals("", this.parse("''").asString());
+        assertEquals("", this.parseValue("''").asString());
     }
 
     @Test
     public void parse_readsMultilineString() throws IOException {
-        assertEquals("test", this.parse("'''test'''").asString());
+        assertEquals("test", this.parseValue("'''test'''").asString());
     }
 
     @Test
     public void parse_toleratesEmptyMultilineString() throws IOException {
-        assertEquals("", this.parse("''''''").asString());
+        assertEquals("", this.parseValue("''''''").asString());
     }
 
     @Test
     public void multilineString_ignoresLeadingWhitespace() throws IOException {
-        assertEquals("test", this.parse("'''  test'''").asString());
+        assertEquals("test", this.parseValue("'''  test'''").asString());
     }
 
     @Test
     public void multilineString_ignoresTrailingNewline() throws IOException {
-        assertEquals("test", this.parse("'''test\n'''").asString());
+        assertEquals("test", this.parseValue("'''test\n'''").asString());
     }
 
     @Test
@@ -143,7 +138,7 @@ public final class XjsParserTest extends CommonParserTest {
                 2
               '''
             """;
-        assertEquals("0\n 1\n  2", this.parse(text).asObject().get("multi").asString());
+        assertEquals("0\n 1\n  2", this.parseValue(text).asObject().get("multi").asString());
     }
 
     @ParameterizedTest
@@ -171,21 +166,21 @@ public final class XjsParserTest extends CommonParserTest {
     @CsvSource({"/*header*/", "#header", "//header"})
     public void parse_preservesHeader_aboveValue(final String comment) throws IOException {
         assertEquals(comment,
-            this.parse(comment + "\nk:v").asObject().get(0).getComments().getData(CommentType.HEADER));
+            this.parseValue(comment + "\nk:v").asObject().getReference(0).getComments().getData(CommentType.HEADER));
     }
 
     @ParameterizedTest
     @CsvSource({"/*value*/", "#value", "//value"})
     public void parse_preservesValueComment_betweenKeyValue(final String comment) throws IOException {
         assertEquals(comment + "\n",
-            this.parse("k:\n" + comment + "\nv").asObject().get(0).getComments().getData(CommentType.VALUE));
+            this.parseValue("k:\n" + comment + "\nv").asObject().getReference(0).getComments().getData(CommentType.VALUE));
     }
 
     @ParameterizedTest
     @CsvSource({"/*eol*/", "#eol", "//eol"})
     public void parse_preservesEolComment_afterValue(final String comment) throws IOException {
         assertEquals(comment,
-            this.parse("k:v" + comment).asObject().get(0).getComments().getData(CommentType.EOL));
+            this.parseValue("k:v" + comment).asObject().getReference(0).getComments().getData(CommentType.EOL));
     }
 
     @ParameterizedTest
@@ -199,8 +194,8 @@ public final class XjsParserTest extends CommonParserTest {
     @CsvSource({"/*comment*/", "#comment", "//comment"})
     public void parse_preservesNewlines_afterComments(final String comment) throws IOException {
         assertEquals(comment + "\n",
-            this.parse("k1:v1\n" + comment + "\n\nk:v")
-                .asObject().get(1).getComments().getData(CommentType.HEADER));
+            this.parseValue("k1:v1\n" + comment + "\n\nk:v")
+                .asObject().getReference(1).getComments().getData(CommentType.HEADER));
     }
 
     @Test
@@ -215,7 +210,7 @@ public final class XjsParserTest extends CommonParserTest {
             // comment of "key"
             key: value""";
 
-        final JsonValue parsed = this.parse(header + "\n" + json);
+        final JsonReference parsed = this.parse(header + "\n" + json);
         assertEquals(header, parsed.getComments().getData(CommentType.HEADER));
     }
 
@@ -258,7 +253,7 @@ public final class XjsParserTest extends CommonParserTest {
     }
 
     @Override
-    protected JsonValue parse(final String json) throws IOException {
+    protected JsonReference parse(final String json) throws IOException {
         return new XjsParser(json).parse();
     }
 }

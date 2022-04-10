@@ -113,13 +113,13 @@ public final class XjsWriterTest {
 
     @Test
     public void write_preservesWhitespaceAbove() {
-        assertEquals("\n\ntrue", write(Json.value(true).setLinesAbove(2)));
+        assertEquals("\n\ntrue", write(Json.value(true).intoReference().setLinesAbove(2)));
     }
 
     @Test
     public void write_preservesWhitespaceBetween() {
         assertEquals("a:\n\n\n\n  1234",
-            write(new JsonObject().add("a", Json.value(1234).setLinesBetween(4))));
+            write(new JsonObject().addReference("a", Json.value(1234).intoReference().setLinesBetween(4))));
     }
 
     @Test
@@ -145,15 +145,16 @@ public final class XjsWriterTest {
     public void write_preservesComplexFormatting() {
         final JsonObject object =
             new JsonObject()
-                .add("1", Json.value(1).setLinesBetween(1))
+                .addReference("1", Json.value(1).intoReference().setLinesBetween(1))
                 .add("2", 2)
-                .add("a", new JsonArray()
+                .addReference("a", new JsonArray()
                     .add(3)
                     .add(4)
                     .add(new JsonObject()
                         .add("5", 5)
                         .add("6", 6)
                         .condense())
+                    .intoReference()
                     .setLinesAbove(2));
         final String expected = """
             1:
@@ -209,13 +210,13 @@ public final class XjsWriterTest {
               6: [ 7, 8, 9 ]
             }
             """;
-        final JsonObject object = new XjsParser(input).parse().asObject();
+        final JsonReference object = new XjsParser(input).parse();
         assertEquals(expected, write(object, options));
     }
 
     @Test
-    public void write_withHeaderOnRootObject_addsImplicitEmptyLine() throws IOException {
-        final JsonObject object = new JsonObject().add("key", "value");
+    public void write_withHeaderOnRootObject_addsImplicitEmptyLine() {
+        final JsonReference object = new JsonObject().add("key", "value").intoReference();
         object.setComment(CommentType.HEADER, CommentStyle.LINE, "header");
         final String expected = """
             // header
@@ -274,89 +275,97 @@ public final class XjsWriterTest {
 
     @Test
     public void write_printsHeaderComment() {
-        final JsonValue v = new JsonString("v", StringType.IMPLICIT);
-        v.setComment(CommentType.HEADER, CommentStyle.HASH, "Header");
+        final JsonReference r = new JsonString("v", StringType.IMPLICIT).intoReference();
+        r.setComment(CommentType.HEADER, CommentStyle.HASH, "Header");
 
-        assertEquals("# Header\nv", write(v));
+        assertEquals("# Header\nv", write(r));
     }
 
     @Test
     public void write_printsFooterComment() {
-        final JsonValue v = new JsonObject();
-        v.setComment(CommentType.FOOTER, CommentStyle.LINE, "Footer");
+        final JsonReference r = new JsonObject().intoReference();
+        r.setComment(CommentType.FOOTER, CommentStyle.LINE, "Footer");
 
-        assertEquals("{}\n// Footer", write(v));
+        assertEquals("{}\n// Footer", write(r));
     }
 
     @Test
     public void write_printsEolComment() {
-        final JsonValue v = new JsonString("v", StringType.IMPLICIT);
-        v.setComment(CommentType.EOL, CommentStyle.LINE_DOC, "Eol");
+        final JsonReference r = new JsonString("v", StringType.IMPLICIT).intoReference();
+        r.setComment(CommentType.EOL, CommentStyle.LINE_DOC, "Eol");
 
-        assertEquals("v /// Eol", write(v));
+        assertEquals("v /// Eol", write(r));
     }
 
     @Test
     public void write_printsValueComment() {
-        final JsonValue v = new JsonString("v", StringType.IMPLICIT);
-        v.setComment(CommentType.VALUE, CommentStyle.BLOCK, "Value");
+        final JsonReference r = new JsonString("v", StringType.IMPLICIT).intoReference();
+        r.setComment(CommentType.VALUE, CommentStyle.BLOCK, "Value");
 
-        assertEquals("k: /* Value */ v", write(new JsonObject().add("k", v)));
+        assertEquals("k: /* Value */ v", write(new JsonObject().addReference("k", r)));
     }
 
     @Test
     public void writeValueComment_withLinesBetween_coercesOntoNextLine() {
-        final JsonValue v = new JsonString("v", StringType.IMPLICIT);
-        v.setComment(CommentType.VALUE, CommentStyle.BLOCK, "Value");
-        v.setLinesBetween(1);
+        final JsonReference r = new JsonString("v", StringType.IMPLICIT).intoReference();
+        r.setComment(CommentType.VALUE, CommentStyle.BLOCK, "Value");
+        r.setLinesBetween(1);
 
-        assertEquals("k:\n  /* Value */\n  v", write(new JsonObject().add("k", v)));
+        assertEquals("k:\n  /* Value */\n  v", write(new JsonObject().addReference("k", r)));
     }
 
     @Test
     public void writeValueComment_withLinesBetween_andLinesBelow_doesNotInsertExtraLines() {
-        final JsonValue v = new JsonString("v", StringType.IMPLICIT);
-        v.getComments().setData(CommentType.VALUE, "/* Value */\n");
-        v.setLinesBetween(1);
+        final JsonReference r = new JsonString("v", StringType.IMPLICIT).intoReference();
+        r.getComments().setData(CommentType.VALUE, "/* Value */\n");
+        r.setLinesBetween(1);
 
-        assertEquals("k:\n  /* Value */\n  v", write(new JsonObject().add("k", v)));
+        assertEquals("k:\n  /* Value */\n  v", write(new JsonObject().addReference("k", r)));
     }
 
     @Test
     public void write_printsInteriorComment() {
-        final JsonValue v = new JsonArray();
-        v.setComment(CommentType.INTERIOR, CommentStyle.MULTILINE_DOC, "Interior");
+        final JsonReference r = new JsonArray().intoReference();
+        r.setComment(CommentType.INTERIOR, CommentStyle.MULTILINE_DOC, "Interior");
 
-        assertEquals("[ /** Interior */ ]", write(v));
+        assertEquals("[ /** Interior */ ]", write(r));
     }
 
     @Test
     public void writeInteriorComment_withNewlineInComment_insertsLinesAround() {
-        final JsonValue v = new JsonArray();
-        v.setComment(CommentType.INTERIOR, CommentStyle.MULTILINE_DOC, "Interior\nLine 2");
+        final JsonReference r = new JsonArray().intoReference();
+        r.setComment(CommentType.INTERIOR, CommentStyle.MULTILINE_DOC, "Interior\nLine 2");
 
-        assertEquals("[\n  /**\n   * Interior\n   * Line 2\n   */\n]", write(v));
+        assertEquals("[\n  /**\n   * Interior\n   * Line 2\n   */\n]", write(r));
     }
 
     @Test
     public void writeInteriorComment_withNewlineAboveComment_insertsLineBelow() {
-        final JsonArray v = new JsonArray();
-        v.setLinesTrailing(1);
-        v.setComment(CommentType.INTERIOR, CommentStyle.MULTILINE_DOC, "Interior");
+        final JsonReference r = new JsonArray().intoReference();
+        r.get().asArray().setLinesTrailing(1); // todo
+        r.setComment(CommentType.INTERIOR, CommentStyle.MULTILINE_DOC, "Interior");
 
-        assertEquals("[\n  /** Interior */\n]", write(v));
+        assertEquals("[\n  /** Interior */\n]", write(r));
     }
 
     private static String write(final JsonValue value) {
-        return write(value, new JsonWriterOptions());
+        return write(value.intoReference(), new JsonWriterOptions());
+    }
+
+    private static String write(final JsonReference reference) {
+        return write(reference, new JsonWriterOptions());
     }
 
     private static String write(final JsonValue value, final JsonWriterOptions options) {
+        return write(value.intoReference(), options);
+    }
+
+    private static String write(final JsonReference reference, final JsonWriterOptions options) {
         final StringWriter sw = new StringWriter();
         final XjsWriter writer =
             options != null ? new XjsWriter(sw, options) : new XjsWriter(sw, false);
         try {
-            writer.write(value);
+            writer.write(reference);
         } catch (final Exception e) {
             e.printStackTrace();
         }

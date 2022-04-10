@@ -161,13 +161,11 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      * @param key   The key of the value being replaced.
      * @param value The value being set at this index.
      * @return <code>this</code>, for method chaining.
-     * @throws IndexOutOfBoundsException if the given index is out of bounds.
      */
     public JsonObject set(final String key, final @Nullable JsonValue value) {
         final int index = this.indexOf(key);
         if (index != -1) {
-            this.references.get(index).update(og ->
-                Json.nonnull(value).setDefaultMetadata(og));
+            this.references.get(index).set(value);
             return this;
         }
         return this.addReference(key, new JsonReference(value).setAccessed(true));
@@ -193,7 +191,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     /**
      * Sets the header comment for a value with the given key.
      *
-     * <p>This is an {@link JsonReference#get accessing} operation.
+     * <p>This is an {@link JsonReference#get visiting} operation.
      *
      * @param key     The key of the value being updated.
      * @param comment The message of the generated comment.
@@ -201,11 +199,11 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      * @throws UnsupportedOperationException if the value does not exist.
      */
     public JsonObject setComment(final String key, final String comment) {
-        final JsonValue value = this.get(key);
-        if (value == null) {
+        final JsonReference reference = this.getReference(key);
+        if (reference == null) {
             throw new UnsupportedOperationException("Setting comment for missing value");
         }
-        value.setComment(comment);
+        reference.setComment(comment);
         return this;
     }
 
@@ -364,7 +362,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      * @return <code>this</code>, for method chaining.
      */
     public JsonObject add(final String key, final @Nullable JsonValue value, final String comment) {
-        return this.add(key, Json.nonnull(value).setComment(comment));
+        return this.addReference(key, new JsonReference(value).setComment(comment));
     }
 
     /**
@@ -412,8 +410,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         if (index < 0 || index >= this.references.size()) {
             return this.add(key, value);
         }
-        this.references.get(index).update(og ->
-            Json.nonnull(value).setDefaultMetadata(og));
+        this.references.get(index).set(value);
         this.keys.set(index, key);
         this.table.clear();
         this.table.init(this.keys);
@@ -666,7 +663,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
     @Override
     public JsonObject deepCopy(final boolean trackAccess) {
-        final JsonObject copy = (JsonObject) new JsonObject().setDefaultMetadata(this);
+        final JsonObject copy = new JsonObject();
         final Iterator<String> keyIterator = this.keys.iterator();
         final Iterator<JsonReference> referenceIterator = this.references.iterator();
 
@@ -693,9 +690,12 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         while (keyIterator.hasNext() && referenceIterator.hasNext()) {
             final String key = keyIterator.next();
             final JsonReference reference = referenceIterator.next();
+            final JsonReference cloned = reference.clone(true);
 
-            copy.addReference(key, reference.clone(true)
-                .mutate(reference.visit().unformatted()));
+            if (reference.visit().isContainer()) {
+                reference.mutate(reference.visit().asContainer().unformatted());
+            }
+            copy.addReference(key, cloned);
         }
         return copy;
     }
@@ -738,14 +738,14 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
     @Override
     public int hashCode() {
-        int result = super.hashCode();
+        int result = 1;
         result = 31 * result + this.keys.hashCode();
         result = 31 * result + this.references.hashCode();
         return result;
     }
 
     @Override
-    public boolean matches(final JsonValue other) {
+    public boolean equals(final Object other) {
         if (!(other instanceof JsonObject)) {
             return false;
         }
@@ -757,7 +757,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             return false;
         }
         for (int i = 0; i < this.size(); i++) {
-            if (!this.references.get(i).visit().matches(object.references.get(i).visit())) {
+            if (!this.references.get(i).visit().equals(object.references.get(i).visit())) {
                 return false;
             }
         }
