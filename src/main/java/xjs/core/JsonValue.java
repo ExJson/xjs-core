@@ -11,7 +11,6 @@ import xjs.serialization.writer.XjsWriter;
 import java.io.*;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Represents a JSON value. This may be a primitive value, such as a
@@ -745,6 +744,26 @@ public abstract class JsonValue implements Serializable {
      *          impacted by such a change.
      */
     public abstract JsonValue unformatted();
+
+    /**
+     * Trims any whitespace above or below this value.
+     *
+     * <p>This method is ideal when adding formatted values into an already-
+     * formatted container. For example, to add a parsed value into a parsed
+     * container:
+     *
+     * <pre>{@code
+     *   object.add("key", Json.parse("1234").trim());
+     * }</pre>
+     *
+     * <p>This convention avoids disrupting the established-formatting in an
+     * existing container.
+     *
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonValue trim() {
+        return this.setLinesAbove(-1).setLinesBetween(-1);
+    }
 
     @Override
     public int hashCode() {
