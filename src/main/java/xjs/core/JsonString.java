@@ -44,7 +44,7 @@ public class JsonString extends JsonValue {
 
     @Override
     public double intoDouble() {
-        return this.value.length();
+        return this.value.hashCode();
     }
 
     @Override

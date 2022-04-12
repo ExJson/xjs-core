@@ -103,6 +103,41 @@ public final class JsonContainerTest {
     }
 
     @Test
+    public void intoDouble_returnsSum() {
+        assertEquals(6, Json.array(1, 2, 3).intoInt());
+    }
+
+    @Test
+    public void intoBoolean_allValuesTrue_returnsTrue() {
+        assertTrue(Json.any(true, true, true).intoBoolean());
+    }
+
+    @Test
+    public void intoBoolean_anyValueFalse_returnsFalse() {
+        assertFalse(Json.any(true, false, true).intoBoolean());
+    }
+
+    @Test
+    public void intoBoolean_containerEmpty_returnsFalse() {
+        assertFalse(Json.array().intoBoolean());
+    }
+
+    @Test
+    public void intoString_returnsJoinedString() {
+        assertEquals("Hi, mom!", Json.array("Hi,", "mom!").intoString());
+    }
+
+    @Test
+    public void into_supportsMultipleTypes() {
+        assertEquals("number: 1.0", Json.any("number:", 1.0).intoString());
+    }
+
+    @Test
+    public void into_isRecursive() {
+        assertEquals(2, Json.any(1, Json.array(1)).intoInt());
+    }
+
+    @Test
     public void intoContainer_returnsThis() {
         final JsonContainer container = new JsonArray().add(1);
         assertSame(container, container.intoContainer());

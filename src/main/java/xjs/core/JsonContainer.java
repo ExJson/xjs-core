@@ -555,18 +555,31 @@ public abstract class JsonContainer extends JsonValue {
     }
 
     /**
-     * Allows any {@link JsonContainer} type to be coerced into a number value from its size.
+     * Allows any {@link JsonContainer} type to be coerced into its first value.
      *
-     * <p><b>Note:</b> this implementation is very likely to change in a future release.
-     *
-     * @return The size of this array.
-     * @apiNote Experimental - may get removed or be implemented differently in a future
-     *          release.
+     * @return The first element in this container, or else 0.
      */
     @Override
-    @ApiStatus.Experimental
     public double intoDouble() {
-        return this.size();
+        return this.values().stream().mapToDouble(JsonValue::intoDouble).sum();
+    }
+
+    /**
+     * Allows any {@link JsonContainer} type to be coerced into its first value.
+     *
+     * @return The first element in this container, or else false.
+     */
+    public boolean intoBoolean() {
+        return !this.isEmpty() && this.values().stream().allMatch(JsonValue::intoBoolean);
+    }
+
+    /**
+     * Allows any {@link JsonContainer} type to be coerced into its first value.
+     *
+     * @return The first element in this container, or else "".
+     */
+    public String intoString() {
+        return this.values().stream().map(JsonValue::intoString).collect(Collectors.joining(" "));
     }
 
     /**
