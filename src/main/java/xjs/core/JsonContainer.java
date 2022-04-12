@@ -249,12 +249,7 @@ public abstract class JsonContainer extends JsonValue {
      * @return The expected data, or else {@link Optional#empty}.
      */
     public <T> Optional<T> getOptional(final int index, final Function<JsonValue, T> filter) {
-        return this.getOptional(index).flatMap(value -> {
-            try {
-                return Optional.ofNullable(filter.apply(value));
-            } catch (final UnsupportedOperationException | SyntaxException ignored) {}
-            return Optional.empty();
-        });
+        return this.getOptional(index).flatMap(value -> Optional.ofNullable(mapSuppressing(value, filter)));
     }
 
     /**
@@ -696,6 +691,22 @@ public abstract class JsonContainer extends JsonValue {
                 })
                 .collect(Collectors.toList());
         return Collections.unmodifiableList(frozen);
+    }
+
+    /**
+     * Returns the result of the given filter, ignoring any syntax exceptions thrown
+     * in the process.
+     *
+     * @param value  The value being mapped.
+     * @param filter A mapper transforming the value into something else.
+     * @param <T>    The return type.
+     * @return The output of <code>filter</code>, or else <code>null</code>.
+     */
+    protected static <T> @Nullable T mapSuppressing(final JsonValue value, final Function<JsonValue, T> filter) {
+        try {
+            return filter.apply(value);
+        } catch (final UnsupportedOperationException | SyntaxException ignored) {}
+        return null;
     }
 
     /**

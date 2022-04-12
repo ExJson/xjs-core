@@ -1,8 +1,8 @@
 package xjs.core;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
-import xjs.exception.SyntaxException;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -477,16 +477,39 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
     /**
      * Returns the <em>last</em> value paired with the given key, or else
-     * <code>null</code>.
+     * throws an {@link UnsupportedOperationException}.
      *
      * <p>This is an {@link JsonReference#get accessing} operation.
      *
-     * @param key The key being queried for.
-     * @return Whichever {@link JsonValue} is found, or else <code>null</code>.
+     * @param key The name of the value being returned.
+     * @return Whichever {@link JsonValue} is found.
+     * @throws UnsupportedOperationException If the value is absent.
      */
-    public @Nullable JsonValue get(final String key) {
+    public JsonValue get(final String key) {
         final int index = this.indexOf(key);
-        return index != -1 ? this.references.get(index).get() : null;
+        if (index != -1) {
+            return this.references.get(index).get();
+        }
+        throw new UnsupportedOperationException("Expected: " + key);
+    }
+
+    /**
+     * Returns the <em>last</em> value paired with the given key, or else
+     * the <code>defaultValue</code>
+     *
+     * @param key The name of the value being returned.
+     * @param defaultValue The default value to return, if absent.
+     * @return The expected value, or else <code>defaultValue</code>.
+     */
+    @Contract("_, !null -> !null")
+    public JsonValue get(final String key, final Object defaultValue) {
+        final int index = this.indexOf(key);
+        if (index != -1) {
+            return this.references.get(index).get();
+        } else if (defaultValue == null) {
+            return null;
+        }
+        return Json.any(defaultValue);
     }
 
     /**
@@ -511,12 +534,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      * @return The expected data, or else {@link Optional#empty}.
      */
     public <T> Optional<T> getOptional(final String key, final Function<JsonValue, T> filter) {
-        return this.getOptional(key).flatMap(value -> {
-            try {
-                return Optional.ofNullable(filter.apply(value));
-            } catch (final UnsupportedOperationException | SyntaxException ignored) {}
-            return Optional.empty();
-        });
+        return this.getOptional(key).flatMap(value -> Optional.ofNullable(mapSuppressing(value, filter)));
     }
 
     /**
@@ -529,7 +547,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      * @return The expected value, or else {@link Optional#empty}.
      */
     public Optional<JsonValue> getOptional(final String key) {
-        return Optional.ofNullable(this.get(key));
+        return Optional.ofNullable(this.get(key, null));
     }
 
     /**
