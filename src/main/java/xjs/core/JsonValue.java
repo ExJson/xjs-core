@@ -608,10 +608,7 @@ public abstract class JsonValue implements Serializable {
      * Coerces this value in to a long, even if it is not a number.
      *
      * @return This value as a number.
-     * @apiNote Experimental - The exact implementation of this value may
-     *          change slightly.
      */
-    @ApiStatus.Experimental
     public long intoLong() {
         return (long) this.intoDouble();
     }
@@ -620,10 +617,7 @@ public abstract class JsonValue implements Serializable {
      * Coerces this value in to an int, even if it is not a number.
      *
      * @return This value as a number.
-     * @apiNote Experimental - The exact implementation of this value may
-     *          change slightly.
      */
-    @ApiStatus.Experimental
     public int intoInt() {
         return (int) this.intoDouble();
     }
@@ -632,20 +626,14 @@ public abstract class JsonValue implements Serializable {
      * Coerces this value in to a double, even if it is not a number.
      *
      * @return This value as a number.
-     * @apiNote Experimental - The exact implementation of this value may
-     *          change slightly.
      */
-    @ApiStatus.Experimental
     public abstract double intoDouble();
 
     /**
      * Coerces this value in to a float, even if it is not a number.
      *
      * @return This value as a number.
-     * @apiNote Experimental - The exact implementation of this value may
-     *          change slightly.
      */
-    @ApiStatus.Experimental
     public float intoFloat() {
         return (float) this.intoDouble();
     }
@@ -654,10 +642,7 @@ public abstract class JsonValue implements Serializable {
      * Coerces this value in to a boolean, even if it is not a boolean value.
      *
      * @return This value as a boolean value.
-     * @apiNote Experimental - The exact implementation of this value may
-     *          change slightly.
      */
-    @ApiStatus.Experimental
     public boolean intoBoolean() {
         return this.intoDouble() != 0;
     }
@@ -666,10 +651,7 @@ public abstract class JsonValue implements Serializable {
      * Coerces this value in to a string, even if it is not a string value.
      *
      * @return This value as a string.
-     * @apiNote Experimental - The exact implementation of this value may
-     *          change slightly.
      */
-    @ApiStatus.Experimental
     public String intoString() {
         return this.toString();
     }
@@ -765,6 +747,16 @@ public abstract class JsonValue implements Serializable {
         return this.setLinesAbove(-1).setLinesBetween(-1);
     }
 
+    /**
+     * Generates a hash code accounting for the value being wrapped by this
+     * object. This ignores any metadata associated with the value.
+     *
+     * @return An integer which should
+     */
+    public int hashValue() {
+        return this.unwrap().hashCode();
+    }
+
     @Override
     public int hashCode() {
         int result = 1;
@@ -775,7 +767,7 @@ public abstract class JsonValue implements Serializable {
         if (this.comments != null) {
             result = 31 * result + this.comments.hashCode();
         }
-        return result;
+        return 31 * result + this.hashValue();
     }
 
     /**
@@ -785,7 +777,9 @@ public abstract class JsonValue implements Serializable {
      * @param other The value being compared to.
      * @return <code>true</code>, if the two values contain the same primary data.
      */
-    public abstract boolean matches(final JsonValue other);
+    public boolean matches(final JsonValue other) {
+        return Objects.equals(this.unwrap(), other.unwrap());
+    }
 
     /**
      * Indicates whether the metadata associated with this value matches that
@@ -846,6 +840,9 @@ public abstract class JsonValue implements Serializable {
      */
     @Override
     public String toString() {
+        if (this.isPrimitive()) {
+            return this.unwrap().toString();
+        }
         return this.toString(JsonFormat.JSON);
     }
 

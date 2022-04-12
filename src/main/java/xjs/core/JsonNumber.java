@@ -57,22 +57,4 @@ public class JsonNumber extends JsonValue {
     public JsonNumber unformatted() {
         return new JsonNumber(this.value);
     }
-
-    @Override
-    public int hashCode() {
-        return 31 * super.hashCode() + Double.hashCode(this.value);
-    }
-
-    @Override
-    public boolean matches(final JsonValue other) {
-        if (other instanceof JsonNumber) {
-            return this.value == ((JsonNumber) other).value;
-        }
-        return false;
-    }
-
-    @Override
-    public String toString() {
-        return String.valueOf(this.value);
-    }
 }

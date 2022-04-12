@@ -58,19 +58,6 @@ public class JsonString extends JsonValue {
     }
 
     @Override
-    public int hashCode() {
-        return 31 * super.hashCode() + this.value.hashCode();
-    }
-
-    @Override
-    public boolean matches(final JsonValue other) {
-        if (other instanceof JsonString) {
-            return this.value.equals(((JsonString) other).value);
-        }
-        return false;
-    }
-
-    @Override
     protected boolean matchesMetadata(final JsonValue other) {
         if (other instanceof JsonString) {
             return this.type.equals(((JsonString) other).type)
@@ -78,10 +65,4 @@ public class JsonString extends JsonValue {
         }
         return false;
     }
-
-    @Override
-    public String toString() {
-        return this.value;
-    }
-
 }

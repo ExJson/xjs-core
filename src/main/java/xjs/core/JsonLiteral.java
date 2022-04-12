@@ -56,29 +56,6 @@ public class JsonLiteral extends JsonValue {
     }
 
     @Override
-    public long asLong() {
-        return (long) this.asDouble();
-    }
-
-    @Override
-    public int asInt() {
-        return (int) this.asDouble();
-    }
-
-    @Override
-    public double asDouble() {
-        if (this.value != Value.NULL) {
-            return this.value.number;
-        }
-        return super.asDouble();
-    }
-
-    @Override
-    public float asFloat() {
-        return (float) this.asDouble();
-    }
-
-    @Override
     public boolean asBoolean() {
         switch (this.value) {
             case TRUE: return true;
@@ -89,7 +66,7 @@ public class JsonLiteral extends JsonValue {
 
     @Override
     public double intoDouble() {
-        return this.value.number;
+        return this.isTrue() ? 1.0 : 0.0;
     }
 
     @Override
@@ -103,34 +80,15 @@ public class JsonLiteral extends JsonValue {
     }
 
     @Override
-    public int hashCode() {
-        return 31 * super.hashCode() + 17 * this.value.ordinal();
-    }
-
-    @Override
-    public boolean matches(final JsonValue other) {
-        if (other instanceof JsonLiteral) {
-            return this.value == ((JsonLiteral) other).value;
-        }
-        return false;
-    }
-
-    @Override
     public String toString() {
         return this.value.token;
     }
 
     private enum Value {
-        TRUE("true", 1.0),
-        FALSE("false", 0.0),
-        NULL("null", 0.0);
+        TRUE,
+        FALSE,
+        NULL;
 
-        final String token;
-        final double number;
-
-        Value(final String token, final double number) {
-            this.token = token;
-            this.number = number;
-        }
+        final String token = this.name().toLowerCase();
     }
 }
