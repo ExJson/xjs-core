@@ -1,6 +1,5 @@
 package xjs.core;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
@@ -791,6 +790,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     private class MemberIterator implements Iterator<Member> {
         final Iterator<String> keys = JsonObject.this.keys.iterator();
         final Iterator<JsonReference> references = references().iterator();
+        int index = 0;
 
         @Override
         public boolean hasNext() {
@@ -799,7 +799,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
         @Override
         public Member next() {
-            return new Member(this.keys.next(), this.references.next());
+            return new Member(this.index++, this.keys.next(), this.references.next());
         }
 
         @Override
@@ -810,11 +810,11 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     /**
-     * The JSON object counterpart to {@link Element}. In addition to exposing the
-     * underlying references within this container, Member exposes each value's
-     * <em>key</em>, as this is the primary accessor for object values.
+     * The JSON object counterpart to {@link JsonArray.Element}. In addition to
+     * exposing the underlying references within this container, Member exposes
+     * each value's <em>key</em>, as this is the primary accessor for object values.
      */
-    public static class Member extends Element {
+    public static class Member extends JsonArray.Element {
         protected final String key;
 
         /**

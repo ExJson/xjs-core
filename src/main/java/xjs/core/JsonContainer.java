@@ -5,12 +5,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xjs.exception.SyntaxException;
 import xjs.serialization.writer.AbstractJsonWriter;
-import xjs.transformer.JsonCollectors;
 
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -777,129 +775,6 @@ public abstract class JsonContainer extends JsonValue {
         @Override
         public void remove() {
             this.references.remove();
-        }
-    }
-
-    /**
-     * This object represents a handle on a single value in this container, as well as
-     * its accessor--e.g. its index or key--if applicable. It may be used to reflect on
-     * the contents of a container and, additionally, can be {@link Collector collected}
-     * in to a new container via {@link JsonCollectors}.
-     */
-    public static class Element {
-        protected JsonReference reference;
-        protected int index;
-
-        /**
-         * Constructs a new container element by providing its only essential data piece:
-         * the {@link JsonReference}.
-         *
-         * @param reference The reference being wrapped by this accessor.
-         */
-        public Element(final JsonReference reference) {
-            this(-1, reference);
-        }
-
-        /**
-         * Constructs a new container element from a reference and its index.
-         *
-         * @param index     The index of the value, or else -1
-         * @param reference A reference pointing to the value at this location.
-         */
-        public Element(final int index, final JsonReference reference) {
-            this.reference = reference;
-            this.index = index;
-        }
-
-        /**
-         * Returns the value being wrapped by this Element.
-         *
-         * <p>This is an {@link JsonReference#get accessing} operation.
-         *
-         * @return The value being wrapped.
-         */
-        public @NotNull JsonValue getValue() {
-            return this.reference.get();
-        }
-
-        /**
-         * Updates the value being wrapped by this accessor. This operation will cascade and
-         * consequently replace the original value in the parent container.
-         *
-         * <p>This is an {@link JsonReference#get accessing} operation.
-         *
-         * @param value The new value to be wrapped.
-         * @return <code>this</code>, for method chaining.
-         */
-        public Element setValue(final @Nullable JsonValue value) {
-            this.reference.set(value);
-            return this;
-        }
-
-        /**
-         * Returns the value being wrapped by this element <em>without</em> updating its
-         * access flags.
-         *
-         * <p>This is a {@link JsonReference#visit visiting} operation.
-         *
-         * @return The value being wrapped.
-         */
-        public @NotNull JsonValue visit() {
-            return this.reference.visit();
-        }
-
-        /**
-         * Updates the value being wrapped by this element <em>without</em> updating its
-         * access flags.
-         *
-         * <p>This is a {@link JsonReference#visit visiting} operation.
-         *
-         * @param value The new value to be wrapped.
-         * @return <code>this</code>, for method chaining.
-         */
-        public Element mutate(final @Nullable JsonValue value) {
-            this.reference.mutate(value);
-            return this;
-        }
-
-        /**
-         * Directly exposes the reference to the value being wrapped by this element.
-         *
-         * @return A reference to the wrapped value.
-         */
-        public JsonReference getReference() {
-            return this.reference;
-        }
-
-        /**
-         * Exposes this element's index to the caller.
-         *
-         * @return The index of the original value.
-         */
-        public int getIndex() {
-            return this.index;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = 1;
-            result = 31 * result + this.index;
-            result = 31 * result + this.reference.hashCode();
-            return result;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (o instanceof Element) {
-                final Element other = (Element) o;
-                return this.index == other.index && this.reference.equals(other.reference);
-            }
-            return false;
-        }
-
-        @Override
-        public String toString() {
-            return "([" + this.index + "]=" + this.reference + ")";
         }
     }
 

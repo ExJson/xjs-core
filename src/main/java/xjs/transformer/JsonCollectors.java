@@ -99,12 +99,12 @@ public final class JsonCollectors {
     }
 
     /**
-     * Generates a {@link Collector} collecting {@link JsonContainer.Element accessors}
+     * Generates a {@link Collector} collecting {@link JsonArray.Element elements}
      * into {@link JsonArray arrays}.
      *
      * @return The collector.
      */
-    public static Collector<JsonContainer.Element, JsonArray, JsonArray> element() {
+    public static Collector<JsonArray.Element, JsonArray, JsonArray> element() {
         return Collector.of(
             JsonArray::new,
             (array, element) -> array.addReference(element.getReference()),
