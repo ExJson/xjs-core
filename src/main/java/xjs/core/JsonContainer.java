@@ -1,6 +1,5 @@
 package xjs.core;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xjs.exception.SyntaxException;
@@ -104,10 +103,7 @@ public abstract class JsonContainer extends JsonValue {
      * {@link AbstractJsonWriter writer}.
      *
      * @return The number of newline characters at the very end of this container.
-     * @apiNote Experimental - may get removed or be implemented differently in a future
-     *          release.
      */
-    @ApiStatus.Experimental
     public int getLinesTrailing() {
         return this.linesTrailing;
     }
@@ -119,10 +115,7 @@ public abstract class JsonContainer extends JsonValue {
      * @param linesTrailing The number of newline characters print.
      * @return <code>this</code>, for method chaining.
      * @see #getLinesTrailing()
-     * @apiNote Experimental - may get removed or be implemented differently in a future
-     *          release.
      */
-    @ApiStatus.Experimental
     public JsonContainer setLinesTrailing(final int linesTrailing) {
         this.linesTrailing = linesTrailing;
         return this;
@@ -139,10 +132,7 @@ public abstract class JsonContainer extends JsonValue {
      *
      * @param lineLength The number of elements to output on each line.
      * @return <code>this</code>, for method chaining.
-     * @apiNote Experimental - may get removed or be implemented differently in a future
-     *          release.
      */
-    @ApiStatus.Experimental
     public JsonContainer setLineLength(final int lineLength) {
         for (int i = 0; i < this.references.size(); i++) {
             if ((i % lineLength) == 0) {
@@ -162,10 +152,7 @@ public abstract class JsonContainer extends JsonValue {
      * nature, it may be moved into a dedicated JSON formatting utility in the future.
      *
      * @return <code>this</code>, for method chaining.
-     * @apiNote Experimental - may get removed or be implemented differently in a future
-     *          release.
      */
-    @ApiStatus.Experimental
     public JsonContainer condense() {
         for (final JsonReference reference : this.references) {
             reference.visit().setLinesAbove(0).setLinesBetween(0);
