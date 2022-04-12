@@ -40,9 +40,8 @@ public final class JsonCollectorsTest {
     public void access_collectsFromView() {
         final JsonArray collected =
             new JsonObject().add("value", 1234)
-                .view()
                 .stream()
-                .collect(JsonCollectors.access());
+                .collect(JsonCollectors.element());
         assertEquals(new JsonArray().add(1234), collected);
     }
 

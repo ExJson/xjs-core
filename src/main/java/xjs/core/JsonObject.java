@@ -202,11 +202,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      * @throws UnsupportedOperationException if the value does not exist.
      */
     public JsonObject setComment(final String key, final String comment) {
-        final JsonValue value = this.get(key);
-        if (value == null) {
-            throw new UnsupportedOperationException("Setting comment for missing value");
-        }
-        value.setComment(comment);
+        this.get(key).setComment(comment);
         return this;
     }
 
@@ -594,11 +590,6 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     @Override
-    public View<Member> view() {
-        return this;
-    }
-
-    @Override
     public JsonObject setLineLength(final int lineLength) {
         return (JsonObject) super.setLineLength(lineLength);
     }
@@ -839,37 +830,50 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     /**
-     * The JSON object counterpart to {@link Access}. In addition to exposing the
+     * The JSON object counterpart to {@link Element}. In addition to exposing the
      * underlying references within this container, Member exposes each value's
      * <em>key</em>, as this is the primary accessor for object values.
      */
-    public static class Member extends Access {
+    public static class Member extends Element {
         protected final String key;
-
-        /**
-         * Constructs a new member accessor when given an index and its reference.
-         *
-         * @param key       The key pointing to this value.
-         * @param reference The reference pointing to the value.
-         */
-        public Member(final String key, final JsonReference reference) {
-            super(reference);
-            this.key = key;
-        }
 
         /**
          * Constructs a new member accessor when given its key and the new value.
          *
          * @param key   The key pointing to this value.
          * @param value The value being pointed to.
-         * @apiNote Experimental - constructor is unnecessary and may get removed.
          */
-        @ApiStatus.Experimental
         public Member(final String key, final JsonValue value) {
-            super(new JsonReference(value));
+            this(-1, key, new JsonReference(value));
+        }
+
+        /**
+         * Constructs a new member accessor when given a key and its reference.
+         *
+         * @param key       The key pointing to this value.
+         * @param reference The reference pointing to the value.
+         */
+        public Member(final String key, final JsonReference reference) {
+            this(-1, key, reference);
+        }
+
+        /**
+         * Constructs a new member accessor when given an index and its reference.
+         *
+         * @param index     The index of this member in its object.
+         * @param key       The key pointing to this value.
+         * @param reference The reference pointing to the value.
+         */
+        public Member(final int index, final String key, final JsonReference reference) {
+            super(index, reference);
             this.key = key;
         }
 
+        /**
+         * Returns the name of the value at this index.
+         *
+         * @return The name of the value.
+         */
         public String getKey() {
             return this.key;
         }

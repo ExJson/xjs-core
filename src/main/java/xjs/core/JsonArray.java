@@ -62,7 +62,7 @@ import java.util.stream.Stream;
  */
 public class JsonArray extends JsonContainer implements JsonContainer.View<JsonValue> {
 
-    private ElementView view;
+    private ElementView elements;
 
     /**
      * Constructs a new JSON array containing no contents.
@@ -350,12 +350,11 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
      *
      * @return An {@link ElementView element view} of the contents in this array.
      */
-    @Override
-    public View<Element> view() {
-        if (this.view == null) {
-            return this.view = new ElementView();
+    public View<Element> elements() {
+        if (this.elements == null) {
+            return this.elements = new ElementView();
         }
-        return this.view;
+        return this.elements;
     }
 
     /**
@@ -626,7 +625,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     @Override
     public List<String> getUsedPaths(final boolean used) {
         final List<String> paths = new ArrayList<>();
-        for (final Element element : this.view()) {
+        for (final Element element : this.elements()) {
             if (element.getReference().isAccessed() != used) {
                 continue;
             }
@@ -642,7 +641,6 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
         }
         return paths;
     }
-
 
     private class ElementView implements View<Element> {
         @Override
@@ -669,72 +667,6 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
         @Override
         public void remove() {
             this.references.remove();
-        }
-    }
-
-    /**
-     * The JSON array counterpart to {@link Access}. In addition to exposing the
-     * underlying references within this container, Element exposes each value's
-     * <em>index</em>, as this is the primary accessor for array values.
-     */
-    public static class Element extends Access {
-        private final int index;
-
-        /**
-         * Constructs a new Element accessor when given an index and its reference.
-         *
-         * @param index     The index pointing to this value.
-         * @param reference The reference pointing to the value.
-         */
-        public Element(final int index, final JsonReference reference) {
-            super(reference);
-            this.index = index;
-        }
-
-        /**
-         * Constructs a new Element accessor when given its index and the raw value.
-         *
-         * <p>A new {@link JsonReference reference} will be generated to wrap this value.
-         *
-         * @param index The index pointing to this value.
-         * @param value The raw value being pointed to.
-         * @apiNote Experimental - constructor is unnecessary and may get removed.
-         */
-        @ApiStatus.Experimental
-        public Element(final int index, final JsonValue value) {
-            super(new JsonReference(value));
-            this.index = index;
-        }
-
-        /**
-         * Exposes this element's index to the caller.
-         *
-         * @return The index of the original value.
-         */
-        public int getIndex() {
-            return this.index;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = 1;
-            result = 31 * result + this.index;
-            result = 31 * result + this.reference.hashCode();
-            return result;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (o instanceof Element) {
-                final Element other = (Element) o;
-                return this.index == other.index && this.reference.equals(other.reference);
-            }
-            return false;
-        }
-
-        @Override
-        public String toString() {
-            return "([" + this.index + "]=" + this.reference + ")";
         }
     }
 }

@@ -409,18 +409,6 @@ public abstract class JsonContainer extends JsonValue {
     }
 
     /**
-     * Exposes a {@link View view} of each element in this container along with its accessor,
-     * if applicable.
-     *
-     * Iterating in this manor <em>does</em> allow values to be mutated concurrently.
-     *
-     * @return A {@link View view} of each element in this container and its accessor(s).
-     * @see Access
-     */
-    @ApiStatus.Experimental
-    public abstract View<? extends Access> view();
-
-    /**
      * Recursively executes some action for each value in this container. In other words, for
      * any container nested <em>inside</em> of this container, each of its elements will also
      * be exposed to the consumer.
@@ -797,33 +785,34 @@ public abstract class JsonContainer extends JsonValue {
      * its accessor--e.g. its index or key--if applicable. It may be used to reflect on
      * the contents of a container and, additionally, can be {@link Collector collected}
      * in to a new container via {@link JsonCollectors}.
-     *
-     * <p><b>Note</b>: The exact implementation of this type is a particular source of
-     * <em>bloat</em> being investigated for removal (or consolidation) in a future preview.
-     * Outside of {@link JsonObject.Member}, <b>its use should generally be avoided.</b>
-     *
-     * @apiNote Experimental - may get removed or be implemented differently in a future
-     *          release.
      */
-    @ApiStatus.Experimental
-    public static abstract class Access {
+    public static class Element {
         protected JsonReference reference;
+        protected int index;
 
         /**
-         * Constructs a new value accessor by providing its only essential data piece: the
-         * {@link JsonReference}.
+         * Constructs a new container element by providing its only essential data piece:
+         * the {@link JsonReference}.
          *
          * @param reference The reference being wrapped by this accessor.
-         * @apiNote This implementation is somewhat superfluous. It is possible that it
-         *          will either be expanded upon to provide additional functionality in the
-         *          future. Otherwise, it will simply be removed.
          */
-        protected Access(final JsonReference reference) {
-            this.reference = reference;
+        public Element(final JsonReference reference) {
+            this(-1, reference);
         }
 
         /**
-         * Returns the value being wrapped by this accessor.
+         * Constructs a new container element from a reference and its index.
+         *
+         * @param index     The index of the value, or else -1
+         * @param reference A reference pointing to the value at this location.
+         */
+        public Element(final int index, final JsonReference reference) {
+            this.reference = reference;
+            this.index = index;
+        }
+
+        /**
+         * Returns the value being wrapped by this Element.
          *
          * <p>This is an {@link JsonReference#get accessing} operation.
          *
@@ -842,13 +831,13 @@ public abstract class JsonContainer extends JsonValue {
          * @param value The new value to be wrapped.
          * @return <code>this</code>, for method chaining.
          */
-        public Access setValue(final @Nullable JsonValue value) {
+        public Element setValue(final @Nullable JsonValue value) {
             this.reference.set(value);
             return this;
         }
 
         /**
-         * Returns the value being wrapped by this accessor <em>without</em> updating its
+         * Returns the value being wrapped by this element <em>without</em> updating its
          * access flags.
          *
          * <p>This is a {@link JsonReference#visit visiting} operation.
@@ -860,7 +849,7 @@ public abstract class JsonContainer extends JsonValue {
         }
 
         /**
-         * Updates the value being wrapped by this accessor <em>without</em> updating its
+         * Updates the value being wrapped by this element <em>without</em> updating its
          * access flags.
          *
          * <p>This is a {@link JsonReference#visit visiting} operation.
@@ -868,18 +857,49 @@ public abstract class JsonContainer extends JsonValue {
          * @param value The new value to be wrapped.
          * @return <code>this</code>, for method chaining.
          */
-        public Access mutate(final @Nullable JsonValue value) {
+        public Element mutate(final @Nullable JsonValue value) {
             this.reference.mutate(value);
             return this;
         }
 
         /**
-         * Directly exposes the reference to the value being wrapped by this accessor.
+         * Directly exposes the reference to the value being wrapped by this element.
          *
          * @return A reference to the wrapped value.
          */
         public JsonReference getReference() {
             return this.reference;
+        }
+
+        /**
+         * Exposes this element's index to the caller.
+         *
+         * @return The index of the original value.
+         */
+        public int getIndex() {
+            return this.index;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = 1;
+            result = 31 * result + this.index;
+            result = 31 * result + this.reference.hashCode();
+            return result;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o instanceof Element) {
+                final Element other = (Element) o;
+                return this.index == other.index && this.reference.equals(other.reference);
+            }
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return "([" + this.index + "]=" + this.reference + ")";
         }
     }
 
