@@ -1,5 +1,6 @@
 package xjs.core;
 
+import org.jetbrains.annotations.Nullable;
 import xjs.serialization.util.ImplicitStringUtils;
 import xjs.serialization.writer.XjsWriter;
 
@@ -100,5 +101,21 @@ public enum StringType {
             return IMPLICIT;
         }
         return fast(text);
+    }
+
+    /**
+     * Determines which string type to use for the given value, or else
+     * returns {@link #NONE}.
+     *
+     * @param value The value being analyzed.
+     * @return The most appropriate type for this value.
+     */
+    public static StringType fromValue(final @Nullable JsonValue value) {
+        if (value == null) {
+            return NONE;
+        } else if (value instanceof JsonString) {
+            return ((JsonString) value).getStringType();
+        }
+        return value.isPrimitive() ? IMPLICIT : NONE;
     }
 }

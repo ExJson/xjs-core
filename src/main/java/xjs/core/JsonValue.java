@@ -606,25 +606,6 @@ public abstract class JsonValue implements Serializable {
     }
 
     /**
-     * Filters data out of this wrapper using a filter expression.
-     *
-     * <p>For example, to acquire this value as a string (or else empty):
-     *
-     * <pre>{@code
-     *   final Optional<String> s = value.filter(JsonFilter.STRING)
-     * }</pre>
-     *
-     * @param filter An expression for filtering data out of this wrapper.
-     * @param <T>    The type of data being filtered out.
-     * @return The filtered data, or else {@link Optional#empty}.
-     * @see JsonFilter
-     */
-    @ApiStatus.Experimental
-    public <T> Optional<T> filter(final JsonFilter<T> filter) {
-        return filter.applyOptional(this);
-    }
-
-    /**
      * Coerces this value in to a long, even if it is not a number.
      *
      * @return This value as a number.

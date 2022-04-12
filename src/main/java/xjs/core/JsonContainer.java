@@ -3,6 +3,7 @@ package xjs.core;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import xjs.exception.SyntaxException;
 import xjs.serialization.writer.AbstractJsonWriter;
 import xjs.transformer.JsonCollectors;
 
@@ -234,7 +235,7 @@ public abstract class JsonContainer extends JsonValue {
      * <p>For example, to retrieve string value at index 0:
      *
      * <pre>{@code
-     *   final String s = container.getOptional(0, JsonFilter.STRING).orElse("");
+     *   final String s = container.getOptional(0, JsonValue::asString).orElse("");
      * }</pre>
      *
      * <p>In the previous example, <b>only the happy path will be acknowledged</b>.
@@ -247,9 +248,13 @@ public abstract class JsonContainer extends JsonValue {
      * @param <T>    The type of value being returned by this method.
      * @return The expected data, or else {@link Optional#empty}.
      */
-    @ApiStatus.Experimental
-    public <T> Optional<T> getOptional(final int index, final JsonFilter<T> filter) {
-        return this.getOptional(index).flatMap(filter::applyOptional);
+    public <T> Optional<T> getOptional(final int index, final Function<JsonValue, T> filter) {
+        return this.getOptional(index).flatMap(value -> {
+            try {
+                return Optional.ofNullable(filter.apply(value));
+            } catch (final UnsupportedOperationException | SyntaxException ignored) {}
+            return Optional.empty();
+        });
     }
 
     /**
