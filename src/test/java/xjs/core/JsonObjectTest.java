@@ -90,7 +90,7 @@ public final class JsonObjectTest {
 
     @Test
     public void frozenObject_isImmutable() {
-        final JsonObject object = new JsonObject().add("key", "value").freeze();
+        final JsonObject object = (JsonObject) new JsonObject().add("key", "value").freeze();
 
         assertThrows(UnsupportedOperationException.class, () -> object.add("k2", "v2"));
         assertThrows(UnsupportedOperationException.class, () -> object.set("key", false));

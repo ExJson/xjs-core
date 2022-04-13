@@ -91,7 +91,7 @@ public final class XjsWriterTest {
 
     @Test
     public void write_printsVoidStrings_asCommas_withoutSpaces() {
-        final JsonArray array = new JsonArray()
+        final JsonContainer array = new JsonArray()
             .add(new JsonString("", StringType.IMPLICIT))
             .add(new JsonString("", StringType.IMPLICIT))
             .add(new JsonString("", StringType.IMPLICIT))

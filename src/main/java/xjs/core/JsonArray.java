@@ -1,6 +1,5 @@
 package xjs.core;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xjs.transformer.JsonCollectors;
@@ -360,41 +359,6 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     }
 
     /**
-     * Formats this array to display the given number of elements on each line.
-     *
-     * <p>This operation is valid only when every expected value <b>already exists
-     * inside of the array</b>. It is provided for convenience here, but due to its
-     * nature, it may be moved into a dedicated JSON formatting utility in the future.
-     *
-     * @param lineLength The number of elements to output on each line.
-     * @return <code>this</code>, for method chaining.
-     * @apiNote Experimental - may get removed or be implemented differently in a future
-     *          release.
-     */
-    @Override
-    @ApiStatus.Experimental
-    public JsonArray setLineLength(final int lineLength) {
-        return (JsonArray) super.setLineLength(lineLength);
-    }
-
-    /**
-     * Formats this array to place each element on the same line.
-     *
-     * <p>This operation is valid only when every expected value <b>already exists
-     * inside of the array</b>. It is provided for convenience here, but due to its
-     * nature, it may be moved into a dedicated JSON formatting utility in the future.
-     *
-     * @return <code>this</code>, for method chaining.
-     * @apiNote Experimental - may get removed or be implemented differently in a future
-     *          release.
-     */
-    @Override
-    @ApiStatus.Experimental
-    public JsonArray condense() {
-        return (JsonArray) super.condense();
-    }
-
-    /**
      * Clears every {@link JsonReference reference} from the underlying array.
      *
      * @return <code>this</code>, for method chaining.
@@ -436,17 +400,6 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     @Override
     public JsonArray removeAll(final Iterable<JsonValue> values) {
         return (JsonArray) super.removeAll(values);
-    }
-
-    /**
-     * Recursively updates the access flags for every reference in this container.
-     *
-     * @param accessed Whether each reference should be marked as accessed.
-     * @return <code>this</code>, for method chaining.
-     */
-    @Override
-    public JsonArray setAllAccessed(final boolean accessed) {
-        return (JsonArray) super.setAllAccessed(accessed);
     }
 
     /**
@@ -602,11 +555,6 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
             }
         }
         return true;
-    }
-
-    @Override
-    public JsonArray freeze() {
-        return (JsonArray) super.freeze();
     }
 
     @Override

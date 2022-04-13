@@ -569,16 +569,6 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     @Override
-    public JsonObject setLineLength(final int lineLength) {
-        return (JsonObject) super.setLineLength(lineLength);
-    }
-
-    @Override
-    public JsonObject condense() {
-        return (JsonObject) super.condense();
-    }
-
-    @Override
     public JsonObject clear() {
         this.references.clear();
         this.keys.clear();
@@ -600,11 +590,6 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     @Override
     public JsonObject removeAll(final Iterable<JsonValue> values) {
         return (JsonObject) super.removeAll(values);
-    }
-
-    @Override
-    public JsonObject setAllAccessed(final boolean accessed) {
-        return (JsonObject) super.setAllAccessed(accessed);
     }
 
     public <T> Map<String, T> toMap(final Function<JsonValue, T> mapper) {
@@ -750,11 +735,6 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             }
         }
         return true;
-    }
-
-    @Override
-    public JsonObject freeze() {
-        return (JsonObject) super.freeze();
     }
 
     @Override
