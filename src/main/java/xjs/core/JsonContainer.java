@@ -154,9 +154,7 @@ public abstract class JsonContainer extends JsonValue {
      * @return <code>this</code>, for method chaining.
      */
     public JsonContainer condense() {
-        for (final JsonReference reference : this.references) {
-            reference.visit().setLinesAbove(0).setLinesBetween(0);
-        }
+        this.references.forEach(ref -> ref.visit().setLinesAbove(0).setLinesBetween(0));
         return this;
     }
 

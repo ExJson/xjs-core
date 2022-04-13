@@ -214,7 +214,7 @@ public final class XjsWriterTest {
     }
 
     @Test
-    public void write_withHeaderOnRootObject_addsImplicitEmptyLine() throws IOException {
+    public void write_withHeaderOnRootObject_addsImplicitEmptyLine() {
         final JsonObject object = new JsonObject().add("key", "value");
         object.setComment(CommentType.HEADER, CommentStyle.LINE, "header");
         final String expected = """
