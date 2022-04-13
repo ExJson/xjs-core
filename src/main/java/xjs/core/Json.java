@@ -105,7 +105,7 @@ public final class Json {
      * @return A new {@link JsonString} wrapping the given value, or else {@link JsonLiteral#jsonNull}.
      */
     public static JsonValue value(final @Nullable String value) {
-        return value != null ? JsonString.auto(value) : JsonLiteral.jsonNull();
+        return value != null ? new JsonString(value) : JsonLiteral.jsonNull();
     }
 
     /**

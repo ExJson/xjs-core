@@ -162,7 +162,7 @@ public class XjsWriter extends AbstractJsonWriter {
     }
 
     protected void writeString(final JsonValue value, final int level) throws IOException {
-        this.writeString(value.asString(), this.getValueType(value), level, StringContext.VALUE);
+        this.writeString(value.asString(), this.getStringType(value), level, StringContext.VALUE);
     }
 
     protected void writeString(
@@ -192,7 +192,7 @@ public class XjsWriter extends AbstractJsonWriter {
         return StringType.IMPLICIT;
     }
 
-    protected StringType getValueType(final JsonValue value) {
+    protected StringType getStringType(final JsonValue value) {
         if (this.format) {
             return this.checkType(value.asString(), StringType.fromValue(value));
         }

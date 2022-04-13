@@ -14,10 +14,6 @@ public class JsonString extends JsonValue {
         this.type = type;
     }
 
-    public static JsonString auto(final String value) {
-        return new JsonString(value, StringType.fast(value));
-    }
-
     public StringType getStringType() {
         return this.type;
     }
