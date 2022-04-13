@@ -1,6 +1,11 @@
 package xjs.transformer;
 
-import xjs.core.*;
+import xjs.core.Json;
+import xjs.core.JsonArray;
+import xjs.core.JsonContainer;
+import xjs.core.JsonObject;
+import xjs.core.JsonReference;
+import xjs.core.JsonValue;
 
 import java.util.Map;
 import java.util.function.Function;

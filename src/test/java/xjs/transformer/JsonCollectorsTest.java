@@ -1,7 +1,10 @@
 package xjs.transformer;
 
 import org.junit.jupiter.api.Test;
-import xjs.core.*;
+import xjs.core.Json;
+import xjs.core.JsonArray;
+import xjs.core.JsonObject;
+import xjs.core.JsonReference;
 
 import java.util.Map;
 import java.util.stream.Stream;

@@ -5,7 +5,11 @@ import xjs.core.JsonNumber;
 import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 
 /**
  * The basic parser type to be used for all sorts of JSON formats.

@@ -2,11 +2,23 @@ package xjs.serialization.parser;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import xjs.core.*;
+import xjs.core.CommentType;
+import xjs.core.JsonArray;
+import xjs.core.JsonContainer;
+import xjs.core.JsonLiteral;
+import xjs.core.JsonNumber;
+import xjs.core.JsonObject;
+import xjs.core.JsonString;
+import xjs.core.JsonValue;
+import xjs.core.StringType;
 import xjs.serialization.util.ImplicitStringUtils;
 import xjs.serialization.util.StringContext;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.Arrays;
 
 public class XjsParser extends AbstractJsonParser {
