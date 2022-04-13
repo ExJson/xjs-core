@@ -564,10 +564,10 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     }
 
     @Override
-    public List<String> getUsedPaths(final boolean used) {
+    public List<String> getPaths(final PathFilter filter) {
         final List<String> paths = new ArrayList<>();
         for (final Element element : this.elements()) {
-            if (element.getReference().isAccessed() != used) {
+            if (filter.test(element.getReference())) {
                 continue;
             }
             final String key = "[" + element.getIndex() + "]";
@@ -576,7 +576,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
                 continue;
             }
             final String prefix = element.getOnly().isObject() ? key + "." : key;
-            for (final String inner : element.getOnly().asContainer().getUsedPaths(used)) {
+            for (final String inner : element.getOnly().asContainer().getPaths(filter)) {
                 paths.add(prefix + inner);
             }
         }

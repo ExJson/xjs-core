@@ -744,10 +744,10 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     @Override
-    public List<String> getUsedPaths(final boolean used) {
+    public List<String> getPaths(final PathFilter filter) {
         final List<String> paths = new ArrayList<>();
         for (final Member member : this) {
-            if (member.getReference().isAccessed() != used) {
+            if (filter.test(member.getReference())) {
                 continue;
             }
             paths.add(member.getKey());
@@ -756,7 +756,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             }
             final String prefix = member.getOnly().isObject()
                 ? member.getKey() + "." : member.getKey();
-            for (final String inner : member.getOnly().asContainer().getUsedPaths(used)) {
+            for (final String inner : member.getOnly().asContainer().getPaths(filter)) {
                 paths.add(prefix + inner);
             }
         }

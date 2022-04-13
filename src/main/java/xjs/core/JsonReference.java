@@ -110,7 +110,7 @@ public class JsonReference {
      * @see #get
      */
     public JsonReference set(final @Nullable JsonValue referent) {
-
+        this.accessed = true;
         return this.setOnly(referent);
     }
 

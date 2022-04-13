@@ -618,23 +618,12 @@ public abstract class JsonContainer extends JsonValue {
     public abstract JsonContainer freeze(final boolean recursive);
 
     /**
-     * Generates a list of JSON path strings indicating which paths <em>have not</em>
-     * been used.
+     * Generates a list of every possible JSON path string relative to this container.
      *
-     * @return A list of JSON path strings for each unused value.
+     * @return A list of JSON path strings for every possible value.
      */
-    public List<String> getUnusedPaths() {
-        return this.getUsedPaths(false);
-    }
-
-    /**
-     * Generates a list of JSON path strings indicating which paths <em>have</em>
-     * been used.
-     *
-     * @return A list of JSON path strings for each used value.
-     */
-    public List<String> getUsedPaths() {
-        return this.getUsedPaths(true);
+    public List<String> getPaths() {
+        return this.getPaths(PathFilter.ALL);
     }
 
     /**
@@ -643,7 +632,7 @@ public abstract class JsonContainer extends JsonValue {
      *
      * @return A list of JSON path strings for each used or unused value.
      */
-    public abstract List<String> getUsedPaths(final boolean used);
+    public abstract List<String> getPaths(final PathFilter filter);
 
     /**
      * Generates an immutable list of the references in this container.
