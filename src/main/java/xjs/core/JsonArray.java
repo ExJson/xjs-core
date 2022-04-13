@@ -138,7 +138,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
      * @throws IndexOutOfBoundsException if the given index is out of bounds.
      */
     public JsonArray set(final int index, final @Nullable JsonValue value) {
-        this.references.get(index).update(og ->
+        this.references.get(index).apply(og ->
             Json.nonnull(value).setDefaultMetadata(og));
         return this;
     }

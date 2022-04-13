@@ -7,7 +7,13 @@ import xjs.serialization.writer.JsonWriter;
 import xjs.serialization.writer.JsonWriterOptions;
 import xjs.serialization.writer.XjsWriter;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Serializable;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
+import java.io.Writer;
 import java.util.Map;
 import java.util.Objects;
 

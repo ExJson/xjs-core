@@ -669,7 +669,7 @@ public abstract class JsonContainer extends JsonValue {
                 .map(ref -> {
                     final JsonReference clone = ref.clone(true);
                     if (recursive && ref.visit().isContainer()) {
-                        ref.apply(value -> value.asContainer().freeze(true));
+                        ref.update(value -> value.asContainer().freeze(true));
                     }
                     return clone.freeze();
                 })

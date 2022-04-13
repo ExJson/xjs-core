@@ -5,8 +5,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -146,7 +153,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     public JsonObject set(final String key, final @Nullable JsonValue value) {
         final int index = this.indexOf(key);
         if (index != -1) {
-            this.references.get(index).update(og ->
+            this.references.get(index).apply(og ->
                 Json.nonnull(value).setDefaultMetadata(og));
             return this;
         }
@@ -388,7 +395,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         if (index < 0 || index >= this.references.size()) {
             return this.add(key, value);
         }
-        this.references.get(index).update(og ->
+        this.references.get(index).apply(og ->
             Json.nonnull(value).setDefaultMetadata(og));
         this.keys.set(index, key);
         this.table.clear();
@@ -593,14 +600,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     public <T> Map<String, T> toMap(final Function<JsonValue, T> mapper) {
-        final Map<String, T> map = new HashMap<>();
-        final Iterator<String> keyIterator = this.keys.iterator();
-        final Iterator<JsonReference> referenceIterator = this.references.iterator();
-
-        while (keyIterator.hasNext() && referenceIterator.hasNext()) {
-            map.put(keyIterator.next(), mapper.apply(referenceIterator.next().get()));
-        }
-        return map;
+        return this.stream().collect(Collectors.toMap(Member::getKey, m -> mapper.apply(m.getValue())));
     }
 
     /**
@@ -835,7 +835,8 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
         @Override
         public int hashCode() {
-            int result=1;
+            int result = 1;
+            result = 31 * result + this.index;
             result = 31 * result + this.key.hashCode();
             result = 31 * result + this.reference.hashCode();
             return result;
@@ -845,7 +846,9 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         public boolean equals(final Object o) {
             if (o instanceof Member) {
                 final Member other = (Member) o;
-                return this.key.equals(other.key) && this.reference.equals(other.reference);
+                return this.index == other.index
+                    && this.key.equals(other.key)
+                    && this.reference.equals(other.reference);
             }
             return false;
         }
