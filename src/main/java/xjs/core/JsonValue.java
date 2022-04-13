@@ -756,14 +756,19 @@ public abstract class JsonValue implements Serializable {
      * Generates a hash code accounting for the value being wrapped by this
      * object. This ignores any metadata associated with the value.
      *
-     * @return An integer which should
+     * @return An integer which should always change if the value is updated.
      */
-    public int hashValue() {
+    public int valueHashCode() {
         return this.unwrap().hashCode();
     }
 
-    @Override
-    public int hashCode() {
+    /**
+     * Generates a hash code accounting for the metadata of the value being
+     * wrapped by this object. This ignores the value itself.
+     *
+     * @return An integer which should always change if the metadata are updated.
+     */
+    public int metaHashCode() {
         int result = 1;
         result = 31 * result + this.linesAbove;
         result = 31 * result + this.linesBetween;
@@ -772,7 +777,12 @@ public abstract class JsonValue implements Serializable {
         if (this.comments != null) {
             result = 31 * result + this.comments.hashCode();
         }
-        return 31 * result + this.hashValue();
+        return result;
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * this.metaHashCode() + this.valueHashCode();
     }
 
     /**

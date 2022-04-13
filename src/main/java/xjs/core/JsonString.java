@@ -54,7 +54,7 @@ public class JsonString extends JsonValue {
 
     @Override
     public JsonString unformatted() {
-        return new JsonString(this.value, this.type);
+        return new JsonString(this.value, StringType.NONE);
     }
 
     @Override

@@ -711,11 +711,20 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     @Override
-    public int hashCode() {
-        int result = super.hashCode();
+    public int valueHashCode() {
+        int result = 1;
         result = 31 * result + this.keys.hashCode();
-        result = 31 * result + this.references.hashCode();
+        for (final JsonReference reference : this.references) {
+            result = 31 * reference.getOnly().valueHashCode();
+        }
         return result;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = this.metaHashCode();
+        result = 31 * result + this.keys.hashCode();
+        return 31 * result + this.references.hashCode();
     }
 
     @Override
@@ -736,6 +745,15 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             }
         }
         return true;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o instanceof JsonObject) {
+            return this.keys.equals(((JsonObject) o).keys)
+                && this.references.equals(((JsonObject) o).references);
+        }
+        return false;
     }
 
     @Override

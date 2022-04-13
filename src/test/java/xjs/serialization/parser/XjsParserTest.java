@@ -16,14 +16,15 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class XjsParserTest extends CommonParserTest {
 
     @Test
     public void parse_ignoresTrailingCommas() throws IOException {
-        assertEquals(new JsonArray().add(1).add(2).add(3),
-            this.parse("[1,2,3,]").unformatted());
+        assertTrue(new JsonArray().add(1).add(2).add(3)
+            .matches(this.parse("[1,2,3,]")));
     }
 
     @Test
@@ -38,62 +39,62 @@ public final class XjsParserTest extends CommonParserTest {
 
     @Test
     public void parse_readsMultipleUnquotedKeys() throws IOException {
-        assertEquals(new JsonObject().add("k1", "v1").add("k2", "v2"),
-            this.parse("{k1:v1,k2:v2}").unformatted());
+        assertTrue(new JsonObject().add("k1", "v1").add("k2", "v2")
+            .matches(this.parse("{k1:v1,k2:v2}")));
     }
 
     @Test
     public void parse_readsOpenRoot() throws IOException {
-        assertEquals(new JsonObject().add("a", 1).add("b", 2),
-            this.parse("a:1,b:2").unformatted());
+        assertTrue(new JsonObject().add("a", 1).add("b", 2)
+            .matches(this.parse("a:1,b:2")));
     }
 
     @Test
     public void parse_readsMultipleUnquotedValues() throws IOException {
-        assertEquals(new JsonArray().add("a").add("b").add("c"),
-            this.parse("[a,b,c]").unformatted());
+        assertTrue(new JsonArray().add("a").add("b").add("c")
+            .matches(this.parse("[a,b,c]")));
     }
 
     @Test
     public void singleComma_inArray_isEmptyImplicitString() throws IOException {
-        assertEquals(new JsonArray().add("").add(""),
-            this.parse("[,,]").unformatted());
+        assertTrue(new JsonArray().add("").add("")
+            .matches(this.parse("[,,]")));
     }
 
     @Test
     public void singleComma_inObject_isEmptyImplicitString() throws IOException {
-        assertEquals(new JsonObject().add("k", "").add("r", ""),
-            this.parse("k:,r:,").unformatted());
+        assertTrue(new JsonObject().add("k", "").add("r", "")
+            .matches(this.parse("k:,r:,")));
     }
 
     @Test
     public void singleColon_inObject_isEmptyImplicitKey() throws IOException {
-        assertEquals(new JsonObject().add("", ""),
-            this.parse(":,").unformatted());
+        assertTrue(new JsonObject().add("", "")
+            .matches(this.parse(":,")));
     }
 
     @Test
     public void emptyFile_isImplicitlyString() throws IOException {
         assertEquals(new JsonString("", StringType.IMPLICIT),
-            this.parse("").unformatted());
+            this.parse("").trim());
     }
 
     @Test
     public void parseValue_readsUntilEndOfLine() throws IOException {
-        assertEquals(new JsonObject().add("k", "v").add("r", "t"),
-            this.parse("k:v\nr:t").unformatted());
+        assertTrue(new JsonObject().add("k", "v").add("r", "t")
+            .matches(this.parse("k:v\nr:t")));
     }
 
     @Test
     public void parseKey_readsUntilColon() throws IOException {
-        assertEquals(new JsonObject().add("k\n1\n2\n3", "v"),
-            this.parse("k\n1\n2\n3:v").unformatted());
+        assertTrue(new JsonObject().add("k\n1\n2\n3", "v")
+            .matches(this.parse("k\n1\n2\n3:v").unformatted()));
     }
 
     @Test
     public void parseValue_readsUntilTextIsBalanced() throws IOException {
-        assertEquals(new JsonObject().add("k", "(\n1\n2\n3\n)"),
-            this.parse("k:(\n1\n2\n3\n)").unformatted());
+        assertTrue(new JsonObject().add("k", "(\n1\n2\n3\n)")
+            .matches(this.parse("k:(\n1\n2\n3\n)")));
     }
 
     @Test
@@ -104,8 +105,8 @@ public final class XjsParserTest extends CommonParserTest {
 
     @Test
     public void parseValue_continuesReadingAfterEscape() throws IOException {
-        assertEquals(new JsonObject().add("k", "v\nv"),
-            this.parse("k:v\\\nv").unformatted());
+        assertTrue(new JsonObject().add("k", "v\nv")
+            .matches(this.parse("k:v\\\nv")));
     }
 
     @Test

@@ -537,8 +537,17 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     }
 
     @Override
+    public int valueHashCode() {
+        int result = 1;
+        for (final JsonReference reference : this.references) {
+            result = 31 * reference.getOnly().valueHashCode();
+        }
+        return result;
+    }
+
+    @Override
     public int hashCode() {
-        return 31 * super.hashCode() + this.references.hashCode();
+        return 31 * this.metaHashCode() + this.references.hashCode();
     }
 
     @Override
@@ -556,6 +565,14 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
             }
         }
         return true;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o instanceof JsonArray) {
+            return this.references.equals(((JsonArray) o).references);
+        }
+        return false;
     }
 
     @Override
