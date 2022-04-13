@@ -30,12 +30,12 @@ public class JsonWriter extends AbstractJsonWriter {
             case OBJECT:
                 this.open(condensed, '{');
                 for (final JsonObject.Member member : value.asObject()) {
-                    this.delimit(following, member.visit().getLinesAbove());
-                    this.writeLinesAbove(level + 1, !following, condensed, member.visit());
+                    this.delimit(following, member.getOnly().getLinesAbove());
+                    this.writeLinesAbove(level + 1, !following, condensed, member.getOnly());
                     this.writeQuoted(member.getKey(), '"');
                     this.tw.write(':');
-                    this.separate(level + 2, member.visit());
-                    this.write(member.visit(), level + 1);
+                    this.separate(level + 2, member.getOnly());
+                    this.write(member.getOnly(), level + 1);
                     following = true;
                 }
                 this.close(value.asObject(), condensed, level, '}');

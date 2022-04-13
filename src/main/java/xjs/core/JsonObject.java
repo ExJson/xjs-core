@@ -1,6 +1,7 @@
 package xjs.core;
 
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -220,10 +221,10 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             final String key = keyIterator.next();
             final JsonReference reference = referenceIterator.next();
 
-            final JsonValue replaced = this.get(key);
+            final JsonValue replaced = this.get(key, null);
             if (replaced == null) {
                 this.add(key, reference.get());
-            } else if (replaced.isObject() && reference.visit().isObject()) {
+            } else if (replaced.isObject() && reference.getOnly().isObject()) {
                 replaced.asObject().setDefaults(reference.get().asObject());
             }
         }
@@ -277,7 +278,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     /**
      * Adds a {@link JsonValue} into this container.
      *
-     * <p>This is a {@link JsonReference#visit visiting} operation.
+     * <p>This is a {@link JsonReference#getOnly visiting} operation.
      *
      * @param key   The key of the value being added.
      * @param value The value being added into the container.
@@ -339,7 +340,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      * Variant of {@link #add(String, JsonValue)} which appends a header comment to the
      * given value.
      *
-     * <p>This is a {@link JsonReference#visit visiting} operation.
+     * <p>This is a {@link JsonReference#getOnly visiting} operation.
      *
      * @param key     The key of the value being added.
      * @param value   The value being added into the container.
@@ -354,7 +355,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      * Adds each {@link JsonReference reference} from the given object into this
      * object.
      *
-     * <p>This is a {@link JsonReference#visit visiting} operation.
+     * <p>This is a {@link JsonReference#getOnly visiting} operation.
      *
      * @param object Some other object housing keys and references to be copied.
      * @return <code>this</code>, for method chaining.
@@ -467,7 +468,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      * @return Whichever {@link JsonValue} is found.
      * @throws UnsupportedOperationException If the value is absent.
      */
-    public JsonValue get(final String key) {
+    public @NotNull JsonValue get(final String key) {
         final int index = this.indexOf(key);
         if (index != -1) {
             return this.references.get(index).get();
@@ -621,7 +622,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         while (keyIterator.hasNext() && referenceIterator.hasNext()) {
             final String key = keyIterator.next();
             final JsonReference reference = referenceIterator.next();
-            final JsonValue value = reference.visit();
+            final JsonValue value = reference.getOnly();
 
             if (value.isContainer()) {
                 copy.add(key, value.asContainer().shallowCopy());
@@ -646,7 +647,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         while (keyIterator.hasNext() && referenceIterator.hasNext()) {
             final String key = keyIterator.next();
             final JsonReference reference = referenceIterator.next();
-            final JsonValue value = reference.visit();
+            final JsonValue value = reference.getOnly();
 
             if (value.isContainer()) {
                 copy.add(key, value.asContainer().deepCopy(trackAccess));
@@ -668,7 +669,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             final JsonReference reference = referenceIterator.next();
 
             copy.addReference(key, reference.clone(true)
-                .mutate(reference.visit().unformatted()));
+                .setOnly(reference.getOnly().unformatted()));
         }
         return copy;
     }
@@ -730,7 +731,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             return false;
         }
         for (int i = 0; i < this.size(); i++) {
-            if (!this.references.get(i).visit().matches(object.references.get(i).visit())) {
+            if (!this.references.get(i).getOnly().matches(object.references.get(i).getOnly())) {
                 return false;
             }
         }
@@ -750,12 +751,12 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
                 continue;
             }
             paths.add(member.getKey());
-            if (!member.visit().isContainer()) {
+            if (!member.getOnly().isContainer()) {
                 continue;
             }
-            final String prefix = member.visit().isObject()
+            final String prefix = member.getOnly().isObject()
                 ? member.getKey() + "." : member.getKey();
-            for (final String inner : member.visit().asContainer().getUsedPaths(used)) {
+            for (final String inner : member.getOnly().asContainer().getUsedPaths(used)) {
                 paths.add(prefix + inner);
             }
         }

@@ -1,10 +1,9 @@
 package xjs.core;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.UnaryOperator;
+import java.util.function.Function;
 
 /**
  * The JSON reference is an accessor to a {@link JsonValue} which can be made
@@ -19,8 +18,7 @@ import java.util.function.UnaryOperator;
  *     .filter(ref ->
  *       ref.visit().isNumber())
  *     .forEach(ref ->
- *       ref.apply(n ->
- *         Json.value(n.asDouble() + 1)));
+ *       ref.apply(n -> n.asDouble() + 1));
  * }</pre>
  *
  * <p>To share references between containers, thus synchronizing changes between
@@ -36,28 +34,6 @@ import java.util.function.UnaryOperator;
  *   assert Json.array(7, 2, 3).equals(a1);
  *   assert Json.array(7, 5, 6).equals(a2);
  * }</pre>
- *
- * <h2>A note about future API design:</h2>
- *
- * <p>In the future, this API will almost certainly change due to its odd ergonomic
- * behaviors. The distinction between {@link #get} and {@link #visit} in itself is
- * fine, but additional variants of {@link #set}, {@link #update}, and any other
- * accessors needed here mean that we have to arbitrarily double its vernacular.
- *
- * <p>In the future, we may attach a lazily-initialized <code>Visitor</code> to this
- * object. Its API might work something like this:
- *
- * <pre>{@code
- *   final JsonReference reference = new JsonReference(Json.value(1234));
- *   // Get accessing:
- *   final JsonValue accessed = reference.get();
- *   // Get visiting:
- *   final JsonValue visited = reference.visitor().get();
- * }</pre>
- *
- * <p>However, such an API also has its limitations, as it requires a bit of
- * significant code duplication for each of the accessors. For this reason, a new
- * design is still being worked out.
  */
 public class JsonReference {
 
@@ -84,7 +60,7 @@ public class JsonReference {
      *
      * <p>Calling this method implies that the referent is required by the application
      * in some way. For example, to be {@link JsonValue#unwrap unwrapped} and treated
-     * as raw data, <em>not</em> JSON data. The alternative would be to {@link #visit}
+     * as raw data, <em>not</em> JSON data. The alternative would be to {@link #getOnly}
      * the data, which implies that we are using it to update formatting or simply
      * find a value which we <em>do</em> need.
      *
@@ -95,47 +71,10 @@ public class JsonReference {
      * user or to investigate potential optimizations regarding unused values.
      *
      * @return The referent
-     * @apiNote Experimental - This method may get renamed at some point before release.
      */
-    @ApiStatus.Experimental
     public @NotNull JsonValue get() {
         this.accessed = true;
-        return this.referent;
-    }
-
-    /**
-     * Points this reference toward a different {@link JsonValue}.
-     *
-     * <p>This is an {@link #get accessing} operation.
-     *
-     * @param referent The new referent being wrapped by this object.
-     * @return <code>this</code>, for method chaining.
-     * @throws UnsupportedOperationException If this reference is immutable.
-     * @apiNote Experimental - This method may get renamed at some point before release.
-     * @see #get
-     */
-    @ApiStatus.Experimental
-    public JsonReference set(final @Nullable JsonValue referent) {
-        this.checkMutable();
-        this.referent = Json.nonnull(referent);
-        this.accessed = true;
-        return this;
-    }
-
-    /**
-     * Applies the given transformation to the referent of this object.
-     *
-     * <p>This is an {@link #get accessing} operation.
-     *
-     * @param updater An expression transforming the wrapped {@link JsonValue}.
-     * @return <code>this</code>, for method chaining.
-     * @throws UnsupportedOperationException If this reference is immutable.
-     * @apiNote Experimental - This method may get renamed at some point before release.
-     * @see #get
-     */
-    @ApiStatus.Experimental
-    public JsonReference update(final UnaryOperator<JsonValue> updater) {
-        return this.set(updater.apply(this.referent));
+        return this.getOnly();
     }
 
     /**
@@ -155,45 +94,76 @@ public class JsonReference {
      * potential optimizations regarding unused values.
      *
      * @return The referent
-     * @apiNote Experimental - This method may get renamed at some point before release.
      */
-    @ApiStatus.Experimental
-    public JsonValue visit() {
+    public JsonValue getOnly() {
         return this.referent;
+    }
+
+    /**
+     * Points this reference toward a different {@link JsonValue}.
+     *
+     * <p>This is an {@link #get accessing} operation.
+     *
+     * @param referent The new referent being wrapped by this object.
+     * @return <code>this</code>, for method chaining.
+     * @throws UnsupportedOperationException If this reference is immutable.
+     * @see #get
+     */
+    public JsonReference set(final @Nullable JsonValue referent) {
+
+        return this.setOnly(referent);
     }
 
     /**
      * Visiting counterpart of {@link #set}.
      *
-     * <p>This is a {@link #visit visiting} operation.
+     * <p>This is a {@link #getOnly visiting} operation.
      *
      * @param referent The new referent being wrapped by this object.
      * @return <code>this</code>, for method chaining.
      * @throws UnsupportedOperationException If this reference is immutable.
-     * @apiNote Experimental - This method may get renamed at some point before release.
-     * @see #visit
+     * @see #getOnly
      */
-    @ApiStatus.Experimental
-    public JsonReference mutate(final @Nullable JsonValue referent) {
+    public JsonReference setOnly(final @Nullable JsonValue referent) {
         this.checkMutable();
         this.referent = Json.nonnull(referent);
         return this;
     }
 
     /**
-     * Visiting counterpart of {@link #update}.
+     * Applies the given transformation to the referent of this object.
      *
-     * <p>This is a {@link #visit visiting} operation.
+     * <p>This is an {@link #get accessing} operation.
      *
      * @param updater An expression transforming the wrapped {@link JsonValue}.
      * @return <code>this</code>, for method chaining.
      * @throws UnsupportedOperationException If this reference is immutable.
-     * @apiNote Experimental - This method may get renamed at some point before release.
-     * @see #visit
+     * @see #get
      */
-    @ApiStatus.Experimental
-    public JsonReference apply(final UnaryOperator<JsonValue> updater) {
-        return this.mutate(updater.apply(this.referent));
+    public JsonReference apply(final Function<JsonValue, Object> updater) {
+        this.accessed = true;
+        return this.applyOnly(updater);
+    }
+
+    /**
+     * Visiting counterpart of {@link #apply}.
+     *
+     * <p>This is a {@link #getOnly visiting} operation.
+     *
+     * @param updater An expression transforming the wrapped {@link JsonValue}.
+     * @return <code>this</code>, for method chaining.
+     * @throws UnsupportedOperationException If this reference is immutable.
+     * @see #getOnly
+     */
+    public JsonReference applyOnly(final Function<JsonValue, Object> updater) {
+        this.checkMutable();
+        final Object result = updater.apply(this.referent);
+        if (result instanceof JsonValue) {
+            this.referent = (JsonValue) result;
+        } else {
+            this.referent = Json.any(result).setDefaultMetadata(this.referent);
+        }
+        return this;
     }
 
     /**

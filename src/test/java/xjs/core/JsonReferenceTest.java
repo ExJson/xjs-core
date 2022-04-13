@@ -38,7 +38,7 @@ public final class JsonReferenceTest {
     @Test
     public void visit_doesNotTrackAccess() {
         final JsonReference reference = new JsonReference(null);
-        reference.visit();
+        reference.getOnly();
         assertFalse(reference.isAccessed());
     }
 
@@ -52,35 +52,35 @@ public final class JsonReferenceTest {
     @Test
     public void mutate_doesNotTrackAccess() {
         final JsonReference reference = new JsonReference(null);
-        reference.mutate(null);
+        reference.setOnly(null);
         assertFalse(reference.isAccessed());
     }
 
     @Test
     public void update_transformsValue() {
         final JsonReference reference = new JsonReference(null);
-        reference.update(JsonValue::intoArray);
+        reference.apply(JsonValue::intoArray);
         assertTrue(reference.get().isArray());
     }
 
     @Test
     public void update_tracksAccess() {
         final JsonReference reference = new JsonReference(null);
-        reference.update(JsonValue::intoArray);
+        reference.apply(JsonValue::intoArray);
         assertTrue(reference.isAccessed());
     }
 
     @Test
     public void apply_transformsValue() {
         final JsonReference reference = new JsonReference(null);
-        reference.apply(JsonValue::intoArray);
+        reference.applyOnly(JsonValue::intoArray);
         assertTrue(reference.get().isArray());
     }
 
     @Test
     public void apply_doesNotTrackAccess() {
         final JsonReference reference = new JsonReference(null);
-        reference.apply(JsonValue::intoArray);
+        reference.applyOnly(JsonValue::intoArray);
         assertFalse(reference.isAccessed());
     }
 

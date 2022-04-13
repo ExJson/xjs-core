@@ -214,7 +214,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     /**
      * Adds a {@link JsonValue} into this container.
      *
-     * <p>This is a {@link JsonReference#visit visiting} operation.
+     * <p>This is a {@link JsonReference#getOnly visiting} operation.
      *
      * @param value The value being added into the container.
      * @return <code>this</code>, for method chaining.
@@ -272,7 +272,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
      * Variant of {@link #add(JsonValue)} which appends a header comment to the
      * given value.
      *
-     * <p>This is a {@link JsonReference#visit visiting} operation.
+     * <p>This is a {@link JsonReference#getOnly visiting} operation.
      *
      * @param value   The value being added into the container.
      * @param comment The message of the generated comment being appended.
@@ -286,7 +286,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
      * Adds each {@link JsonReference reference} from the given container into this
      * array.
      *
-     * <p>This is a {@link JsonReference#visit visiting} operation.
+     * <p>This is a {@link JsonReference#getOnly visiting} operation.
      *
      * @param container Some other container housing references to be copied.
      * @return <code>this</code>, for method chaining.
@@ -414,7 +414,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     public JsonArray shallowCopy() {
         final JsonArray copy = new JsonArray();
         for (final JsonReference reference : this.references) {
-            final JsonValue value = reference.visit();
+            final JsonValue value = reference.getOnly();
             if (value.isContainer()) {
                 copy.add(value.asContainer().shallowCopy());
             } else {
@@ -449,7 +449,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     public JsonArray deepCopy(final boolean trackAccess) {
         final JsonArray copy = (JsonArray) new JsonArray().setDefaultMetadata(this);
         for (final JsonReference reference : this.references) {
-            final JsonValue value = reference.visit();
+            final JsonValue value = reference.getOnly();
             if (value.isContainer()) {
                 copy.add(value.asContainer().deepCopy(trackAccess));
             } else {
@@ -470,7 +470,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
         final JsonArray copy = new JsonArray();
         for (final JsonReference reference : this.references) {
             copy.addReference(reference.clone(true)
-                .mutate(reference.visit().unformatted()));
+                .setOnly(reference.getOnly().unformatted()));
         }
         return copy;
     }
@@ -547,11 +547,12 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
             return false;
         }
         final JsonArray array = (JsonArray) other;
-        if (this.size() == array.size()) {
-            for (int i = 0; i < this.size(); i++) {
-                if (!this.references.get(i).visit().matches(array.references.get(i).visit())) {
-                    return false;
-                }
+        if (this.size() != array.size()) {
+            return false;
+        }
+        for (int i = 0; i < this.size(); i++) {
+            if (!this.references.get(i).getOnly().matches(array.references.get(i).getOnly())) {
+                return false;
             }
         }
         return true;
@@ -571,11 +572,11 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
             }
             final String key = "[" + element.getIndex() + "]";
             paths.add(key);
-            if (!element.visit().isContainer()) {
+            if (!element.getOnly().isContainer()) {
                 continue;
             }
-            final String prefix = element.visit().isObject() ? key + "." : key;
-            for (final String inner : element.visit().asContainer().getUsedPaths(used)) {
+            final String prefix = element.getOnly().isObject() ? key + "." : key;
+            for (final String inner : element.getOnly().asContainer().getUsedPaths(used)) {
                 paths.add(prefix + inner);
             }
         }
@@ -670,25 +671,25 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
          * Returns the value being wrapped by this element <em>without</em> updating its
          * access flags.
          *
-         * <p>This is a {@link JsonReference#visit visiting} operation.
+         * <p>This is a {@link JsonReference#getOnly visiting} operation.
          *
          * @return The value being wrapped.
          */
-        public @NotNull JsonValue visit() {
-            return this.reference.visit();
+        public @NotNull JsonValue getOnly() {
+            return this.reference.getOnly();
         }
 
         /**
          * Updates the value being wrapped by this element <em>without</em> updating its
          * access flags.
          *
-         * <p>This is a {@link JsonReference#visit visiting} operation.
+         * <p>This is a {@link JsonReference#getOnly visiting} operation.
          *
          * @param value The new value to be wrapped.
          * @return <code>this</code>, for method chaining.
          */
-        public Element mutate(final @Nullable JsonValue value) {
-            this.reference.mutate(value);
+        public Element setOnly(final @Nullable JsonValue value) {
+            this.reference.setOnly(value);
             return this;
         }
 

@@ -147,10 +147,10 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         if (this.allowCondense && value.isContainer()) {
             final JsonContainer c = value.asContainer();
             if (!c.isEmpty()) {
-                if (c.getReference(0).visit().getLinesAbove() != 0) {
+                if (c.getReference(0).getOnly().getLinesAbove() != 0) {
                     return false;
                 } // Intentionally shallow check for formatting purposes
-                return c.size() == 1 || c.getReference(c.size() - 1).visit().getLinesAbove() == 0;
+                return c.size() == 1 || c.getReference(c.size() - 1).getOnly().getLinesAbove() == 0;
             }
         }
         return false;

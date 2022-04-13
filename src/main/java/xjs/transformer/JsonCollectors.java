@@ -145,12 +145,7 @@ public final class JsonCollectors {
      * @return The collector.
      */
     public static Collector<JsonObject.Member, JsonObject, JsonObject> member() {
-        return Collector.of(
-            JsonObject::new,
-            (object, member) -> object.addReference(member.getKey(), member.getReference()),
-            (left, right) -> { left.addAll(right); return left; },
-            Collector.Characteristics.IDENTITY_FINISH
-        );
+        return toObject(JsonObject.Member::getKey, JsonObject.Member::getOnly);
     }
 
     /**

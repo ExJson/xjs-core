@@ -42,7 +42,7 @@ public class XjsWriter extends AbstractJsonWriter {
         this.writeOpenHeader(object);
         for (final JsonObject.Member member : object) {
             this.writeNextMember(previous, member, condensed, -1);
-            previous = member.visit();
+            previous = member.getOnly();
         }
         this.writeEolComment(0, previous, null);
         if (!condensed) {
@@ -92,7 +92,7 @@ public class XjsWriter extends AbstractJsonWriter {
                 this.open(condensed, '{');
                 for (final JsonObject.Member member : value.asObject()) {
                     this.writeNextMember(previous, member, condensed, level);
-                    previous = member.visit();
+                    previous = member.getOnly();
                 }
                 this.writeEolComment(level, previous, null);
                 this.close(value.asObject(), condensed, level, '}');
@@ -128,17 +128,17 @@ public class XjsWriter extends AbstractJsonWriter {
 
     protected void writeNextMember(
             final JsonValue previous, final JsonObject.Member member, final boolean condensed, final int level) throws IOException {
-        this.delimit(previous, member.visit());
-        this.writeEolComment(level, previous, member.visit());
-        this.writeLinesAbove(level + 1, previous == null, condensed, member.visit());
-        this.writeHeader(level + 1, member.visit());
+        this.delimit(previous, member.getOnly());
+        this.writeEolComment(level, previous, member.getOnly());
+        this.writeLinesAbove(level + 1, previous == null, condensed, member.getOnly());
+        this.writeHeader(level + 1, member.getOnly());
         this.writeString(member.getKey(), level);
         this.tw.write(':');
-        if (!this.isVoidString(member.visit())) {
-            this.separate(level + 2, member.visit());
+        if (!this.isVoidString(member.getOnly())) {
+            this.separate(level + 2, member.getOnly());
         }
-        this.writeValueComment(level + 2, member.visit());
-        this.write(member.visit(), level + 1);
+        this.writeValueComment(level + 2, member.getOnly());
+        this.write(member.getOnly(), level + 1);
     }
 
     protected void writeNextElement(

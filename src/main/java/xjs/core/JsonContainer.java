@@ -46,10 +46,9 @@ import java.util.stream.StreamSupport;
  *   container.references()
  *     .stream()
  *     .filter(ref ->
- *       ref.visit().isNumber())
+ *       ref.getOnly().isNumber())
  *     .forEach(ref ->
- *       ref.update(v ->
- *         Json.value(v.asDouble() + 1)));
+ *       ref.apply(v -> v.asDouble() + 1));
  * }</pre>
  */
 public abstract class JsonContainer extends JsonValue {
@@ -128,18 +127,15 @@ public abstract class JsonContainer extends JsonValue {
      * inside of the container</b>. It is provided for convenience here, but due to its
      * nature, it may be moved into a dedicated JSON formatting utility in the future.
      *
-     * <p>This is a {@link JsonReference#visit visiting} operation.
+     * <p>This is a {@link JsonReference#getOnly visiting} operation.
      *
      * @param lineLength The number of elements to output on each line.
      * @return <code>this</code>, for method chaining.
      */
     public JsonContainer setLineLength(final int lineLength) {
         for (int i = 0; i < this.references.size(); i++) {
-            if ((i % lineLength) == 0) {
-                this.references.get(i).visit().setLinesAbove(1).setLinesBetween(0);
-            } else {
-                this.references.get(i).visit().setLinesAbove(0).setLinesBetween(0);
-            }
+            final int linesAbove = i % lineLength == 0 ? 1 : 0;
+            this.references.get(i).getOnly().setLinesAbove(linesAbove).setLinesBetween(0);
         }
         return this;
     }
@@ -154,7 +150,7 @@ public abstract class JsonContainer extends JsonValue {
      * @return <code>this</code>, for method chaining.
      */
     public JsonContainer condense() {
-        this.references.forEach(ref -> ref.visit().setLinesAbove(0).setLinesBetween(0));
+        this.references.forEach(ref -> ref.getOnly().setLinesAbove(0).setLinesBetween(0));
         return this;
     }
 
@@ -175,7 +171,7 @@ public abstract class JsonContainer extends JsonValue {
      *   final JsonContainer collected =
      *     container.references()
      *       .stream()
-     *       .filter(ref -> ref.visit().isNumber())
+     *       .filter(ref -> ref.getOnly().isNumber())
      *       .collect(JsonCollectors.reference());
      * }</pre>
      *
@@ -245,10 +241,7 @@ public abstract class JsonContainer extends JsonValue {
      * @return The expected value, or else {@link Optional#empty}.
      */
     public Optional<JsonValue> getOptional(final int index) {
-        if (index >= 0 && index < this.references.size()) {
-            return Optional.of(this.references.get(index).get());
-        }
-        return Optional.empty();
+        return this.has(index) ? Optional.of(this.references.get(index).get()) : Optional.empty();
     }
 
     /**
@@ -354,12 +347,7 @@ public abstract class JsonContainer extends JsonValue {
      * @see #contains(JsonValue)
      */
     public boolean containsAll(final Iterable<JsonValue> values) {
-        for (final JsonValue value : values) {
-            if (!this.contains(value)) {
-                return false;
-            }
-        }
-        return true;
+        return StreamSupport.stream(values.spliterator(), false).anyMatch(this::contains);
     }
 
     /**
@@ -380,7 +368,7 @@ public abstract class JsonContainer extends JsonValue {
      * Variant of {@link #values} intended for reflective purposes. This may be needed for
      * any user wishing to track which values do and do not get used by their application.
      *
-     * <p>This is a {@link JsonReference#visit visiting} operation.
+     * <p>This is a {@link JsonReference#getOnly visiting} operation.
      *
      * @return An {@link AccessingView accessing view} which may be iterated or streamed.
      */
@@ -402,13 +390,13 @@ public abstract class JsonContainer extends JsonValue {
      * <pre>{@code
      *   // Transform numbers into strings of numbers.
      *   container.forEachRecursive(ref -> {
-     *      if (ref.visit().isNumber()) {
+     *      if (ref.isNumber()) {
      *          ref.apply(JsonValue::intoString);
      *      }
      *   });
      * }</pre>
      *
-     * <p>This is a {@link JsonReference#visit visiting} operation.
+     * <p>This is a {@link JsonReference#getOnly visiting} operation.
      *
      * @param fn An action to execute for each value in this container.
      * @return <code>this</code>, for method chaining.
@@ -416,8 +404,8 @@ public abstract class JsonContainer extends JsonValue {
     public JsonContainer forEachRecursive(final Consumer<JsonReference> fn) {
         this.references.forEach(ref -> {
             fn.accept(ref);
-            if (ref.visit().isContainer()) {
-                ref.visit().asContainer().forEachRecursive(fn);
+            if (ref.getOnly().isContainer()) {
+                ref.getOnly().asContainer().forEachRecursive(fn);
             }
         });
         return this;
@@ -477,7 +465,7 @@ public abstract class JsonContainer extends JsonValue {
      */
     public int indexOf(final JsonValue value) {
         for (int i = 0; i < this.references.size(); i++) {
-            if (this.references.get(i).visit().matches(value)) {
+            if (this.references.get(i).getOnly().matches(value)) {
                 return i;
             }
         }
@@ -501,7 +489,7 @@ public abstract class JsonContainer extends JsonValue {
      * @return <code>false</code>, always.
      */
     @Override
-    public boolean isPrimitive() {
+    public final boolean isPrimitive() {
         return false;
     }
 
@@ -668,8 +656,8 @@ public abstract class JsonContainer extends JsonValue {
             this.references.stream()
                 .map(ref -> {
                     final JsonReference clone = ref.clone(true);
-                    if (recursive && ref.visit().isContainer()) {
-                        ref.update(value -> value.asContainer().freeze(true));
+                    if (recursive && ref.getOnly().isContainer()) {
+                        ref.applyOnly(value -> value.asContainer().freeze(true));
                     }
                     return clone.freeze();
                 })
@@ -729,7 +717,7 @@ public abstract class JsonContainer extends JsonValue {
     }
 
     /**
-     * A {@link View view} of this container which {@link JsonReference#visit visits}
+     * A {@link View view} of this container which {@link JsonReference#getOnly visits}
      * each value as it gets returned to the consumer. This implies that the actions
      * are intended for the purpose of reflecting on the values in the container. For
      * example, to search for a value or reformat the container.
@@ -754,7 +742,7 @@ public abstract class JsonContainer extends JsonValue {
 
         @Override
         public JsonValue next() {
-            return this.references.next().visit();
+            return this.references.next().getOnly();
         }
 
         @Override
