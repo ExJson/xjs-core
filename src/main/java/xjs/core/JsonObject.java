@@ -216,7 +216,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             final JsonValue replaced = this.get(key);
             if (replaced == null) {
                 this.add(key, reference.get());
-            } else if (replaced instanceof JsonObject && reference.visit() instanceof JsonObject) {
+            } else if (replaced.isObject() && reference.visit().isObject()) {
                 replaced.asObject().setDefaults(reference.get().asObject());
             }
         }
@@ -625,11 +625,6 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      */
     public Map<String, Object> toMap() {
         return this.toMap(JsonValue::unwrap);
-    }
-
-    @Override
-    public JsonObject intoContainer() {
-        return (JsonObject) super.intoContainer();
     }
 
     @Override

@@ -553,16 +553,6 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     }
 
     /**
-     * Override allowing this value to be cast into a {@link JsonContainer}.
-     *
-     * @return <code>this</code>, always.
-     */
-    @Override
-    public JsonArray asContainer() {
-        return this;
-    }
-
-    /**
      * Override allowing this value to be cast into a {@link JsonArray}.
      *
      * @return <code>this</code>, always.

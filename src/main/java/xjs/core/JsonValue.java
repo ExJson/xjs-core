@@ -1,7 +1,6 @@
 package xjs.core;
 
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import xjs.serialization.JsonSerializationContext;
 import xjs.serialization.writer.JsonWriter;
