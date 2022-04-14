@@ -70,13 +70,8 @@ public class JsonLiteral extends JsonValue {
     }
 
     @Override
-    public JsonLiteral deepCopy(final boolean trackAccess) {
-        return (JsonLiteral) new JsonLiteral(this.value).setDefaultMetadata(this);
-    }
-
-    @Override
-    public JsonValue unformatted() {
-        return new JsonLiteral(this.value);
+    public JsonLiteral copy(final int options) {
+        return withMetadata(new JsonLiteral(this.value), this, options);
     }
 
     @Override

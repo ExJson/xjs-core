@@ -87,7 +87,7 @@ public final class JsonReferenceTest {
     @Test
     public void clone_createsNewInstance() {
         final JsonReference reference = new JsonReference(null);
-        assertNotSame(reference, reference.clone(false));
+        assertNotSame(reference, reference.copy(false));
     }
 
     @Test
@@ -95,7 +95,7 @@ public final class JsonReferenceTest {
         final JsonReference reference =
             new JsonReference(null).setAccessed(true);
 
-        final JsonReference clone = reference.clone(true);
+        final JsonReference clone = reference.copy(true);
         assertEquals(reference.isAccessed(), clone.isAccessed());
     }
 

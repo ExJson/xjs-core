@@ -219,7 +219,7 @@ public class JsonReference {
      * @param trackAccess Whether to additionally persist access tracking.
      * @return A copy of this reference.
      */
-    public JsonReference clone(final boolean trackAccess) {
+    public JsonReference copy(final boolean trackAccess) {
         final JsonReference clone = new JsonReference(this.referent);
         return trackAccess ? clone.setAccessed(this.accessed) : clone;
     }

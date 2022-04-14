@@ -613,65 +613,13 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         return this.toMap(JsonValue::unwrap);
     }
 
-    @Override
-    public JsonObject shallowCopy() {
-        final JsonObject copy = new JsonObject();
-        final Iterator<String> keyIterator = this.keys.iterator();
-        final Iterator<JsonReference> referenceIterator = this.references.iterator();
-
-        while (keyIterator.hasNext() && referenceIterator.hasNext()) {
-            final String key = keyIterator.next();
-            final JsonReference reference = referenceIterator.next();
-            final JsonValue value = reference.getOnly();
-
-            if (value.isContainer()) {
-                copy.add(key, value.asContainer().shallowCopy());
-            } else {
-                copy.addReference(key, reference);
-            }
+    public JsonObject copy(final int options) {
+        final JsonObject copy =
+            new JsonObject(new ArrayList<>(this.keys), this.copyReferences(options));
+        if ((options & JsonCopy.FORMATTING) == JsonCopy.FORMATTING) {
+            copy.setLinesTrailing(this.linesTrailing);
         }
-        return copy;
-    }
-
-    @Override
-    public JsonObject deepCopy() {
-        return this.deepCopy(false);
-    }
-
-    @Override
-    public JsonObject deepCopy(final boolean trackAccess) {
-        final JsonObject copy = (JsonObject) new JsonObject().setDefaultMetadata(this);
-        final Iterator<String> keyIterator = this.keys.iterator();
-        final Iterator<JsonReference> referenceIterator = this.references.iterator();
-
-        while (keyIterator.hasNext() && referenceIterator.hasNext()) {
-            final String key = keyIterator.next();
-            final JsonReference reference = referenceIterator.next();
-            final JsonValue value = reference.getOnly();
-
-            if (value.isContainer()) {
-                copy.add(key, value.asContainer().deepCopy(trackAccess));
-            } else {
-                copy.addReference(key, reference.clone(trackAccess));
-            }
-        }
-        return copy;
-    }
-
-    @Override
-    public JsonObject unformatted() {
-        final JsonObject copy = new JsonObject();
-        final Iterator<String> keyIterator = this.keys.iterator();
-        final Iterator<JsonReference> referenceIterator = this.references.iterator();
-
-        while (keyIterator.hasNext() && referenceIterator.hasNext()) {
-            final String key = keyIterator.next();
-            final JsonReference reference = referenceIterator.next();
-
-            copy.addReference(key, reference.clone(true)
-                .setOnly(reference.getOnly().unformatted()));
-        }
-        return copy;
+        return withMetadata(copy, this, options);
     }
 
     @Override

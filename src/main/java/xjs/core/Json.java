@@ -1,5 +1,6 @@
 package xjs.core;
 
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 import xjs.exception.SyntaxException;
 import xjs.serialization.JsonSerializationContext;
@@ -337,5 +338,21 @@ public final class Json {
      */
     public static void update(final File file, final UnaryOperator<JsonValue> f) throws IOException {
         f.apply(parse(file)).write(file);
+    }
+
+    /**
+     * Generates a copy of the given value without requiring an explicit cast at the
+     * source. This operation is considered safe for any values correctly following
+     * the contract of {@link JsonValue#copy(int)}.
+     *
+     * @param value   The value being copied.
+     * @param options Any {@link JsonCopy} flags for which data to copy.
+     * @param <V>     The type of {@link JsonValue value} being copied.
+     * @return A copy of <code>value</code> with similar or identical properties.
+     */
+    @SuppressWarnings("unchecked")
+    public static <V extends JsonValue> V copy(
+            final V value, final @MagicConstant(flagsFromClass = JsonCopy.class) int options) {
+        return (V) value.copy(options);
     }
 }

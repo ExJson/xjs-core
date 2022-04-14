@@ -402,77 +402,13 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
         return (JsonArray) super.removeAll(values);
     }
 
-    /**
-     * Generates a shallow copy of this container. This operation yields a new
-     * array containing the exact same references. Any other containers in this
-     * array will be shallow copied recursively, but regular values will simply
-     * be reused and are not safe to be mutually updated.
-     *
-     * @return A <em>shallow</em> copy of this array.
-     */
     @Override
-    public JsonArray shallowCopy() {
-        final JsonArray copy = new JsonArray();
-        for (final JsonReference reference : this.references) {
-            final JsonValue value = reference.getOnly();
-            if (value.isContainer()) {
-                copy.add(value.asContainer().shallowCopy());
-            } else {
-                copy.addReference(reference);
-            }
+    public JsonArray copy(final int options) {
+        final JsonArray copy = new JsonArray(this.copyReferences(options));
+        if ((options & JsonCopy.FORMATTING) == JsonCopy.FORMATTING) {
+            copy.setLinesTrailing(this.linesTrailing);
         }
-        return copy;
-    }
-
-    /**
-     * Generates a deep copy of this container. This operation yields a new
-     * array containing the exact same references. Any other containers in this
-     * array will be deep copied recursively. However, the new object will be
-     * entirely flagged as {@link JsonReference#setAccessed unused}.
-     *
-     * @return a <em>deep</em> copy of this array.
-     */
-    @Override
-    public JsonArray deepCopy() {
-        return this.deepCopy(false);
-    }
-
-    /**
-     * Generates a deep copy of this container. This operation yields a new
-     * array containing the exact same references. Any other containers in this
-     * array will be deep copied recursively.
-     *
-     * @param trackAccess Whether to additionally copy access flags.
-     * @return a <em>deep</em> copy of this array.
-     */
-    @Override
-    public JsonArray deepCopy(final boolean trackAccess) {
-        final JsonArray copy = (JsonArray) new JsonArray().setDefaultMetadata(this);
-        for (final JsonReference reference : this.references) {
-            final JsonValue value = reference.getOnly();
-            if (value.isContainer()) {
-                copy.add(value.asContainer().deepCopy(trackAccess));
-            } else {
-                copy.addReference(reference.clone(trackAccess));
-            }
-        }
-        return copy;
-    }
-
-    /**
-     * Generates a deep copy of this array without persisting any formatting
-     * info or similar metadata.
-     *
-     * @return a <em>deep</em>, unformatted copy of this array.
-     */
-    @Override
-    public JsonArray unformatted() {
-        final JsonArray copy = new JsonArray();
-        for (final JsonReference reference : this.references) {
-            copy.addReference(reference.clone(true)
-                .setOnly(reference.getOnly().unformatted()));
-        }
-        return copy;
+        return withMetadata(copy, this, options);
     }
 
     /**

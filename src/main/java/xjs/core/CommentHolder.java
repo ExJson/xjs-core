@@ -231,6 +231,21 @@ public class CommentHolder {
         return new String(newlines);
     }
 
+    /**
+     * Generates a clone of this object, housing the same comments.
+     *
+     * @return A clone of this object.
+     */
+    public CommentHolder copy() {
+        final CommentHolder copy = new CommentHolder();
+        copy.headerData = this.headerData;
+        copy.eolData = this.eolData;
+        copy.footerData = this.footerData;
+        copy.valueData = this.valueData;
+        copy.interiorData = this.interiorData;
+        return copy;
+    }
+
     @Override
     public int hashCode() {
         int result = 0;

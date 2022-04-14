@@ -160,6 +160,22 @@ public abstract class JsonContainer extends JsonValue {
     }
 
     /**
+     * Override allowing this method to preserve {@link #linesTrailing} when copying
+     * metadata.
+     *
+     * @param other Any other value being copied out of.
+     * @return <code>this</code>, for method chaining.
+     */
+    @Override
+    public JsonContainer setDefaultMetadata(final JsonValue other) {
+        if (other instanceof JsonContainer) {
+            final JsonContainer c = (JsonContainer) other;
+            if (this.linesTrailing < 0) this.linesTrailing = c.linesTrailing;
+        }
+        return (JsonContainer) super.setDefaultMetadata(other);
+    }
+
+    /**
      * Returns a view of each reference in this container. Callers should be aware that
      * the return value of this method is <b>immutable</b>. However, callers may
      * <em>replace</em> values within this collection by mutating the references directly.
@@ -557,42 +573,29 @@ public abstract class JsonContainer extends JsonValue {
     }
 
     /**
-     * Generates a shallow copy of this container. This operation yields a new
-     * container housing the exact same references. Any other containers in this
-     * object will be shallow copied recursively, but regular values will simply
-     * be reused and are not safe to be mutually updated.
+     * Generates a copy of every reference in this container given a series of copy options.
      *
-     * @return A <em>shallow</em> copy of this container.
+     * @param options Any {@link JsonCopy} flags passed from {@link #copy}.
+     * @return Either {@link #references} or a clone of it.
      */
-    public abstract JsonContainer shallowCopy();
+    protected List<JsonReference> copyReferences(final int options) {
+        final boolean tracking = (options & JsonCopy.TRACKING) == JsonCopy.TRACKING;
+        final boolean recursive = (options & JsonCopy.RECURSIVE) == JsonCopy.RECURSIVE;
+        final boolean containers = (options & JsonCopy.CONTAINERS) == JsonCopy.CONTAINERS;
 
-    /**
-     * Generates a deep copy of this container. This operation yields a new
-     * container housing the exact same references. Any other containers in this
-     * object will be deep copied recursively. However, the new object will be
-     * entirely flagged as {@link JsonReference#setAccessed unused}.
-     *
-     * @return a <em>deep</em> copy of this container.
-     */
-    public abstract JsonContainer deepCopy();
-
-    /**
-     * Generates a deep copy of this container. This operation yields a new
-     * container housing the exact same references. Any other containers in this
-     * object will be deep copied recursively.
-     *
-     * @param trackAccess Whether to additionally copy access flags.
-     * @return a <em>deep</em> copy of this container.
-     */
-    public abstract JsonContainer deepCopy(final boolean trackAccess);
-
-    /**
-     * Generates a deep copy of this container without persisting any formatting
-     * info or similar metadata.
-     *
-     * @return a <em>deep</em>, unformatted copy of this container.
-     */
-    public abstract JsonContainer unformatted();
+        if (recursive || containers) {
+            final List<JsonReference> copy = new ArrayList<>(this.references.size());
+            for (final JsonReference reference : this.references) {
+                if (recursive || reference.getOnly().isContainer()) {
+                    copy.add(reference.copy(tracking).applyOnly(v -> v.copy(options)));
+                } else {
+                    copy.add(reference);
+                }
+            }
+            return copy;
+        }
+        return this.references;
+    }
 
     /**
      * Override indicating that subclasses must still implement this method.
@@ -649,7 +652,7 @@ public abstract class JsonContainer extends JsonValue {
         final List<JsonReference> frozen =
             this.references.stream()
                 .map(ref -> {
-                    final JsonReference clone = ref.clone(true);
+                    final JsonReference clone = ref.copy(true);
                     if (recursive && ref.getOnly().isContainer()) {
                         ref.applyOnly(value -> value.asContainer().freeze(true));
                     }

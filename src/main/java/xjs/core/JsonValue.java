@@ -393,7 +393,10 @@ public abstract class JsonValue implements Serializable {
         if (this.linesAbove < 0) this.linesAbove = metadata.linesAbove;
         if (this.linesBetween < 0) this.linesBetween = metadata.linesBetween;
         if (this.hasFlag(JsonFlags.NULL)) this.flags = metadata.flags;
-        if (this.comments == null) this.comments = metadata.comments;
+
+        if (this.comments == null && metadata.comments != null) {
+            this.comments = metadata.comments.copy();
+        }
         return this;
     }
 
@@ -697,7 +700,7 @@ public abstract class JsonValue implements Serializable {
      * @return A shallow copy of this value.
      */
     public JsonValue shallowCopy() {
-        return this.deepCopy(false);
+        return this.copy(JsonCopy.NEW_CONTAINERS);
     }
 
     /**
@@ -708,16 +711,18 @@ public abstract class JsonValue implements Serializable {
      * @return A deep copy of this value.
      */
     public JsonValue deepCopy() {
-        return this.deepCopy(false);
+        return this.copy(JsonCopy.DEEP);
     }
 
     /**
      * Generates a deep copy of this value, including all metadata.
      *
-     * @param trackAccess Whether to additionally persist access tracking.
+     * @param tracking Whether to additionally persist access tracking data.
      * @return A deep copy of this value.
      */
-    public abstract JsonValue deepCopy(final boolean trackAccess);
+    public JsonValue deepCopy(final boolean tracking) {
+        return this.copy(tracking ? JsonCopy.DEEP_TRACKING : JsonCopy.DEEP);
+    }
 
     /**
      * Generates a deep copy of this value without any formatting options.
@@ -725,12 +730,10 @@ public abstract class JsonValue implements Serializable {
      * <p>Note that access tracking will be reset in the output of the method.
      *
      * @return A deep, unformatted copy of this value.
-     * @apiNote The behavior of this method is unlikely to change, but the
-     *          exact implementation <em>might</em>. Implementors should be
-     *          aware that any exact methods required could potentially be
-     *          impacted by such a change.
      */
-    public abstract JsonValue unformatted();
+    public JsonValue unformatted() {
+        return this.copy(JsonCopy.UNFORMATTED);
+    }
 
     /**
      * Trims any whitespace above or below this value.
@@ -750,6 +753,35 @@ public abstract class JsonValue implements Serializable {
      */
     public JsonValue trim() {
         return this.setLinesAbove(-1).setLinesBetween(-1);
+    }
+
+    /**
+     * Generates a copy of this value given a series of copy options.
+     *
+     * @param options Any {@link JsonCopy} flags for which data to copy.
+     * @return A new instance of this value with similar or identical data.
+     */
+    public abstract JsonValue copy(final @MagicConstant(flagsFromClass = JsonCopy.class) int options);
+
+    /**
+     * Copies the common metadata from a source value into its clone.
+     *
+     * @param copy    The value being copied into.
+     * @param source  The value being copied out of.
+     * @param options Any {@link JsonCopy} options from {@link #copy(int)}.
+     * @param <V>     The type of value being copied.
+     * @return <code>copy</code>
+     */
+    protected static <V extends JsonValue> V withMetadata(final V copy, final V source, final int options) {
+        if ((options & JsonCopy.COMMENTS) == JsonCopy.COMMENTS) {
+            if (source.comments != null) copy.comments = source.comments.copy();
+        }
+        if ((options & JsonCopy.FORMATTING) == JsonCopy.FORMATTING) {
+            copy.linesAbove = source.linesAbove;
+            copy.linesBetween = source.linesBetween;
+            copy.flags = source.flags;
+        }
+        return copy;
     }
 
     /**

@@ -164,7 +164,7 @@ public final class JsonContainerTest {
                 new JsonReference(Json.value(5678)));
 
         final JsonContainer container = new JsonArray(references);
-        final JsonContainer copy = container.shallowCopy();
+        final JsonContainer copy = (JsonContainer) container.shallowCopy();
 
         for (int i = 0; i < references.size(); i++) {
             assertSame(references.get(i), copy.getReference(i));
@@ -175,7 +175,7 @@ public final class JsonContainerTest {
     public void shallowCopy_copiesRecursively() {
         final JsonContainer nested = new JsonArray();
         final JsonContainer container = new JsonArray().add(nested);
-        final JsonContainer copy = container.shallowCopy();
+        final JsonContainer copy = (JsonContainer) container.shallowCopy();
 
         assertNotSame(nested, copy.get(0));
     }
@@ -183,7 +183,7 @@ public final class JsonContainerTest {
     @Test
     public void shallowCopy_doesNotTrackAccess() {
         final JsonContainer container = new JsonArray().add(1).add(2).add(3);
-        final JsonContainer copy = container.shallowCopy();
+        final JsonContainer copy = (JsonContainer) container.shallowCopy();
 
         assertFalse(copy.references().stream().anyMatch(JsonReference::isAccessed));
     }
@@ -195,7 +195,7 @@ public final class JsonContainerTest {
                 new JsonReference(Json.value(5678)));
 
         final JsonContainer container = new JsonArray(references);
-        final JsonContainer copy = container.deepCopy(false);
+        final JsonContainer copy = (JsonContainer) container.deepCopy(false);
 
         for (int i = 0; i < references.size(); i++) {
             assertNotSame(references.get(i), copy.getReference(i));
@@ -207,7 +207,7 @@ public final class JsonContainerTest {
     public void deepCopy_copiesRecursively() {
         final JsonContainer nested = new JsonArray();
         final JsonContainer container = new JsonArray().add(nested);
-        final JsonContainer copy = container.deepCopy();
+        final JsonContainer copy = (JsonContainer) container.deepCopy();
 
         assertNotSame(nested, copy.get(0));
     }
@@ -215,7 +215,7 @@ public final class JsonContainerTest {
     @Test
     public void deepCopy_doesNotTrackAccess() {
         final JsonContainer container = new JsonArray().add(1).add(2).add(3);
-        final JsonContainer copy = container.deepCopy();
+        final JsonContainer copy = (JsonContainer) container.deepCopy();
 
         assertFalse(copy.references().stream().anyMatch(JsonReference::isAccessed));
     }

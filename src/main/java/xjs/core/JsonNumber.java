@@ -49,12 +49,7 @@ public class JsonNumber extends JsonValue {
     }
 
     @Override
-    public JsonNumber deepCopy(final boolean trackAccess) {
-        return (JsonNumber) new JsonNumber(this.value).setDefaultMetadata(this);
-    }
-
-    @Override
-    public JsonNumber unformatted() {
-        return new JsonNumber(this.value);
+    public JsonNumber copy(final int options) {
+        return withMetadata(new JsonNumber(this.value), this, options);
     }
 }

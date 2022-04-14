@@ -67,5 +67,10 @@ public final class JsonCopy {
      */
     public static final byte DEEP_TRACKING = DEEP | TRACKING;
 
+    /**
+     * Flag providing an explicit label for unformatted copying.
+     */
+    public static final byte UNFORMATTED = RECURSIVE;
+
     private JsonCopy() {}
 }
