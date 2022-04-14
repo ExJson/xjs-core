@@ -189,7 +189,11 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      * @throws UnsupportedOperationException if the value does not exist.
      */
     public JsonObject setComment(final String key, final String comment) {
-        this.get(key).setComment(comment);
+        final JsonValue expected = this.get(key);
+        if (expected == null) {
+            throw new UnsupportedOperationException("Setting comment on null value (" + key + ")");
+        }
+        expected.setComment(comment);
         return this;
     }
 
@@ -393,7 +397,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      * @return <code>this</code>, for method chaining.
      */
     public JsonObject set(final int index, final String key, final @Nullable JsonValue value) {
-        if (index < 0 || index >= this.references.size()) {
+        if (!this.has(index)) {
             return this.add(key, value);
         }
         this.references.get(index).apply(og ->
@@ -460,6 +464,24 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
     /**
      * Returns the <em>last</em> value paired with the given key, or else
+     * <code>null</code>.
+     *
+     * <p>This is an {@link JsonReference#get accessing} operation.
+     *
+     * @param key The name of the value being returned.
+     * @return Whichever {@link JsonValue} is found, or else <code>null</code>.
+     * @throws UnsupportedOperationException If the value is absent.
+     */
+    public @Nullable JsonValue get(final String key) {
+        final int index = this.indexOf(key);
+        if (index != -1) {
+            return this.references.get(index).get();
+        }
+        throw new UnsupportedOperationException("Expected: " + key);
+    }
+
+    /**
+     * Returns the <em>last</em> value paired with the given key, or else
      * throws an {@link UnsupportedOperationException}.
      *
      * <p>This is an {@link JsonReference#get accessing} operation.
@@ -468,12 +490,12 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      * @return Whichever {@link JsonValue} is found.
      * @throws UnsupportedOperationException If the value is absent.
      */
-    public @NotNull JsonValue get(final String key) {
-        final int index = this.indexOf(key);
-        if (index != -1) {
-            return this.references.get(index).get();
+    public @NotNull JsonValue expect(final String key) {
+        final JsonValue expected = this.get(key);
+        if (expected == null) {
+            throw new UnsupportedOperationException("Expected: " + key);
         }
-        throw new UnsupportedOperationException("Expected: " + key);
+        return expected;
     }
 
     /**
@@ -486,9 +508,9 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      */
     @Contract("_, !null -> !null")
     public JsonValue get(final String key, final Object defaultValue) {
-        final int index = this.indexOf(key);
-        if (index != -1) {
-            return this.references.get(index).get();
+        final JsonValue expected = this.get(key);
+        if (expected != null) {
+            return expected;
         } else if (defaultValue == null) {
             return null;
         }
@@ -530,7 +552,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
      * @return The expected value, or else {@link Optional#empty}.
      */
     public Optional<JsonValue> getOptional(final String key) {
-        return Optional.ofNullable(this.get(key, null));
+        return Optional.ofNullable(this.get(key));
     }
 
     /**
