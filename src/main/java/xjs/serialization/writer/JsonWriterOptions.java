@@ -28,7 +28,7 @@ public class JsonWriterOptions {
     private String separator = " ";
     private int minSpacing = 0;
     private int maxSpacing = Integer.MAX_VALUE;
-    private int lineSpacing = 1;
+    private int defaultSpacing = 1;
 
     /**
      * Construct a new instance with default settings.
@@ -52,7 +52,7 @@ public class JsonWriterOptions {
         this.separator = source.separator;
         this.minSpacing = source.minSpacing;
         this.maxSpacing = source.maxSpacing;
-        this.lineSpacing = source.lineSpacing;
+        this.defaultSpacing = source.defaultSpacing;
     }
 
     /**
@@ -526,20 +526,20 @@ public class JsonWriterOptions {
      * @return The default number of newline characters to output.
      * @see #getMinSpacing()
      */
-    public int getLineSpacing() {
-        return this.lineSpacing;
+    public int getDefaultSpacing() {
+        return this.defaultSpacing;
     }
 
     /**
      * Sets the <em>default</em> number of newline characters to
      * output between values.
      *
-     * @param lineSpacing The default number of newline characters.
+     * @param defaultSpacing The default number of newline characters.
      * @return <code>this</code>, for method chaining.
      * @see #getMinSpacing()
      */
-    public JsonWriterOptions setLineSpacing(final int lineSpacing) {
-        this.lineSpacing = lineSpacing;
+    public JsonWriterOptions setDefaultSpacing(final int defaultSpacing) {
+        this.defaultSpacing = defaultSpacing;
         return this;
     }
 }

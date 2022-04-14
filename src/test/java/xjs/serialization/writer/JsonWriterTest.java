@@ -150,7 +150,7 @@ public final class JsonWriterTest {
 
     @Test
     public void write_withLineSpacing_overridesDefaultSpacing() {
-        final JsonWriterOptions options = new JsonWriterOptions().setLineSpacing(2);
+        final JsonWriterOptions options = new JsonWriterOptions().setDefaultSpacing(2);
         final JsonObject object =
             new JsonObject()
                 .add("1", "2")

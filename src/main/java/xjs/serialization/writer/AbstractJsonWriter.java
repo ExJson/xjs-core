@@ -27,7 +27,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
     protected final String indent;
     protected final int minSpacing;
     protected final int maxSpacing;
-    protected final int lineSpacing;
+    protected final int defaultSpacing;
     protected String separator;
 
     protected AbstractJsonWriter(final File file, final boolean format) throws IOException {
@@ -47,7 +47,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.indent = "  ";
         this.minSpacing = 0;
         this.maxSpacing = Integer.MAX_VALUE;
-        this.lineSpacing = format ? 1 : 0;
+        this.defaultSpacing = format ? 1 : 0;
         this.separator = format ? " " : "";
     }
 
@@ -64,7 +64,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.indent = options.getIndent();
         this.minSpacing = options.getMinSpacing();
         this.maxSpacing = options.getMaxSpacing();
-        this.lineSpacing = options.getLineSpacing();
+        this.defaultSpacing = options.getDefaultSpacing();
         this.separator = options.getSeparator();
     }
 
@@ -118,11 +118,11 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
             return 0;
         } else if (top) {
             if (level > 0) {
-                return Math.max(1, this.lineSpacing - 1);
+                return Math.max(1, this.defaultSpacing - 1);
             }
-            return this.lineSpacing - 1;
+            return this.defaultSpacing - 1;
         }
-        return this.lineSpacing;
+        return this.defaultSpacing;
     }
 
     protected void nl(final int level) throws IOException {
@@ -212,9 +212,9 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
 
     private int getDefaultLinesTrailing(final int level) {
         if (level >= 0) {
-            return Math.max(1, this.lineSpacing - 1);
+            return Math.max(1, this.defaultSpacing - 1);
         }
-        return this.lineSpacing - 1;
+        return this.defaultSpacing - 1;
     }
 
     protected int limitLines(final int lines, final boolean condensed, final boolean topOrBottom) {
