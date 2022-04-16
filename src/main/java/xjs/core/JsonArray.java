@@ -520,7 +520,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     public List<String> getPaths(final PathFilter filter) {
         final List<String> paths = new ArrayList<>();
         for (final Element element : this.elements()) {
-            if (filter.test(element.getReference())) {
+            if (!filter.test(element.getReference())) {
                 continue;
             }
             final String key = "[" + element.getIndex() + "]";

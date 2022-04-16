@@ -735,7 +735,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     public List<String> getPaths(final PathFilter filter) {
         final List<String> paths = new ArrayList<>();
         for (final Member member : this) {
-            if (filter.test(member.getReference())) {
+            if (!filter.test(member.getReference())) {
                 continue;
             }
             paths.add(member.getKey());

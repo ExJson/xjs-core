@@ -144,6 +144,39 @@ public final class JsonContainerTest {
     }
 
     @Test
+    public void getPaths_returnsAllPaths() {
+        final JsonObject container = Json.object()
+            .add("a", "b")
+            .add("c", Json.array("d"))
+            .add("e", Json.object().add("f", "g"));
+        container.get("a");
+        container.get("e");
+        assertEquals(List.of("a", "c", "c[0]", "e", "e.f"), container.getPaths());
+    }
+
+    @Test
+    public void getUnusedPaths_returnsUnusedPaths() {
+        final JsonObject container = Json.object()
+            .add("a", "b")
+            .add("c", Json.array("d"))
+            .add("e", Json.object().add("f", "g"));
+        container.get("a");
+        container.get("e");
+        assertEquals(List.of("c", "c[0]"), container.getPaths(PathFilter.UNUSED));
+    }
+
+    @Test
+    public void getUsedPaths_returnsUsedPaths() {
+        final JsonObject container = Json.object()
+            .add("a", "b")
+            .add("c", Json.array("d"))
+            .add("e", Json.object().add("f", "g"));
+        container.get("a");
+        container.get("e");
+        assertEquals(List.of("a", "e"), container.getPaths(PathFilter.USED));
+    }
+
+    @Test
     public void values_tracksAccess() {
         final JsonContainer container = new JsonArray().add(1).add(2).add(3);
         container.values().forEach(value -> {});
