@@ -82,13 +82,17 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
 
     protected abstract void write(final JsonValue value, final int level) throws IOException;
 
-    protected void open(final boolean condensed, final char opener) throws IOException {
+    protected void open(final JsonContainer c, final boolean condensed, final char opener) throws IOException {
         this.tw.write(opener);
-        if (this.format) {
-            if (condensed && this.allowCondense) {
+        if (this.format && this.allowCondense) {
+            if (this.shouldSeparateOpener(c, condensed)) {
                 this.tw.write(this.separator);
             }
         }
+    }
+
+    protected boolean shouldSeparateOpener(final JsonContainer c, final boolean condensed) {
+        return c.size() > 1 && c.getReference(0).getOnly().getLinesAbove() == 0;
     }
 
     protected void writeLinesAbove(

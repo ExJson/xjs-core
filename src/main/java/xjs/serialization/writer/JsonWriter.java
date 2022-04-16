@@ -28,7 +28,7 @@ public class JsonWriter extends AbstractJsonWriter {
 
         switch (value.getType()) {
             case OBJECT:
-                this.open(condensed, '{');
+                this.open(value.asObject(), condensed, '{');
                 for (final JsonObject.Member member : value.asObject()) {
                     this.delimit(following, member.getOnly().getLinesAbove());
                     this.writeLinesAbove(level + 1, !following, condensed, member.getOnly());
@@ -41,7 +41,7 @@ public class JsonWriter extends AbstractJsonWriter {
                 this.close(value.asObject(), condensed, level, '}');
                 break;
             case ARRAY:
-                this.open(condensed, '[');
+                this.open(value.asArray(), condensed, '[');
                 for (final JsonValue v : value.asArray().visitAll()) {
                     this.delimit(following, v.getLinesAbove());
                     this.writeLinesAbove(level + 1, !following, condensed, v);

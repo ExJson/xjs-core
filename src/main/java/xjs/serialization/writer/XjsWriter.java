@@ -44,7 +44,7 @@ public class XjsWriter extends AbstractJsonWriter {
     }
 
     protected void writeOpenRoot(final JsonObject object) throws IOException {
-        final boolean condensed = this.isCondensed(object);
+        final boolean condensed = this.isOpenRootCondensed(object);
         JsonValue previous = null;
         this.writeOpenHeader(object);
         for (final JsonObject.Member member : object) {
@@ -56,6 +56,22 @@ public class XjsWriter extends AbstractJsonWriter {
             this.writeLinesTrailing(object, -1);
         }
         this.writeOpenFooter(object);
+    }
+
+
+    protected boolean isOpenRootCondensed(final JsonValue value) {
+        if (this.allowCondense && value.isContainer()) {
+            final JsonContainer c = value.asContainer();
+            if (c.size() < 2) {
+                return false;
+            }
+            // Intentionally shallow check for formatting purposes
+            if (c.getReference(0).getOnly().getLinesAbove() != 0) {
+                return false;
+            }
+            return c.getReference(c.size() - 1).getOnly().getLinesAbove() == 0;
+        }
+        return false;
     }
 
     protected void writeOpenHeader(final JsonObject root) throws IOException {
@@ -96,7 +112,7 @@ public class XjsWriter extends AbstractJsonWriter {
 
         switch (value.getType()) {
             case OBJECT:
-                this.open(condensed, '{');
+                this.open(value.asObject(), condensed, '{');
                 for (final JsonObject.Member member : value.asObject()) {
                     this.writeNextMember(previous, member, condensed, level);
                     previous = member.getOnly();
@@ -105,8 +121,7 @@ public class XjsWriter extends AbstractJsonWriter {
                 this.close(value.asObject(), condensed, level, '}');
                 break;
             case ARRAY:
-                final boolean voidStart = this.isVoidString(value.asArray(), 0);
-                this.open(condensed && !voidStart, '[');
+                this.open(value.asArray(), condensed, '[');
                 for (final JsonValue v : value.asArray().visitAll()) {
                     this.writeNextElement(previous, v, condensed, level);
                     previous = v;
@@ -133,6 +148,16 @@ public class XjsWriter extends AbstractJsonWriter {
         }
     }
 
+    @Override
+    protected boolean shouldSeparateOpener(final JsonContainer c, final boolean condensed) {
+        if (c.isEmpty()) {
+            return false;
+        } else if (c.isObject()) {
+            return condensed;
+        }
+        return condensed && !this.isVoidString(c.asArray(), 0);
+    }
+
     protected void writeNextMember(
             final JsonValue previous, final JsonObject.Member member, final boolean condensed, final int level) throws IOException {
         this.delimit(previous, member.getOnly());
@@ -145,7 +170,11 @@ public class XjsWriter extends AbstractJsonWriter {
             this.separate(level + 2, member.getOnly());
         }
         this.writeValueComment(level + 2, member.getOnly());
-        this.write(member.getOnly(), level + 1);
+        if (StringType.fromValue(member.getOnly()) == StringType.MULTI) {
+            this.write(member.getOnly(), level + 2);
+        } else {
+            this.write(member.getOnly(), level + 1);
+        }
     }
 
     protected void writeNextElement(
@@ -175,7 +204,7 @@ public class XjsWriter extends AbstractJsonWriter {
                 this.writeQuoted(value, '"');
                 break;
             case MULTI:
-                this.writeMulti(value, level + 1);
+                this.writeMulti(value, level);
                 break;
             case IMPLICIT:
                 this.tw.write(ImplicitStringUtils.escape(value, ctx));
@@ -241,7 +270,7 @@ public class XjsWriter extends AbstractJsonWriter {
     protected void close(
             final JsonContainer c, final boolean condensed, final int level, final char closer) throws IOException {
         if (this.format) {
-            if (condensed && this.allowCondense) {
+            if (c.getLinesTrailing() < 1 && condensed && this.allowCondense) {
                 this.tw.write(this.separator);
             } else {
                 this.writeLinesTrailing(c, level);

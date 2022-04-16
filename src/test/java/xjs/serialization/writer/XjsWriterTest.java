@@ -69,7 +69,13 @@ public final class XjsWriterTest {
 
     @Test
     public void write_printsMultiString() {
-        assertEquals("'''\n  test\n  '''", write(new JsonString("test", StringType.MULTI)));
+        assertEquals("'''\ntest\n'''", write(new JsonString("test", StringType.MULTI)));
+    }
+
+    @Test
+    public void write_inObject_indentsMultiString() {
+        final JsonValue s = new JsonString("value", StringType.MULTI);
+        assertEquals("key: '''\n  value\n  '''", write(Json.object().add("key", s)));
     }
 
     @Test
@@ -89,12 +95,17 @@ public final class XjsWriterTest {
 
     @Test
     public void write_printsCondensedArray() {
-        assertEquals("[ 1, 2, 3 ]", write(new JsonArray().add(1).add(2).add(3).condense()));
+        assertEquals("[ 1, 2, 3 ]", write(Json.array(1, 2, 3).condense()));
+    }
+
+    @Test
+    public void write_condensedArray_withMultipleLinesTrailing_writesLines() {
+        assertEquals("[ 1, 2, 3\n]", write(Json.array(1, 2, 3).condense().setLinesTrailing(1)));
     }
 
     @Test
     public void write_printsMultilineArray() {
-        assertEquals("[\n  1\n  2\n  3\n]", write(new JsonArray().add(1).add(2).add(3)));
+        assertEquals("[\n  1\n  2\n  3\n]", write(Json.array(1, 2, 3)));
     }
 
     @Test
@@ -111,6 +122,14 @@ public final class XjsWriterTest {
     public void write_printsCondensedObject() {
         assertEquals("1: 1, 2: 2, 3: 3",
             write(new JsonObject().add("1", 1).add("2", 2).add("3", 3).condense()));
+    }
+
+    @Test
+    public void write_doesNotCondense_openRoot_byFirstValue() {
+        final JsonObject object = Json.object()
+            .add("first", Json.value("value").setLinesAbove(0))
+            .add("second", Json.value("value").setLinesAbove(1));
+        assertEquals("first: 'value'\nsecond: 'value'", write(object));
     }
 
     @Test
