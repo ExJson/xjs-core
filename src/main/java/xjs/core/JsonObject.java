@@ -477,7 +477,7 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         if (index != -1) {
             return this.references.get(index).get();
         }
-        throw new UnsupportedOperationException("Expected: " + key);
+        return null;
     }
 
     /**
