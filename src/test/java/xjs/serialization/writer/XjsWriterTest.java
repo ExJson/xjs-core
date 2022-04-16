@@ -12,7 +12,7 @@ import xjs.core.JsonObject;
 import xjs.core.JsonString;
 import xjs.core.JsonValue;
 import xjs.core.StringType;
-import xjs.serialization.JsonSerializationContext;
+import xjs.serialization.JsonContext;
 import xjs.serialization.parser.XjsParser;
 
 import java.io.IOException;
@@ -24,12 +24,12 @@ public final class XjsWriterTest {
 
     @BeforeAll
     static void setup() {
-        JsonSerializationContext.setEol("\n");
+        JsonContext.setEol("\n");
     }
 
     @AfterAll
     static void teardown() {
-        JsonSerializationContext.setEol(System.getProperty("line.separator"));
+        JsonContext.setEol(System.getProperty("line.separator"));
     }
 
     @Test

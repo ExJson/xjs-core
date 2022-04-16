@@ -4,7 +4,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import xjs.core.CommentStyle;
-import xjs.serialization.JsonSerializationContext;
+import xjs.serialization.JsonContext;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -12,12 +12,12 @@ public final class CommentUtilsTest {
 
     @BeforeAll
     static void setup() {
-        JsonSerializationContext.setEol("\n");
+        JsonContext.setEol("\n");
     }
 
     @AfterAll
     static void teardown() {
-        JsonSerializationContext.setEol(System.getProperty("line.separator"));
+        JsonContext.setEol(System.getProperty("line.separator"));
     }
 
     @Test

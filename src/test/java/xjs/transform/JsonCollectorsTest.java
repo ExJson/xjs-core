@@ -1,4 +1,4 @@
-package xjs.transformer;
+package xjs.transform;
 
 import org.junit.jupiter.api.Test;
 import xjs.core.Json;

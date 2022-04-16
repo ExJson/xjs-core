@@ -7,7 +7,7 @@ import xjs.core.Json;
 import xjs.core.JsonArray;
 import xjs.core.JsonObject;
 import xjs.core.JsonValue;
-import xjs.serialization.JsonSerializationContext;
+import xjs.serialization.JsonContext;
 import xjs.serialization.parser.JsonParser;
 
 import java.io.IOException;
@@ -19,12 +19,12 @@ public final class JsonWriterTest {
 
     @BeforeAll
     static void setup() {
-        JsonSerializationContext.setEol("\n");
+        JsonContext.setEol("\n");
     }
 
     @AfterAll
     static void teardown() {
-        JsonSerializationContext.setEol(System.getProperty("line.separator"));
+        JsonContext.setEol(System.getProperty("line.separator"));
     }
 
     @Test

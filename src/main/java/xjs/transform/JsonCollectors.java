@@ -1,4 +1,4 @@
-package xjs.transformer;
+package xjs.transform;
 
 import xjs.core.Json;
 import xjs.core.JsonArray;

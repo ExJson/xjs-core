@@ -28,14 +28,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * by all provided serializers:
  *
  * <pre>{@code
- *   JsonSerializationContext.setDefaultCommentStyle(CommentStyle.HASH);
- *   JsonSerializationContext.setEol("\n");
+ *   JsonContext.setDefaultCommentStyle(CommentStyle.HASH);
+ *   JsonContext.setEol("\n");
  * }</pre>
  *
  * <p>Or the formatting options used by all default serializers:
  *
  * <pre>{@code
- *   JsonSerializationContext.setDefaultFormatting(
+ *   JsonContext.setDefaultFormatting(
  *     new JsonWriterOptions()
  *       .setIndent("    ")
  *       .setMaxSpacing(3))
@@ -45,11 +45,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * format selection of {@link Json} and {@link JsonValue}:
  *
  * <pre>{@code
- *   JsonSerializationContext.addParser("yaml", file -> new MyYamlParser(file).parse());
- *   JsonSerializationContext.addWriter("yaml" (w, v, o) -> new MyYamlWriter(w, o).write(v));
+ *   JsonContext.addParser("yaml", file -> new MyYamlParser(file).parse());
+ *   JsonContext.addWriter("yaml" (w, v, o) -> new MyYamlWriter(w, o).write(v));
  * }</pre>
  */
-public class JsonSerializationContext {
+public class JsonContext {
 
     private static final Map<String, ParsingFunction> PARSERS = new ConcurrentHashMap<>();
     private static final Map<String, WritingFunction> WRITERS = new ConcurrentHashMap<>();
@@ -110,7 +110,7 @@ public class JsonSerializationContext {
      * <p>For example, to register <code>yml</code> as an alias of <code>yaml</code>:
      *
      * <pre>{@code
-     *   JsonSerializationContext.registerAlias("yml", "yaml");
+     *   JsonContext.registerAlias("yml", "yaml");
      * }</pre>
      *
      * @param alias  An alias for the expected format.
@@ -135,7 +135,7 @@ public class JsonSerializationContext {
      * @param eol The default newline character, e.g. <code>\n</code>
      */
     public static synchronized void setEol(final String eol) {
-        JsonSerializationContext.eol = eol;
+        JsonContext.eol = eol;
     }
 
     /**

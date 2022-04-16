@@ -2,7 +2,7 @@ package xjs.core;
 
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
-import xjs.serialization.JsonSerializationContext;
+import xjs.serialization.JsonContext;
 import xjs.serialization.writer.JsonWriter;
 import xjs.serialization.writer.JsonWriterOptions;
 import xjs.serialization.writer.XjsWriter;
@@ -273,7 +273,7 @@ public abstract class JsonValue implements Serializable {
      * @return <code>this</code>, for method chaining.
      */
     public JsonValue setComment(final String text) {
-        return this.setComment(CommentType.HEADER, JsonSerializationContext.getDefaultCommentStyle(), text);
+        return this.setComment(CommentType.HEADER, JsonContext.getDefaultCommentStyle(), text);
     }
 
     /**
@@ -285,7 +285,7 @@ public abstract class JsonValue implements Serializable {
      * @return <code>this</code>, for method chaining.
      */
     public JsonValue setComment(final CommentType type, final String text) {
-        return this.setComment(type, JsonSerializationContext.getDefaultCommentStyle(), text);
+        return this.setComment(type, JsonContext.getDefaultCommentStyle(), text);
     }
 
     /**
@@ -330,7 +330,7 @@ public abstract class JsonValue implements Serializable {
      * @return <code>this</code>, for method chaining.
      */
     public JsonValue prependComment(final String text) {
-        this.getComments().prepend(CommentType.HEADER, JsonSerializationContext.getDefaultCommentStyle(), text);
+        this.getComments().prepend(CommentType.HEADER, JsonContext.getDefaultCommentStyle(), text);
         return this;
     }
 
@@ -343,7 +343,7 @@ public abstract class JsonValue implements Serializable {
      * @return <code>this</code>, for method chaining.
      */
     public JsonValue prependComment(final CommentType type, final String text) {
-        this.getComments().prepend(type, JsonSerializationContext.getDefaultCommentStyle(), text);
+        this.getComments().prepend(type, JsonContext.getDefaultCommentStyle(), text);
         return this;
     }
 
@@ -355,7 +355,7 @@ public abstract class JsonValue implements Serializable {
      * @return <code>this</code>, for method chaining.
      */
     public JsonValue appendComment(final String text) {
-        this.getComments().append(CommentType.HEADER, JsonSerializationContext.getDefaultCommentStyle(), text);
+        this.getComments().append(CommentType.HEADER, JsonContext.getDefaultCommentStyle(), text);
         return this;
     }
 
@@ -368,7 +368,7 @@ public abstract class JsonValue implements Serializable {
      * @return <code>this</code>, for method chaining.
      */
     public JsonValue appendComment(final CommentType type, final String text) {
-        this.getComments().append(type, JsonSerializationContext.getDefaultCommentStyle(), text);
+        this.getComments().append(type, JsonContext.getDefaultCommentStyle(), text);
         return this;
     }
 
@@ -866,7 +866,7 @@ public abstract class JsonValue implements Serializable {
      * @throws IOException If the involved {@link FileWriter} throws an exception.
      */
     public void write(final File file) throws IOException {
-        JsonSerializationContext.autoWrite(file, this);
+        JsonContext.autoWrite(file, this);
     }
 
     /**
@@ -876,7 +876,7 @@ public abstract class JsonValue implements Serializable {
      * @throws IOException If this writer throws an exception.
      */
     public void write(final Writer writer) throws IOException {
-        new XjsWriter(writer, JsonSerializationContext.getDefaultFormatting()).write(this);
+        new XjsWriter(writer, JsonContext.getDefaultFormatting()).write(this);
     }
 
     /**

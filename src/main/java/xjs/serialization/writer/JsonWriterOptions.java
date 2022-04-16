@@ -2,7 +2,7 @@ package xjs.serialization.writer;
 
 import org.jetbrains.annotations.ApiStatus;
 import xjs.core.JsonValue;
-import xjs.serialization.JsonSerializationContext;
+import xjs.serialization.JsonContext;
 
 import java.util.Arrays;
 
@@ -23,7 +23,7 @@ public class JsonWriterOptions {
     private boolean omitRootBraces = true;
     private boolean outputComments = true;
     private boolean omitQuotes = true;
-    private String eol = JsonSerializationContext.getEol();
+    private String eol = JsonContext.getEol();
     private String indent = "  ";
     private String separator = " ";
     private int minSpacing = 0;

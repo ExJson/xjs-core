@@ -2,7 +2,7 @@ package xjs.serialization.writer;
 
 import xjs.core.JsonContainer;
 import xjs.core.JsonValue;
-import xjs.serialization.JsonSerializationContext;
+import xjs.serialization.JsonContext;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -37,7 +37,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
     protected AbstractJsonWriter(final Writer writer, final boolean format) {
         this.format = format;
         this.tw = writer;
-        this.eol = JsonSerializationContext.getEol();
+        this.eol = JsonContext.getEol();
         this.allowCondense = true;
         this.bracesSameLine = true;
         this.nestedSameLine = false;

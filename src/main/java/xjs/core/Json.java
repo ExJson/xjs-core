@@ -3,9 +3,9 @@ package xjs.core;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 import xjs.exception.SyntaxException;
-import xjs.serialization.JsonSerializationContext;
+import xjs.serialization.JsonContext;
 import xjs.serialization.parser.XjsParser;
-import xjs.transformer.JsonCollectors;
+import xjs.transform.JsonCollectors;
 
 import java.io.File;
 import java.io.IOException;
@@ -262,7 +262,7 @@ public final class Json {
 
     /**
      * Parses a file automatically based on its extension. Aliases and additional parsers can
-     * be registered via the {@link JsonSerializationContext}.
+     * be registered via the {@link JsonContext}.
      *
      * @param file A file containing JSON data.
      * @return A new {@link JsonValue} representing the contents of this file.
@@ -270,7 +270,7 @@ public final class Json {
      * @throws SyntaxException If the file is syntactically invalid.
      */
     public static JsonValue parse(final File file) throws IOException {
-        return JsonSerializationContext.autoParse(file);
+        return JsonContext.autoParse(file);
     }
 
     /**
@@ -302,7 +302,7 @@ public final class Json {
     /**
      * Exposes the contents of a JSON file to the given consumer. The file's extension will
      * determine which parser gets used. Note that aliases and additional parsers can be
-     * registered via the {@link JsonSerializationContext}.
+     * registered via the {@link JsonContext}.
      *
      * <p>For example, to update a field in the given file:
      *
