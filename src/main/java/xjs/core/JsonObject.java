@@ -482,24 +482,6 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
 
     /**
      * Returns the <em>last</em> value paired with the given key, or else
-     * throws an {@link UnsupportedOperationException}.
-     *
-     * <p>This is an {@link JsonReference#get accessing} operation.
-     *
-     * @param key The name of the value being returned.
-     * @return Whichever {@link JsonValue} is found.
-     * @throws UnsupportedOperationException If the value is absent.
-     */
-    public @NotNull JsonValue expect(final String key) {
-        final JsonValue expected = this.get(key);
-        if (expected == null) {
-            throw new UnsupportedOperationException("Expected: " + key);
-        }
-        return expected;
-    }
-
-    /**
-     * Returns the <em>last</em> value paired with the given key, or else
      * the <code>defaultValue</code>
      *
      * @param key The name of the value being returned.
@@ -515,6 +497,24 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
             return null;
         }
         return Json.any(defaultValue);
+    }
+
+    /**
+     * Returns the <em>last</em> value paired with the given key, or else
+     * throws an {@link UnsupportedOperationException}.
+     *
+     * <p>This is an {@link JsonReference#get accessing} operation.
+     *
+     * @param key The name of the value being returned.
+     * @return Whichever {@link JsonValue} is found.
+     * @throws UnsupportedOperationException If the value is absent.
+     */
+    public @NotNull JsonValue getAsserted(final String key) {
+        final JsonValue expected = this.get(key);
+        if (expected == null) {
+            throw new UnsupportedOperationException("Expected: " + key);
+        }
+        return expected;
     }
 
     /**
