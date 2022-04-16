@@ -61,6 +61,24 @@ public class JsonSerializationContext {
     private static volatile JsonWriterOptions defaultFormatting = new JsonWriterOptions();
 
     /**
+     * Indicates whether the xjs-compat module is provided, enabling support for
+     * Hjson, JSON-C, YAML, and other foreign serializers.
+     */
+    public static final boolean COMPAT_AVAILABLE;
+
+    /**
+     * Indicates whether the xjs-jel module is provided, enabling support for JEL
+     * expressions and data processing.
+     */
+    public static final boolean JEL_AVAILABLE;
+
+    /**
+     * Indicates whether the xjs-transform module is provided, enabling support for
+     * data transforms and formatters.
+     */
+    public static final boolean TRANSFORM_AVAILABLE;
+
+    /**
      * Adds or replaces a parser for the given format.
      *
      * <p>Note that parsing functions would ideally not get reused for multiple formats.
@@ -211,5 +229,17 @@ public class JsonSerializationContext {
         PARSERS.put("xjs", DEFAULT_PARSER);
         WRITERS.put("json", (w, v, o) -> new JsonWriter(w, o).write(v));
         WRITERS.put("xjs", DEFAULT_WRITER);
+
+        COMPAT_AVAILABLE = isClassAvailable("xjs.serialization.XjsCompat");
+        JEL_AVAILABLE = isClassAvailable("xjs.jel.JelContext");
+        TRANSFORM_AVAILABLE = isClassAvailable("xjs.transform.JsonTransformer");
+    }
+
+    private static boolean isClassAvailable(final String name) {
+        try {
+            Class.forName(name);
+            return true;
+        } catch (final ClassNotFoundException ignored) {}
+        return false;
     }
 }
