@@ -79,7 +79,9 @@ public class XjsWriter extends AbstractJsonWriter {
             this.writeLinesAbove(-1, true, false, root);
             this.writeComment(-1, root, CommentType.HEADER);
             this.nl(-1);
-            this.nl(-1);
+            if (!root.isEmpty() && root.getReference(0).getOnly().getLinesAbove() <= 0) {
+                this.nl(-1);
+            }
         }
     }
 

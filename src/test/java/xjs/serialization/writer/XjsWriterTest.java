@@ -252,6 +252,17 @@ public final class XjsWriterTest {
     }
 
     @Test
+    public void write_withHeaderOnRootObject_withLinesAbove_doesNotAddEmptyLine() {
+        final JsonObject object = new JsonObject().add("key", Json.value("value").setLinesAbove(1));
+        object.setComment(CommentType.HEADER, CommentStyle.LINE, "header");
+        final String expected = """
+            // header
+            
+            key: 'value'""";
+        assertEquals(expected, write(object));
+    }
+
+    @Test
     public void parse_thenRewrite_preservesComplexFormatting() throws IOException {
         final String expected = """
             
