@@ -233,34 +233,63 @@ public final class ImplicitStringUtils {
      * @return The first index of this character in unbalanced space.
      * @throws SyntaxException If the syntax of the input is invalid.
      */
-    public static int expect(final String text, final int s, final char e, final boolean n, final boolean u) {
-        int index = search(text, s, e, n, u);
-        index = trimWhitespace(text, index);
-        index = trimComments(text, index);
-        return trimWhitespace(text, index);
-    }
-
-    private static int search(final String text, final int s, final char e, final boolean n, final boolean u) {
+    private static int expect(final String text, final int s, final char e, final boolean n, final boolean u) {
         for (int i = s; i < text.length(); i++) {
             char c = text.charAt(i);
-            if (c == e || (n && c == '\n')) {
+            if (shouldExit(c, e, n, u)) {
                 return i;
             }
-            if (u && (c == '}' || c == ']' || c == ')')) {
+            // Lookahead to ignore comments and whitespace
+            final int cIdx = skipBetweenValues(text, i, n);
+            if (cIdx == i) {
+                i = getNextIndex(text, i, c);
+                continue;
+            }
+            if (cIdx > text.length() - 1) {
+                checkEndOfInput(text, cIdx, e, n);
                 return i;
             }
-            i = getNextIndex(text, i, c);
+            final char cmt = text.charAt(cIdx);
+            if (shouldExit(cmt, e, n, u)) {
+                return i;
+            }
+            i = getNextIndex(text, cIdx, cmt) - 1;
         }
-        if (e == '}' || e == ']' || e == ')') throw unclosed(text, e, s - 1);
-        if (n || e == '\u0000') return text.length();
-        throw endOfInput(text, s);
+        checkEndOfInput(text, s, e, n);
+        return text.length();
+    }
+
+    private static boolean shouldExit(final char c, final char e, final boolean n, final boolean u) {
+        return c == e || (n && c == '\n') || (u && (c == '}' || c == ']' || c == ')'));
+    }
+
+    private static int skipBetweenValues(final String text, int s, final boolean n) {
+        int last;
+        char c;
+        do {
+            last = s;
+            if (s == text.length()) {
+                return s;
+            }
+            s = skipWhitespace(text, s, n);
+            if (s == text.length()) {
+                return s;
+            }
+            c = text.charAt(s);
+            if (c == '/') {
+                s = skipSlash(text, s);
+            } else if (c == '#') {
+                s = skipToNl(text, s);
+            }
+        } while (s > last);
+        return s;
     }
 
     private static int getNextIndex(final String text, final int s, final char c) {
         switch (c) {
-            case '{': return search(text, s + 1, '}', false, false);
-            case '[': return search(text, s + 1, ']', false, false);
-            case '(': return search(text, s + 1, ')', false, false);
+            case '{': return search(text, s + 1, '}');
+            case '[': return search(text, s + 1, ']');
+            case '(': return search(text, s + 1, ')');
             case '}':
             case ']':
             case ')': throw unexpected(text, c, s);
@@ -273,6 +302,37 @@ public final class ImplicitStringUtils {
         return s;
     }
 
+    private static int search(final String text, final int s, final char e) {
+        for (int i = s; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (shouldExit(c, e, false, false)) {
+                return i;
+            }
+            i = getNextIndex(text, i, c);
+        }
+        checkEndOfInput(text, s, e, false);
+        return text.length();
+    }
+
+    private static void checkEndOfInput(final String text, final int s, final char e, final boolean n) {
+        if (e == '}' || e == ']' || e == ')') throw unclosed(text, e, s - 1);
+        if (n || e == '\u0000') return;
+        throw endOfInput(text, s);
+    }
+
+    private static int skipWhitespace(final String text, int s, final boolean n) {
+        char c = text.charAt(s);
+        while (true) {
+            if ((n && c == '\n') || !Character.isWhitespace(c)) {
+                return s;
+            }
+            if (++s == text.length()) {
+                return s;
+            }
+            c = text.charAt(s);
+        }
+    }
+
     private static int skipSlash(final String text, final int s) {
         if (s + 1 >= text.length()) {
             return s + 1;
@@ -282,7 +342,9 @@ public final class ImplicitStringUtils {
             final int n = text.indexOf('\n', s + 1);
             return n >= 0 ? n : text.length();
         } else if (next == '*') {
-            return text.indexOf("*/", s + 1);
+            final int e = text.indexOf("*/", s + 1);
+            if (e < 0) throw unclosedComment(text, s);
+            return e + 2;
         }
         return s + 1;
     }
@@ -344,34 +406,6 @@ public final class ImplicitStringUtils {
 
     private static int skipBackslash(final String text, final int s) {
         return text.charAt(s + 1) == '\r' ? s + 2 : s + 1;
-    }
-
-    private static int trimWhitespace(final String text, int e) {
-        while (--e >= 0) { // while e < 0, if char at e - 1, then return e ???
-            if (!Character.isWhitespace(text.charAt(e))) {
-                return e + 1;
-            }
-        }
-        return e + 1;
-    }
-
-    private static int trimComments(final String text, final int e) {
-        if (e - 2 >= 0 && text.charAt(e - 1) == '/' && text.charAt(e - 2) == '*') {
-            return text.lastIndexOf("/*", e - 1);
-        }
-        for (int i = e - 1; i > 0; i--) {
-            final char c = text.charAt(i);
-            if (c == '\n' || c == '}' || c == ']' || c == ')') {
-                return e;
-            }
-            if (c == '#') {
-                return i;
-            }
-            if (c == '/' && text.charAt(i - 1) == '/') {
-                return i - 1;
-            }
-        }
-        return e;
     }
 
     public static String escape(final String text, final StringContext ctx) {
@@ -467,6 +501,11 @@ public final class ImplicitStringUtils {
             }
         }
         sb.append(quote);
+    }
+
+    private static SyntaxException unclosedComment(final String text, final int index) {
+        final int[] lineColumn = getLineColumn(text, index);
+        return SyntaxException.expected("*/", lineColumn[0], lineColumn[1]);
     }
 
     private static SyntaxException unclosed(final String text, final char c, final int index) {

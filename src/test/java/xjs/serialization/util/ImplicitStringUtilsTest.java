@@ -166,6 +166,12 @@ public final class ImplicitStringUtilsTest {
     }
 
     @Test
+    public void selectValue_trimsMultipleComments() {
+        assertEquals("value{}",
+            ImplicitStringUtils.select("value{}\n//comment\n#comment\n:", 0, StringContext.KEY));
+    }
+
+    @Test
     public void selectValue_trimsInlineComment() {
         assertEquals("value{}",
             ImplicitStringUtils.select("value{}/*inline*/", 0, StringContext.VALUE));
@@ -187,6 +193,12 @@ public final class ImplicitStringUtilsTest {
     public void selectValue_trimsWhitespaceBeforeComment() {
         assertEquals("value",
             ImplicitStringUtils.select("value # comment", 0, StringContext.VALUE));
+    }
+
+    @Test
+    public void selectValue_doesNotTrimQuotedComment() {
+        assertEquals("'# not a comment'",
+            ImplicitStringUtils.select("'# not a comment'", 0, StringContext.VALUE));
     }
 
     @Test
