@@ -216,6 +216,48 @@ public final class JsonWriterTest {
         assertEquals(expected, write(new JsonParser(expected).parse()));
     }
 
+    @Test
+    public void write_withSmartSpacing_separatesContainers() throws IOException {
+        final String input = """
+            {
+              "a": 1,
+              "b": 2,
+              "c": {
+                "c1": "3a",
+                "c2": "3b"
+              },
+              "d": [
+                "4a",
+                {},
+                "4b"
+              ],
+              "e": 5,
+              "f": 6
+            }""";
+        final String expected = """
+            {
+              "a": 1,
+              "b": 2,
+              
+              "c": {
+                "c1": "3a",
+                "c2": "3b"
+              },
+              
+              "d": [
+                "4a",
+                {},
+                "4b"
+              ],
+              
+              "e": 5,
+              "f": 6
+            }""";
+
+        final JsonValue value = new JsonParser(input).parse().unformatted();
+        assertEquals(expected, write(value, new JsonWriterOptions().setSmartSpacing(true)));
+    }
+
     private static String write(final JsonValue value) {
         return write(value, new JsonWriterOptions());
     }

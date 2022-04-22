@@ -1,5 +1,6 @@
 package xjs.serialization.writer;
 
+import xjs.core.CommentType;
 import xjs.core.JsonContainer;
 import xjs.core.JsonValue;
 import xjs.serialization.JsonContext;
@@ -28,6 +29,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
     protected final int minSpacing;
     protected final int maxSpacing;
     protected final int defaultSpacing;
+    protected final boolean smartSpacing;
     protected String separator;
 
     protected AbstractJsonWriter(final File file, final boolean format) throws IOException {
@@ -48,6 +50,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.minSpacing = 0;
         this.maxSpacing = Integer.MAX_VALUE;
         this.defaultSpacing = format ? 1 : 0;
+        this.smartSpacing = false;
         this.separator = format ? " " : "";
     }
 
@@ -65,6 +68,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.minSpacing = options.getMinSpacing();
         this.maxSpacing = options.getMaxSpacing();
         this.defaultSpacing = options.getDefaultSpacing();
+        this.smartSpacing = options.isSmartSpacing();
         this.separator = options.getSeparator();
     }
 
@@ -76,7 +80,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
      * @throws IOException If the underlying writer throws an {@link IOException}.
      */
     public void write(final JsonValue value) throws IOException {
-        this.writeLinesAbove(-1, true, false, value);
+        this.writeLinesAbove(-1, null, null, false, value);
         this.write(value, 0);
     }
 
@@ -96,37 +100,52 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
     }
 
     protected void writeLinesAbove(
-            final int level, final boolean top, final boolean condensed, final JsonValue value) throws IOException {
+            int level, JsonValue parent, JsonValue previous, boolean condensed, JsonValue value) throws IOException {
         if (this.format) {
-            final int lines =
-                this.getNumLinesAbove(value.getLinesAbove(), level, condensed, top);
+            final int lines = this.getNumLinesAbove(level, parent, previous, condensed, value);
             if (lines > 0) {
                 this.nl(lines, level);
             }
         }
     }
 
-    protected int getNumLinesAbove(final int lines, final int level, final boolean condensed, final boolean top) {
+    protected int getNumLinesAbove(int level, JsonValue parent, JsonValue previous, boolean condensed, JsonValue value) {
+        final int lines = value.getLinesAbove();
         if (lines < 0) {
-            return this.getDefaultLinesAbove(level, top);
-        } else if (!(top && level < 1) && !this.allowCondense) {
+            return this.getDefaultLinesAbove(level, parent, previous, value);
+        } else if (!(previous == null && level < 1) && !this.allowCondense) {
             return Math.max(1, lines);
         } else if (level >= 0) {
-            return this.limitLines(lines, condensed, top);
+            return this.limitLines(lines, condensed, previous == null);
         }
         return lines;
     }
 
-    private int getDefaultLinesAbove(final int level, final boolean top) {
+    private int getDefaultLinesAbove(int level, JsonValue parent, JsonValue previous, JsonValue value) {
         if (level < 0) {
             return 0;
-        } else if (top) {
+        }
+        final int spacing = this.getSpacing(parent, previous, value);
+        if (previous == null) {
             if (level > 0) {
-                return Math.max(1, this.defaultSpacing - 1);
+                return Math.max(1, spacing - 1);
             }
-            return this.defaultSpacing - 1;
+            return spacing - 1;
+        }
+        return spacing;
+    }
+
+    private int getSpacing(final JsonValue parent, final JsonValue previous, final JsonValue value) {
+        if (this.smartSpacing && parent != null && parent.isObject()) {
+            if (this.requiresSmartSpace(value) || this.requiresSmartSpace(previous)) {
+                return this.defaultSpacing + 1;
+            }
         }
         return this.defaultSpacing;
+    }
+
+    private boolean requiresSmartSpace(final JsonValue value) {
+        return value != null && (value.isContainer() || value.hasComment(CommentType.HEADER));
     }
 
     protected void nl(final int level) throws IOException {

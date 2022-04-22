@@ -24,29 +24,29 @@ public class JsonWriter extends AbstractJsonWriter {
     @Override
     public void write(final JsonValue value, final int level) throws IOException {
         final boolean condensed = this.isCondensed(value);
-        boolean following = false;
+        JsonValue previous = null;
 
         switch (value.getType()) {
             case OBJECT:
                 this.open(value.asObject(), condensed, '{');
                 for (final JsonObject.Member member : value.asObject()) {
-                    this.delimit(following, member.getOnly().getLinesAbove());
-                    this.writeLinesAbove(level + 1, !following, condensed, member.getOnly());
+                    this.delimit(previous != null, member.getOnly().getLinesAbove());
+                    this.writeLinesAbove(level + 1, value, previous, condensed, member.getOnly());
                     this.writeQuoted(member.getKey(), '"');
                     this.tw.write(':');
                     this.separate(level + 2, member.getOnly());
                     this.write(member.getOnly(), level + 1);
-                    following = true;
+                    previous = member.getOnly();
                 }
                 this.close(value.asObject(), condensed, level, '}');
                 break;
             case ARRAY:
                 this.open(value.asArray(), condensed, '[');
                 for (final JsonValue v : value.asArray().visitAll()) {
-                    this.delimit(following, v.getLinesAbove());
-                    this.writeLinesAbove(level + 1, !following, condensed, v);
+                    this.delimit(previous != null, v.getLinesAbove());
+                    this.writeLinesAbove(level + 1, value, previous, condensed, v);
                     this.write(v, level + 1);
-                    following = true;
+                    previous = v;
                 }
                 this.close(value.asArray(), condensed, level, ']');
                 break;

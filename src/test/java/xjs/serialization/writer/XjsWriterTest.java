@@ -3,15 +3,7 @@ package xjs.serialization.writer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import xjs.core.CommentStyle;
-import xjs.core.CommentType;
-import xjs.core.Json;
-import xjs.core.JsonArray;
-import xjs.core.JsonContainer;
-import xjs.core.JsonObject;
-import xjs.core.JsonString;
-import xjs.core.JsonValue;
-import xjs.core.StringType;
+import xjs.core.*;
 import xjs.serialization.JsonContext;
 import xjs.serialization.parser.XjsParser;
 
@@ -383,6 +375,52 @@ public final class XjsWriterTest {
         v.setComment(CommentType.INTERIOR, CommentStyle.MULTILINE_DOC, "Interior");
 
         assertEquals("[\n  /** Interior */\n]", write(v));
+    }
+
+    @Test
+    public void write_withSmartSpacing_separatesContainers() throws IOException {
+        final String input = """
+            a: 1
+            b: 2
+            c: {
+              c1: '3a'
+              c2: '3b'
+            }
+            d: [
+              '4a'
+              {}
+              '4b'
+            ]
+            e: 5
+            f: 6
+            // header
+            g: 7
+            h: 8""";
+        final String expected = """
+            a: 1
+            b: 2
+            
+            c: {
+              c1: '3a'
+              c2: '3b'
+            }
+            
+            d: [
+              '4a'
+              {}
+              '4b'
+            ]
+            
+            e: 5
+            f: 6
+            
+            // header
+            g: 7
+            
+            h: 8""";
+
+        final JsonValue value = new XjsParser(input).parse().copy(JsonCopy.UNFORMATTED | JsonCopy.COMMENTS);
+        assertEquals(expected, write(value, new JsonWriterOptions().setSmartSpacing(true)));
     }
 
     private static String write(final JsonValue value) {

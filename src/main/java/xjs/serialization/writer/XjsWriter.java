@@ -35,7 +35,7 @@ public class XjsWriter extends AbstractJsonWriter {
         if (value.isObject() && this.omitRootBraces && !value.asObject().isEmpty()) {
             this.writeOpenRoot(value.asObject());
         } else {
-            this.writeLinesAbove(-1, true, false, value);
+            this.writeLinesAbove(-1, null, null, false, value);
             this.writeHeader(0, value);
             this.write(value, 0);
             this.writeEolComment(0, value, null);
@@ -48,7 +48,7 @@ public class XjsWriter extends AbstractJsonWriter {
         JsonValue previous = null;
         this.writeOpenHeader(object);
         for (final JsonObject.Member member : object) {
-            this.writeNextMember(previous, member, condensed, -1);
+            this.writeNextMember(object, previous, member, condensed, -1);
             previous = member.getOnly();
         }
         this.writeEolComment(0, previous, null);
@@ -76,7 +76,7 @@ public class XjsWriter extends AbstractJsonWriter {
 
     protected void writeOpenHeader(final JsonObject root) throws IOException {
         if (this.outputComments && root.hasComment(CommentType.HEADER)) {
-            this.writeLinesAbove(-1, true, false, root);
+            this.writeLinesAbove(-1, null, null, false, root);
             this.writeComment(-1, root, CommentType.HEADER);
             this.nl(-1);
             if (!root.isEmpty() && root.getReference(0).getOnly().getLinesAbove() <= 0) {
@@ -116,7 +116,7 @@ public class XjsWriter extends AbstractJsonWriter {
             case OBJECT:
                 this.open(value.asObject(), condensed, '{');
                 for (final JsonObject.Member member : value.asObject()) {
-                    this.writeNextMember(previous, member, condensed, level);
+                    this.writeNextMember(value, previous, member, condensed, level);
                     previous = member.getOnly();
                 }
                 this.writeEolComment(level, previous, null);
@@ -125,7 +125,7 @@ public class XjsWriter extends AbstractJsonWriter {
             case ARRAY:
                 this.open(value.asArray(), condensed, '[');
                 for (final JsonValue v : value.asArray().visitAll()) {
-                    this.writeNextElement(previous, v, condensed, level);
+                    this.writeNextElement(value, previous, v, condensed, level);
                     previous = v;
                 }
                 final boolean voidEnd = this.isVoidString(value.asArray(), value.asArray().size() - 1);
@@ -161,10 +161,10 @@ public class XjsWriter extends AbstractJsonWriter {
     }
 
     protected void writeNextMember(
-            final JsonValue previous, final JsonObject.Member member, final boolean condensed, final int level) throws IOException {
+            JsonValue parent, JsonValue previous, JsonObject.Member member, boolean condensed, int level) throws IOException {
         this.delimit(previous, member.getOnly());
         this.writeEolComment(level, previous, member.getOnly());
-        this.writeLinesAbove(level + 1, previous == null, condensed, member.getOnly());
+        this.writeLinesAbove(level + 1, parent, previous, condensed, member.getOnly());
         this.writeHeader(level + 1, member.getOnly());
         this.writeString(member.getKey(), level);
         this.tw.write(':');
@@ -180,10 +180,10 @@ public class XjsWriter extends AbstractJsonWriter {
     }
 
     protected void writeNextElement(
-            final JsonValue previous, final JsonValue value, final boolean condensed, final int level) throws IOException {
+            JsonValue parent, JsonValue previous, JsonValue value, boolean condensed, int level) throws IOException {
         this.delimit(previous, value);
         this.writeEolComment(level, previous, value);
-        this.writeLinesAbove(level + 1, previous == null, condensed, value);
+        this.writeLinesAbove(level + 1, parent, previous, condensed, value);
         this.writeHeader(level + 1, value);
         this.write(value, level + 1);
     }

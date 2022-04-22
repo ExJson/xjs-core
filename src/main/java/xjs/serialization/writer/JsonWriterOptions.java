@@ -29,6 +29,7 @@ public class JsonWriterOptions {
     private int minSpacing = 0;
     private int maxSpacing = Integer.MAX_VALUE;
     private int defaultSpacing = 1;
+    private boolean smartSpacing = false;
 
     /**
      * Construct a new instance with default settings.
@@ -53,6 +54,7 @@ public class JsonWriterOptions {
         this.minSpacing = source.minSpacing;
         this.maxSpacing = source.maxSpacing;
         this.defaultSpacing = source.defaultSpacing;
+        this.smartSpacing = source.smartSpacing;
     }
 
     /**
@@ -540,6 +542,65 @@ public class JsonWriterOptions {
      */
     public JsonWriterOptions setDefaultSpacing(final int defaultSpacing) {
         this.defaultSpacing = defaultSpacing;
+        return this;
+    }
+
+    /**
+     * Determines whether to use "smart spacing" in the output.
+     *
+     * <p><b>Smart spacing</b> essentially means that any container or
+     * value with a header comment will get an extra space above and
+     * below it. This should make it easier to identify keys in large
+     * objects when syntax highlighting is unavailable.
+     *
+     * <p><b>This effect only applies to unformatted values</b> in
+     * object containers and <b>does not apply to values in arrays</b>.
+     *
+     * <p>For example, when smart spacing is enabled, the following
+     * JSON object:
+     *
+     * <pre>{@code
+     *   {
+     *     "a": 1,
+     *     "b": 2,
+     *     "c": {}
+     *     "d": []
+     *     "e": 5,
+     *     "f": 6
+     *   }
+     * }</pre>
+     *
+     * <p>Will be output as follows:
+     *
+     * <pre>{@code
+     *   {
+     *     "a": 1,
+     *     "b": 2,
+     *
+     *     "c": {}
+     *
+     *     "d": []
+     *
+     *     "e": 5,
+     *     "f": 6
+     *   }
+     * }</pre>
+     *
+     * @return Whether to use smart spacing in the output.
+     */
+    public boolean isSmartSpacing() {
+        return this.smartSpacing;
+    }
+
+    /**
+     * Sets whether to use smart spacing in the output.
+     *
+     * @param smartSpacing Whether to use smart spacing in the output.
+     * @return <code>this</code>, for method chaining.
+     * @see #isSmartSpacing()
+     */
+    public JsonWriterOptions setSmartSpacing(final boolean smartSpacing) {
+        this.smartSpacing = smartSpacing;
         return this;
     }
 }
