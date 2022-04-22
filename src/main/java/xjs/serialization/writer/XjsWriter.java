@@ -229,12 +229,9 @@ public class XjsWriter extends AbstractJsonWriter {
         if (type == StringType.MULTI) {
             return type;
         } else if (type == StringType.SINGLE || type == StringType.DOUBLE) {
-            if (this.omitQuotes && s.length() == ImplicitStringUtils.indexOf(s, 0, StringContext.VALUE)) {
-                return StringType.IMPLICIT;
-            }
-            return type;
+            return this.omitQuotes ? StringType.select(s) : type;
         } else if (type == StringType.NONE) {
-            return StringType.fast(s);
+            return this.omitQuotes ? StringType.select(s) : StringType.fast(s);
         }
         return StringType.select(s);
     }

@@ -2,6 +2,7 @@ package xjs.core;
 
 import org.jetbrains.annotations.Nullable;
 import xjs.serialization.util.ImplicitStringUtils;
+import xjs.serialization.util.StringContext;
 import xjs.serialization.writer.XjsWriter;
 
 /**
@@ -97,7 +98,7 @@ public enum StringType {
      * @return An appropriate string type for reprinting the data.
      */
     public static StringType select(final String text) {
-        if (ImplicitStringUtils.isBalanced(text)) {
+        if (text.length() == ImplicitStringUtils.indexOf(text, 0, StringContext.VALUE)) {
             return IMPLICIT;
         }
         return fast(text);
