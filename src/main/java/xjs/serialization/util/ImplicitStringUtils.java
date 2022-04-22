@@ -240,20 +240,20 @@ public final class ImplicitStringUtils {
                 return i;
             }
             // Lookahead to ignore comments and whitespace
-            final int cIdx = skipBetweenValues(text, i, n);
-            if (cIdx == i) {
+            final int next = skipBetweenValues(text, i, n);
+            if (next == i) {
                 i = getNextIndex(text, i, c);
                 continue;
             }
-            if (cIdx > text.length() - 1) {
-                checkEndOfInput(text, cIdx, e, n);
+            if (next == text.length()) {
+                checkEndOfInput(text, next, e, n);
                 return i;
             }
-            final char cmt = text.charAt(cIdx);
-            if (shouldExit(cmt, e, n, u)) {
+            c = text.charAt(next);
+            if (shouldExit(c, e, n, u)) {
                 return i;
             }
-            i = getNextIndex(text, cIdx, cmt) - 1;
+            i = getNextIndex(text, next, c);
         }
         checkEndOfInput(text, s, e, n);
         return text.length();
@@ -264,25 +264,57 @@ public final class ImplicitStringUtils {
     }
 
     private static int skipBetweenValues(final String text, int s, final boolean n) {
-        int last;
-        char c;
-        do {
-            last = s;
-            if (s == text.length()) {
+        while (s < text.length()) {
+            int next = skipWhitespace(text, s, n);
+            if (next < text.length()) {
+                next = skipComments(text, next, text.charAt(next));
+            }
+            if (next == s) {
                 return s;
             }
-            s = skipWhitespace(text, s, n);
-            if (s == text.length()) {
+            s = next;
+        }
+        return s;
+    }
+
+    private static int skipWhitespace(final String text, int s, final boolean n) {
+        char c = text.charAt(s);
+        while (true) {
+            if ((n && c == '\n') || !Character.isWhitespace(c)) {
+                return s;
+            }
+            if (++s == text.length()) {
                 return s;
             }
             c = text.charAt(s);
-            if (c == '/') {
-                s = skipSlash(text, s);
-            } else if (c == '#') {
-                s = skipToNl(text, s);
-            }
-        } while (s > last);
+        }
+    }
+
+    private static int skipComments(final String text, final int s, final char c) {
+        if (c == '/') return skipSlash(text, s);
+        if (c == '#') return skipToNl(text, s);
         return s;
+    }
+
+    private static int skipSlash(final String text, final int s) {
+        if (s + 1 >= text.length()) {
+            return s + 1;
+        }
+        final char next = text.charAt(s + 1);
+        if (next == '/') {
+            final int n = text.indexOf('\n', s + 1);
+            return n >= 0 ? n : text.length();
+        } else if (next == '*') {
+            final int e = text.indexOf("*/", s + 1);
+            if (e < 0) throw unclosedComment(text, s);
+            return e + 2;
+        }
+        return s + 1;
+    }
+
+    private static int skipToNl(final String text, final int s) {
+        final int i = text.indexOf('\n', s);
+        return i > 0 ? i : text.length();
     }
 
     private static int getNextIndex(final String text, final int s, final char c) {
@@ -305,7 +337,7 @@ public final class ImplicitStringUtils {
     private static int search(final String text, final int s, final char e) {
         for (int i = s; i < text.length(); i++) {
             char c = text.charAt(i);
-            if (shouldExit(c, e, false, false)) {
+            if (c == e) {
                 return i;
             }
             i = getNextIndex(text, i, c);
@@ -318,40 +350,6 @@ public final class ImplicitStringUtils {
         if (e == '}' || e == ']' || e == ')') throw unclosed(text, e, s - 1);
         if (n || e == '\u0000') return;
         throw endOfInput(text, s);
-    }
-
-    private static int skipWhitespace(final String text, int s, final boolean n) {
-        char c = text.charAt(s);
-        while (true) {
-            if ((n && c == '\n') || !Character.isWhitespace(c)) {
-                return s;
-            }
-            if (++s == text.length()) {
-                return s;
-            }
-            c = text.charAt(s);
-        }
-    }
-
-    private static int skipSlash(final String text, final int s) {
-        if (s + 1 >= text.length()) {
-            return s + 1;
-        }
-        final char next = text.charAt(s + 1);
-        if (next == '/') {
-            final int n = text.indexOf('\n', s + 1);
-            return n >= 0 ? n : text.length();
-        } else if (next == '*') {
-            final int e = text.indexOf("*/", s + 1);
-            if (e < 0) throw unclosedComment(text, s);
-            return e + 2;
-        }
-        return s + 1;
-    }
-
-    private static int skipToNl(final String text, final int s) {
-        final int i = text.indexOf('\n', s);
-        return i > 0 ? i : text.length();
     }
 
     private static boolean isMulti(final String text, final int s) {

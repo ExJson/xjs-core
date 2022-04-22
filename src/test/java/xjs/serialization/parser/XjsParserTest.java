@@ -144,7 +144,7 @@ public final class XjsParserTest extends CommonParserTest {
                 2
               '''
             """;
-        assertEquals("0\n 1\n  2", this.parse(text).asObject().get("multi").asString());
+        assertEquals("0\n 1\n  2", this.parse(text).asObject().getAsserted("multi").asString());
     }
 
     @ParameterizedTest
