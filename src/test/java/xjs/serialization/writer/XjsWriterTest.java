@@ -423,6 +423,24 @@ public final class XjsWriterTest {
         assertEquals(expected, write(value, new JsonWriterOptions().setSmartSpacing(true)));
     }
 
+    @Test
+    public void write_withOmitQuotes_removesQuotes_fromSingleLineValues() throws IOException {
+        final JsonValue value = new XjsParser("k: 'quoted'").parse();
+        assertEquals("k: quoted", write(value, new JsonWriterOptions().setOmitQuotes(true)));
+    }
+
+    @Test
+    public void write_withOmitQuotes_andUnbalancedValue_doesNotOmitQuotes() throws IOException {
+        final JsonValue value = new XjsParser("k: 'quoted)'").parse();
+        assertEquals("k: 'quoted)'", write(value, new JsonWriterOptions().setOmitQuotes(true)));
+    }
+
+    @Test
+    public void write_withOmitQuotes_andCommentLikeValue_doesNotOmitQuotes() throws IOException {
+        final JsonValue value = new XjsParser("k: '#quoted'").parse();
+        assertEquals("k: '#quoted'", write(value, new JsonWriterOptions().setOmitQuotes(true)));
+    }
+
     private static String write(final JsonValue value) {
         return write(value, new JsonWriterOptions());
     }

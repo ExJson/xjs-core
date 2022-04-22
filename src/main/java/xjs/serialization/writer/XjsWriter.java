@@ -224,26 +224,19 @@ public class XjsWriter extends AbstractJsonWriter {
     }
 
     protected StringType getStringType(final JsonValue value) {
-        if (this.format) {
-            return this.checkType(value.asString(), StringType.fromValue(value));
-        }
-        if (this.omitQuotes) {
-            final String s = value.asString();
-            if (!s.contains("\n") && ImplicitStringUtils.isBalanced(s)) {
+        final StringType type = StringType.fromValue(value);
+        final String s = value.asString();
+        if (type == StringType.MULTI) {
+            return type;
+        } else if (type == StringType.SINGLE || type == StringType.DOUBLE) {
+            if (this.omitQuotes && s.length() == ImplicitStringUtils.indexOf(s, 0, StringContext.VALUE)) {
                 return StringType.IMPLICIT;
             }
-        }
-        return StringType.SINGLE;
-    }
-
-    protected StringType checkType(final String value, final StringType type) {
-        if (type == StringType.SINGLE || type == StringType.DOUBLE || type == StringType.MULTI) {
             return type;
+        } else if (type == StringType.NONE) {
+            return StringType.fast(s);
         }
-        if (type == StringType.NONE) {
-            return StringType.fast(value);
-        }
-        return StringType.select(value);
+        return StringType.select(s);
     }
 
     protected void writeMulti(final String value, int level) throws IOException {

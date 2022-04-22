@@ -22,7 +22,7 @@ public class JsonWriterOptions {
     private boolean nestedSameLine = false;
     private boolean omitRootBraces = true;
     private boolean outputComments = true;
-    private boolean omitQuotes = true;
+    private boolean omitQuotes = false;
     private String eol = JsonContext.getEol();
     private String indent = "  ";
     private String separator = " ";
