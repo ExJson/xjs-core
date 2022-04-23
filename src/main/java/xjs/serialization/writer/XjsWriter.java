@@ -198,6 +198,11 @@ public class XjsWriter extends AbstractJsonWriter {
 
     protected void writeString(
             final String value, final StringType type, int level, final StringContext ctx) throws IOException {
+        if (type == null) {
+            // optimization to avoid unnecessary escapes for verified strings.
+            this.tw.write(ImplicitStringUtils.escape(value, ctx));
+            return;
+        }
         switch (type) {
             case SINGLE:
                 this.writeQuoted(value, '\'');
@@ -209,7 +214,7 @@ public class XjsWriter extends AbstractJsonWriter {
                 this.writeMulti(value, level);
                 break;
             case IMPLICIT:
-                this.tw.write(ImplicitStringUtils.escape(value, ctx));
+                this.tw.write(value);
                 break;
             default:
                 throw new IllegalStateException("unreachable");
@@ -233,7 +238,7 @@ public class XjsWriter extends AbstractJsonWriter {
         } else if (type == StringType.NONE) {
             return this.omitQuotes ? StringType.select(s) : StringType.fast(s);
         }
-        return StringType.select(s);
+        return ImplicitStringUtils.isBalanced(s) ? null : StringType.fast(s);
     }
 
     protected void writeMulti(final String value, int level) throws IOException {

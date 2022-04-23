@@ -98,7 +98,11 @@ public enum StringType {
      * @return An appropriate string type for reprinting the data.
      */
     public static StringType select(final String text) {
-        if (text.length() == ImplicitStringUtils.indexOf(text, 0, StringContext.VALUE)) {
+        if (text.isEmpty()) {
+            return IMPLICIT;
+        } else if (ImplicitStringUtils.isPunctuation(text.charAt(0))) {
+            return fast(text);
+        } else if (text.length() == ImplicitStringUtils.indexOf(text, 0, StringContext.VALUE)) {
             return IMPLICIT;
         }
         return fast(text);

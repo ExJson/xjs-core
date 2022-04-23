@@ -406,6 +406,27 @@ public final class ImplicitStringUtils {
         return text.charAt(s + 1) == '\r' ? s + 2 : s + 1;
     }
 
+    /**
+     * Indicates whether this character is one of the core "punctuation" characters
+     * used by JSON and most of its supersets, e.g.
+     *
+     * <p><code>[]{},:</code>
+     *
+     * @param c The character being tested.
+     * @return <code>true</code>, if the input is one of these characters.
+     */
+    public static boolean isPunctuation(final char c) {
+        return c == '{' || c == '}' || c == '[' || c == ']' || c == ':' || c == ',';
+    }
+
+    /**
+     * Variant of {@link #escape(String, char, boolean)} for one of the core string
+     * {@link StringContext contexts}.
+     *
+     * @param text The raw tokens being escaped.
+     * @param ctx  The context in which these tokens will appear.
+     * @return The escaped text, appropriate for the given context.
+     */
     public static String escape(final String text, final StringContext ctx) {
         if (ctx == StringContext.KEY) {
             return escape(text, ':', false);

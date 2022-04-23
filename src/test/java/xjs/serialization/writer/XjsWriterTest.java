@@ -441,6 +441,12 @@ public final class XjsWriterTest {
         assertEquals("k: '#quoted'", write(value, new JsonWriterOptions().setOmitQuotes(true)));
     }
 
+    @Test
+    public void write_withOmitQuotes_andValueStartingWithPunctuation_doesNotOmitQuotes() throws IOException {
+        final JsonValue value = new XjsParser("k: '{quoted}'").parse();
+        assertEquals("k: '{quoted}'", write(value, new JsonWriterOptions().setOmitQuotes(true)));
+    }
+
     private static String write(final JsonValue value) {
         return write(value, new JsonWriterOptions());
     }
