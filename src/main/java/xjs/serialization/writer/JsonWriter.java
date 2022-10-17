@@ -17,6 +17,10 @@ public class JsonWriter extends AbstractJsonWriter {
         super(writer, format);
     }
 
+    public JsonWriter(final File file, final JsonWriterOptions options) throws IOException {
+        super(file, options);
+    }
+
     public JsonWriter(final Writer writer, final JsonWriterOptions options) {
         super(writer, options);
     }

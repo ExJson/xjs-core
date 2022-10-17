@@ -54,8 +54,8 @@ public class JsonContext {
     private static final Map<String, ParsingFunction> PARSERS = new ConcurrentHashMap<>();
     private static final Map<String, WritingFunction> WRITERS = new ConcurrentHashMap<>();
     private static final Map<String, String> ALIASES = new ConcurrentHashMap<>();
-    private static final ParsingFunction DEFAULT_PARSER = file -> new XjsParser(file).parse();
-    private static final WritingFunction DEFAULT_WRITER = (w, v, o) -> new XjsWriter(w, o).write(v);
+    private static final ParsingFunction DEFAULT_PARSER = ParsingFunction.fromParser(XjsParser::new);
+    private static final WritingFunction DEFAULT_WRITER = WritingFunction.fromWriter(XjsWriter::new);
     private static volatile String eol = System.lineSeparator();
     private static volatile CommentStyle defaultCommentStyle = CommentStyle.LINE;
     private static volatile JsonWriterOptions defaultFormatting = new JsonWriterOptions();
@@ -209,9 +209,7 @@ public class JsonContext {
      * @throws IOException If the underlying {@link FileWriter} throws an exception.
      */
     public static void autoWrite(final File file, final JsonValue value) throws IOException {
-        final Writer writer = new FileWriter(file);
-        WRITERS.getOrDefault(getFormat(file), DEFAULT_WRITER).write(writer, value, defaultFormatting);
-        writer.flush();
+        WRITERS.getOrDefault(getFormat(file), DEFAULT_WRITER).write(file, value, defaultFormatting);
     }
 
     private static String getFormat(final File file) {
@@ -225,9 +223,9 @@ public class JsonContext {
     }
 
     static {
-        PARSERS.put("json", file -> new JsonParser(file).parse());
+        PARSERS.put("json", ParsingFunction.fromParser(JsonParser::new));
         PARSERS.put("xjs", DEFAULT_PARSER);
-        WRITERS.put("json", (w, v, o) -> new JsonWriter(w, o).write(v));
+        WRITERS.put("json", WritingFunction.fromWriter(JsonWriter::new));
         WRITERS.put("xjs", DEFAULT_WRITER);
 
         COMPAT_AVAILABLE = isClassAvailable("xjs.serialization.XjsCompat");

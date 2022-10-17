@@ -1,6 +1,5 @@
 package xjs.serialization.parser;
 
-import org.jetbrains.annotations.NotNull;
 import xjs.core.JsonNumber;
 import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;
@@ -12,13 +11,13 @@ import java.io.Reader;
 import java.io.StringReader;
 
 /**
- * The basic parser type to be used for all sorts of JSON formats.
+ * A simple parser type which can be used for JSON formats.
  *
  * <p>Implementors should be aware that the exact field structure of this type
  * may be redesigned in a future pre-release, as not every field shown here is
  * used by all provided subclasses.
  */
-public abstract class AbstractJsonParser {
+public abstract class AbstractJsonParser implements ValueParser {
 
     protected static final int MIN_BUFFER_SIZE = 10;
     protected static final int DEFAULT_BUFFER_SIZE = 1024;
@@ -63,16 +62,6 @@ public abstract class AbstractJsonParser {
         this.line = 1;
         this.captureStart = -1;
     }
-
-    /**
-     * Converts the output of the {@link Reader} being wrapped by this object into
-     * any type of {@link JsonValue}.
-     *
-     * @return A definite, non-null {@link JsonValue}.
-     * @throws IOException If the reader throws an {@link IOException}.
-     * @throws SyntaxException If the data is syntactically invalid.
-     */
-    public abstract @NotNull JsonValue parse() throws IOException;
 
     protected void expect(final char c) throws IOException {
         if (!this.readIf(c)) {
@@ -322,5 +311,10 @@ public abstract class AbstractJsonParser {
 
     protected int getColumn() {
         return this.bufferOffset + this.index - this.lineOffset - 1;
+    }
+
+    @Override
+    public void close() throws Exception {
+        this.reader.close();
     }
 }

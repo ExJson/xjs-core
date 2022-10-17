@@ -12,9 +12,9 @@ import java.io.Writer;
 import java.math.BigDecimal;
 
 /**
- * The basic writer type to be used for all sorts of JSON formats.
+ * A basic writer type providing a writer and some formatting options.
  */
-public abstract class AbstractJsonWriter implements AutoCloseable {
+public abstract class AbstractJsonWriter implements ValueWriter {
 
     protected final boolean format;
     protected final Writer tw;
@@ -54,6 +54,10 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
         this.separator = format ? " " : "";
     }
 
+    protected AbstractJsonWriter(final File file, final JsonWriterOptions options) throws IOException {
+        this(new FileWriter(file), options);
+    }
+
     protected AbstractJsonWriter(final Writer writer, final JsonWriterOptions options) {
         this.format = true;
         this.tw = writer;
@@ -79,6 +83,7 @@ public abstract class AbstractJsonWriter implements AutoCloseable {
      * @param value The value being serialized.
      * @throws IOException If the underlying writer throws an {@link IOException}.
      */
+    @Override
     public void write(final JsonValue value) throws IOException {
         this.writeLinesAbove(-1, null, null, false, value);
         this.write(value, 0);

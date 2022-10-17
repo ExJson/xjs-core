@@ -26,6 +26,10 @@ public class XjsWriter extends AbstractJsonWriter {
         super(writer, format);
     }
 
+    public XjsWriter(final File file, final JsonWriterOptions options) throws IOException {
+        super(file, options);
+    }
+
     public XjsWriter(final Writer writer, final JsonWriterOptions options) {
         super(writer, options);
     }

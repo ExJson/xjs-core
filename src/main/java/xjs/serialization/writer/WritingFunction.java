@@ -2,8 +2,8 @@ package xjs.serialization.writer;
 
 import xjs.core.JsonValue;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
 
 /**
  * Represents the entire procedure for serializing {@link JsonValue JSON values}
@@ -15,12 +15,32 @@ public interface WritingFunction {
     /**
      * The main function being represented by this interface.
      *
-     * @param writer  The writer accepting the serialized output.
+     * @param file    The output file where the value will be serialized.
      * @param value   The value being written into the writer.
      * @param options The options used to indicate output formatting.
-     * @throws IOException If the given {@link Writer} throws an exception.
-     * @see AbstractJsonWriter#AbstractJsonWriter(Writer, JsonWriterOptions)
+     * @throws IOException If an exception is thrown in writing to the file.
+     * @see AbstractJsonWriter#AbstractJsonWriter(File, JsonWriterOptions)
      * @see AbstractJsonWriter#write(JsonValue)
      */
-    void write(final Writer writer, final JsonValue value, final JsonWriterOptions options) throws IOException;
+    void write(final File file, final JsonValue value, final JsonWriterOptions options) throws IOException;
+
+    /**
+     * Builds a WritingFunction when given a reference to the constructor
+     * of any {@link ValueWriter}.
+     *
+     * @param c The constructor used to build a {@link ValueWriter}.
+     * @return A reusable {@link WritingFunction}.
+     */
+    static WritingFunction fromWriter(final ValueWriter.FileConstructor c) {
+        return (file, value, options) -> {
+            final ValueWriter writer = c.construct(file, options);
+            writer.write(value);
+
+            try {
+                writer.close();
+            } catch (final Exception e) {
+                throw new IOException(e);
+            }
+        };
+    }
 }
