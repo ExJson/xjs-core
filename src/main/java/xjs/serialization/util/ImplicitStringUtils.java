@@ -263,11 +263,11 @@ public final class ImplicitStringUtils {
         return c == e || (n && c == '\n') || (u && (c == '}' || c == ']' || c == ')'));
     }
 
-    private static int skipBetweenValues(final String text, int s, final boolean n) {
+    public static int skipBetweenValues(final String text, int s, final boolean n) {
         while (s < text.length()) {
             int next = skipWhitespace(text, s, n);
             if (next < text.length()) {
-                next = skipComments(text, next, text.charAt(next));
+                next = expectComment(text, next, text.charAt(next));
             }
             if (next == s) {
                 return s;
@@ -277,7 +277,7 @@ public final class ImplicitStringUtils {
         return s;
     }
 
-    private static int skipWhitespace(final String text, int s, final boolean n) {
+    public static int skipWhitespace(final String text, int s, final boolean n) {
         char c = text.charAt(s);
         while (true) {
             if ((n && c == '\n') || !Character.isWhitespace(c)) {
@@ -290,7 +290,7 @@ public final class ImplicitStringUtils {
         }
     }
 
-    private static int skipComments(final String text, final int s, final char c) {
+    public static int expectComment(final String text, final int s, final char c) {
         if (c == '/') return skipSlash(text, s);
         if (c == '#') return skipToNl(text, s);
         return s;
