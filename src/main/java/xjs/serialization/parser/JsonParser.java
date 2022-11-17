@@ -1,49 +1,50 @@
 package xjs.serialization.parser;
 
 import org.jetbrains.annotations.NotNull;
+import xjs.core.Json;
 import xjs.core.JsonArray;
 import xjs.core.JsonLiteral;
 import xjs.core.JsonObject;
 import xjs.core.JsonString;
 import xjs.core.JsonValue;
+import xjs.serialization.util.PositionTrackingReader;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.Reader;
 
-public class JsonParser extends AbstractJsonParser {
+public class JsonParser implements ValueParser {
+    private final PositionTrackingReader reader;
 
     public JsonParser(final String text) {
-        super(text);
+        this.reader = PositionTrackingReader.fromString(text);
     }
 
     public JsonParser(final File file) throws IOException {
-        super(file);
+        this.reader = PositionTrackingReader.fromIs(
+            new FileInputStream(file));
     }
 
-    public JsonParser(final Reader reader) {
-        super(reader);
-    }
-
-    public JsonParser(final Reader reader, final int buffer) {
-        super(reader, buffer);
+    public JsonParser(final File file, final int bufferSize) throws IOException {
+        this.reader = PositionTrackingReader.fromIs(
+            new FileInputStream(file), bufferSize);
     }
 
     public @NotNull JsonValue parse() throws IOException {
-        this.read();
-        this.skipWhitespace();
-        final int linesAbove = this.linesSkipped;
+        this.reader.read();
+        this.reader.skipWhitespace();
+        final int linesAbove = this.reader.linesSkipped;
         final JsonValue result =
             this.readValue().setLinesAbove(linesAbove);
-        this.skipWhitespace();
-        if (!this.isEndOfText()) {
-            throw this.unexpected((char) this.current);
+        this.reader.skipWhitespace();
+        if (!this.reader.isEndOfText()) {
+            throw this.reader.unexpected();
         }
         return result;
     }
 
     protected JsonValue readValue() throws IOException {
-        switch (this.current) {
+        switch (this.reader.current) {
             case 'n':
                 return this.readNull();
             case 't':
@@ -67,91 +68,96 @@ public class JsonParser extends AbstractJsonParser {
             case '7':
             case '8':
             case '9':
-                return this.readNumber();
+                return Json.value(this.reader.readNumber());
             default:
-                throw this.expected("value");
+                throw this.reader.expected("value");
         }
     }
 
     protected JsonValue readNull() throws IOException {
-        this.read();
-        this.expect('u');
-        this.expect('l');
-        this.expect('l');
+        this.reader.read();
+        this.reader.expect('u');
+        this.reader.expect('l');
+        this.reader.expect('l');
         return JsonLiteral.jsonNull();
     }
 
     protected JsonValue readTrue() throws IOException {
-        this.read();
-        this.expect('r');
-        this.expect('u');
-        this.expect('e');
+        this.reader.read();
+        this.reader.expect('r');
+        this.reader.expect('u');
+        this.reader.expect('e');
         return JsonLiteral.jsonTrue();
     }
 
     protected JsonValue readFalse() throws IOException {
-        this.read();
-        this.expect('a');
-        this.expect('l');
-        this.expect('s');
-        this.expect('e');
+        this.reader.read();
+        this.reader.expect('a');
+        this.reader.expect('l');
+        this.reader.expect('s');
+        this.reader.expect('e');
         return JsonLiteral.jsonFalse();
     }
 
     protected JsonValue readString() throws IOException {
-        return new JsonString(this.readQuoted('"'));
+        return new JsonString(this.reader.readQuoted('"'));
     }
 
     protected JsonArray readArray() throws IOException {
-        this.read();
+        this.reader.read();
         final JsonArray array = new JsonArray();
-        this.skipWhitespace();
-        if (this.readIf(']')) {
+        this.reader.skipWhitespace();
+        if (this.reader.readIf(']')) {
             return array;
         }
         do {
-            this.skipWhitespace(false);
-            final int linesAbove = this.linesSkipped;
+            this.reader.skipWhitespace(false);
+            final int linesAbove = this.reader.linesSkipped;
             array.add(this.readValue().setLinesAbove(linesAbove));
-            this.skipWhitespace();
-        } while (this.readIf(','));
-        if (!this.readIf(']')) {
-            throw expected("',' or ']'");
+            this.reader.skipWhitespace();
+        } while (this.reader.readIf(','));
+        if (!this.reader.readIf(']')) {
+            throw this.reader.expected("',' or ']'");
         }
-        return (JsonArray) array.setLinesTrailing(this.linesSkipped);
+        return (JsonArray) array.setLinesTrailing(this.reader.linesSkipped);
     }
 
     protected JsonObject readObject() throws IOException {
-        this.read();
+        this.reader.read();
         final JsonObject object = new JsonObject();
-        this.skipWhitespace();
-        if (this.readIf('}')) {
+        this.reader.skipWhitespace();
+        if (this.reader.readIf('}')) {
             return object;
         }
         do {
-            this.skipWhitespace(false);
-            final int linesAbove = this.linesSkipped;
+            this.reader.skipWhitespace(false);
+            final int linesAbove = this.reader.linesSkipped;
             final String key = this.readKey();
-            this.skipWhitespace();
-            this.expect(':');
-            this.skipWhitespace();
-            final int linesBetween = this.linesSkipped;
+            this.reader.skipWhitespace();
+            this.reader.expect(':');
+            this.reader.skipWhitespace();
+            final int linesBetween = this.reader.linesSkipped;
             object.add(key,
                 this.readValue()
                     .setLinesAbove(linesAbove)
                     .setLinesBetween(linesBetween));
-            this.skipWhitespace();
-        } while (this.readIf(','));
-        if (!this.readIf('}')) {
-            throw this.expected("',' or '}'");
+            this.reader.skipWhitespace();
+        } while (this.reader.readIf(','));
+        if (!this.reader.readIf('}')) {
+            throw this.reader.expected("',' or '}'");
         }
-        return (JsonObject) object.setLinesTrailing(this.linesSkipped);
+        return (JsonObject) object.setLinesTrailing(this.reader.linesSkipped);
     }
 
     protected String readKey() throws IOException {
-        if (this.current != '"') {
-            throw this.expected("key");
+        if (this.reader.current != '"') {
+            throw this.reader.expected("key");
         }
-        return this.readQuoted('"');
+        return this.reader.readQuoted('"');
+    }
+
+    @Override
+    public void close() throws Exception {
+        this.reader.close();
     }
 }
