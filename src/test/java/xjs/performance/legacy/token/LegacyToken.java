@@ -1,49 +1,54 @@
-package xjs.serialization.token;
+package xjs.performance.legacy.token;
+
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a single token: either a character, group of characters,
  * or any other sequence of tokens.
  */
-public class Token {
+public class LegacyToken {
     public final int start;
     public final int end;
     public final int offset;
     public final Type type;
+    protected final String reference;
+    protected volatile @Nullable String text;
 
     /**
      * Constructs a new Token object to be placed on an AST.
      *
+     * @param reference A reference to the original source of this token.
      * @param start    The inclusive start index of this token.
      * @param end      The exclusive end index of this token.
      * @param offset   The column of the start index.
      * @param type     The type of token.
      */
-    public Token(final int start, final int end, final int offset, final Type type) {
+    public LegacyToken(final String reference, final int start, final int end, final int offset, final Type type) {
+        this.reference = reference;
         this.start = start;
         this.end = end;
         this.offset = offset;
         this.type = type;
     }
 
-    public String textOf(final CharSequence reference) {
-        return reference.subSequence(this.start, this.end).toString();
+    public String getText() {
+        if (this.text == null) {
+            return this.text = this.reference.substring(this.start, this.end);
+        }
+        return text;
     }
 
     @Override
     public boolean equals(final Object o) {
-        if (o instanceof Token) {
-            final Token t = (Token) o;
+        if (o instanceof LegacyToken) {
+            final LegacyToken t = (LegacyToken) o;
             return this.start == t.start
                 && this.end == t.end
                 && this.offset == t.offset
-                && this.type == t.type;
+                && this.type == t.type
+                && this.reference.equals(t.reference);
         }
         return false;
-    }
-
-    @Override
-    public String toString() {
-        return this.type + "(start:" + this.start + ",end:" + this.end + ",offset:" + this.offset + ")";
     }
 
     /**

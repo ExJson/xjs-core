@@ -3,8 +3,10 @@ package xjs.serialization.token;
 import org.jetbrains.annotations.Nullable;
 import xjs.exception.SyntaxException;
 import xjs.serialization.token.Token.Type;
-import xjs.serialization.util.ImplicitStringUtils;
+import xjs.serialization.util.PositionTrackingReader;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,127 +19,142 @@ public final class Tokenizer {
     }
 
     public static TokenStream stream(final String text, final int s, final int e, final int o) {
-        return new TokenStream(text, s, e, o, Type.OPEN);
+        return new TokenStream(PositionTrackingReader.fromString(text), s, e, o, Type.OPEN);
     }
 
-    public static @Nullable Token single(final String text, int i, int o) {
-        if (i >= text.length()) {
+    public static TokenStream stream(final InputStream is) throws IOException {
+        return new TokenStream(PositionTrackingReader.fromIs(is, true), 0, 0, 0, Type.OPEN);
+    }
+
+    public static @Nullable Token single(final PositionTrackingReader reader) throws IOException {
+        reader.skipLineWhitespace();
+        if (reader.isEndOfText()) {
             return null;
         }
-        char c;
-        while ((c = text.charAt(i)) == ' ' || c == '\t' || c == '\r' || c == '\f') {
-            i++;
-            o++;
-            if (i == text.length()) {
-                return null;
+        final char c = (char) reader.current;
+        final int s = reader.index;
+        final int o = reader.column;
+        if (c == '/' || c == '#') {
+            return comment(reader, c, s, o);
+        } else if (c == '\'' || c == '\"') {
+            return quote(reader, s, o, c);
+        } else if (c == '\n') {
+            reader.read();
+            return new Token(s, s + 1, o, Type.BREAK);
+        } else if (c == '.') {
+            return dot(reader, s, o);
+        } else if (Character.isDigit(c)) {
+            return number(reader, s, o);
+        }
+        return word(reader, s, o);
+    }
+
+    private static Token quote(
+            final PositionTrackingReader reader, final int i, final int o, final char quote) throws IOException {
+        final String parsed = reader.readQuoted(quote);
+        if (parsed.isEmpty() && quote == '\'' && reader.readIf('\'')) {
+            return triple(reader, i, o);
+        }
+        final Type type = quote == '\'' ? Type.SINGLE : Type.DOUBLE;
+        return new StringToken(i, reader.index, o, type, parsed);
+    }
+
+    private static Token triple(final PositionTrackingReader reader, final int i, final int o) throws IOException {
+        int quotes = 0;
+        while (!reader.isEndOfText()) {
+            final char c = (char) reader.current;
+            if (c == '\\') {
+                quotes = 0;
+                reader.read();
+                continue;
+            }
+            quotes = c == '\'' ? quotes + 1 : 0;
+            reader.read();
+            if (quotes == 3) {
+                return new Token(i, reader.index, o, Type.TRIPLE);
             }
         }
-        if (c == '/' || c == '#') {
-            return comment(text, c, i, o);
-        } else if (c == '"') {
-            return doubleQuote(text, i, o);
-        } else if (c == '\'') {
-            return singleQuote(text, i, o);
-        } else if (c == '\n') {
-            return new Token(text, i, i + 1, o, Type.BREAK);
-        } else if (Character.isDigit(c)) {
-            return number(text, i, o);
-        }
-        final Token word = word(text, i, o);
-        if (word != null) {
-            return word;
-        }
-        return new SymbolToken(text, i, i + 1, o, c);
+        throw reader.expected("end of multiline string (\"'''\")");
     }
 
-    private static Token doubleQuote(final String text, final int i, final int o) {
-        final int str = ImplicitStringUtils.expectQuote(text, i, '"');
-        return new Token(text, i, str + 1, o, Type.DOUBLE);
-    }
-
-    private static Token singleQuote(final String text, final int i, final int o) {
-        if (isTripleQuote(text, i)) {
-            final int triple = ImplicitStringUtils.expectMulti(text, i + 1);
-            return new Token(text, i, triple + 1, o, Type.TRIPLE);
+    private static Token comment(
+            final PositionTrackingReader reader, char c, final int i, final int o) throws IOException {
+        reader.read();
+        if (c == '#' || reader.readIf('/')) {
+            reader.skipToNL();
+            return new Token(i, reader.index, o, Type.LINE);
+        } else if (!reader.readIf('*')) {
+            return new SymbolToken(i, i + 1, o, c);
         }
-        final int single = ImplicitStringUtils.expectQuote(text, i, '\'');
-        return new Token(text, i, single + 1, o, Type.SINGLE);
-    }
-
-    private static boolean isTripleQuote(final String text, final int i) {
-        return i + 2 < text.length() && text.charAt(i + 1) == '\'' && text.charAt(2) == '\'';
-    }
-
-    private static Token comment(final String text, final char c, final int i, final int o) {
-        final int comment = ImplicitStringUtils.expectComment(text, i, c);
-        if (comment != i + 1) {
-            final Type type = c == '/' && text.charAt(i + 1) == '*'
-                ? Type.MULTI : Type.LINE;
-            return new Token(text, i, comment, o, type);
+        boolean asterisk = false;
+        while (!reader.isEndOfText()) {
+            c = (char) reader.current;
+            reader.read();
+            if (asterisk && c == '/') {
+                return new Token(i, reader.index, o, Type.MULTI);
+            }
+            asterisk = c == '*';
         }
-        return new SymbolToken(text, i, i + 1, o, c);
+        throw reader.expected("end of multiline comment ('*/')");
     }
 
-    private static @Nullable Token word(final String text, int i, final int o) {
-        final int s = i;
-        char c;
-        while (i < text.length() && ((c = text.charAt(i)) == '_' || Character.isLetterOrDigit(c))) {
-            i++;
-        }
-        if (s != i) {
-            return new Token(text, s, i, o, Type.WORD);
-        }
-        return null;
-    }
-
-    private static Token number(final String text, int i, final int o) {
-        final int s = i;
-        boolean periodFound = false;
-        char c = '\u0000';
-        while (i < text.length()) {
-            c = text.charAt(i);
-            if (c == '.') {
-                if (periodFound) {
-                    return parseNumber(text, s, i, o);
-                }
-                periodFound = true;
-            } else if (!Character.isDigit(c)) {
+    private static Token word(
+            final PositionTrackingReader reader, final int i, final int o) throws IOException {
+        do {
+            final char c = (char) reader.current;
+            if (c == '_' || Character.isLetterOrDigit(c)) {
+                reader.read();
+            } else if (reader.index - i == 0) {
+                reader.read();
+                return new SymbolToken(i, reader.index, o, c);
+            } else {
                 break;
             }
-            i++;
-        }
-        if (c == 'e' || c == 'E') {
-            if (i == text.length()) {
-                return new Token(text, s, i, o, Type.WORD);
-            }
-            i++;
-            boolean signFound = false;
-            while (i < text.length()) {
-                c = text.charAt(i);
-                if (c == '+' || c == '-') {
-                    if (signFound) {
-                       return parseNumber(text, s, i - 1, o);
-                    }
-                    signFound = true;
-                } else if (!Character.isDigit(c)) {
-                    break;
-                }
-                i++;
-            }
-            if (c == '+' || c == '-') {
-                return parseNumber(text, s, i - 1, o);
-            }
-        }
-        return parseNumber(text, s, i, o);
+        } while (!reader.isEndOfText());
+        return new Token(i, reader.index, o, Type.WORD);
     }
 
-    private static Token parseNumber(final String text, final int s, final int e, final int o) {
-        final String number = text.substring(s, e);
-        try {
-            return new NumberToken(text, s, e, o, Double.parseDouble(number));
-        } catch (final NumberFormatException ignored) {
-            return new Token(text, s, e, o, Type.WORD);
+    private static Token dot(
+            final PositionTrackingReader reader, final int i, final int o) throws IOException {
+        reader.read();
+        if (reader.isDigit()) {
+            return number(reader, i, o);
         }
+        return new SymbolToken(i, i + 1, o, '.');
+    }
+
+    private static Token number(
+            final PositionTrackingReader reader, int i, final int o) throws IOException {
+        reader.startCapture();
+        if (reader.current != '0') { // ???
+            reader.readAllDigits();
+        }
+        if (reader.readIf('.')) {
+            if (!reader.isDigit()) {
+                return parseNumber(reader, i, o);
+            }
+            reader.readAllDigits();
+        }
+        if (reader.readIf('e') || reader.readIf('E')) {
+            if (!reader.readIf('+')) {
+                reader.readIf('-'); // if no other numbers, result is ignored
+            }
+            if (!reader.readDigit()) {
+                return new Token(i, reader.index, o, Type.WORD);
+            }
+            reader.readAllDigits();
+        }
+        return parseNumber(reader, i, o);
+    }
+
+    private static NumberToken parseNumber(
+            final PositionTrackingReader reader, final int i, final int o) {
+        final double number = Double.parseDouble(reader.endCapture());
+        return new NumberToken(i, reader.index, o, number);
+    }
+
+    public static ContainerToken containerize(final InputStream is) throws IOException {
+        return containerize(stream(is));
     }
 
     public static ContainerToken containerize(final String text) {
@@ -164,14 +181,14 @@ public final class Tokenizer {
     }
 
     private static ContainerToken container(
-            final TokenStream.Itr itr, final String reference,
+            final TokenStream.Itr itr, final CharSequence reference,
             final int s, final int o, final Type type, final char closer) {
         final List<Token> tokens = new ArrayList<>();
         int e = s;
         while (itr.hasNext()) {
             final Token control = itr.next();
             if (tokenMatchesSymbol(control, closer)) {
-                return new ContainerToken(reference, s, control.end, o, type, tokens);
+                return new ContainerToken(reference.toString(), s, control.end, o, type, tokens);
             }
             final Token next = next(itr, reference, control);
             tokens.add(next);
@@ -180,14 +197,14 @@ public final class Tokenizer {
         if (closer != '\u0000') {
             throw SyntaxException.expected(closer, s, o);
         }
-        return new ContainerToken(reference, s, e, o, type, tokens);
+        return new ContainerToken(reference.toString(), s, e, o, type, tokens);
     }
 
     private static boolean tokenMatchesSymbol(final Token token, final char symbol) {
         return token instanceof SymbolToken && ((SymbolToken) token).symbol == symbol;
     }
 
-    private static Token next(final TokenStream.Itr itr, final String reference, final Token control) {
+    private static Token next(final TokenStream.Itr itr, final CharSequence reference, final Token control) {
         switch (getSymbol(control)) {
             case '{':
                 return container(itr, reference, control.start, control.offset, Type.BRACES, '}');

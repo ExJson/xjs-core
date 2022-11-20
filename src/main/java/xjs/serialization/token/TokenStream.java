@@ -1,9 +1,13 @@
 package xjs.serialization.token;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import xjs.serialization.util.PositionTrackingReader;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -18,76 +22,96 @@ import java.util.List;
  *    { k : v }
  * </pre>
  */
-public class TokenStream extends Token implements Iterable<Token> {
+public class TokenStream extends Token implements Iterable<Token>, Closeable {
     protected final List<Token> tokens;
+    protected volatile @Nullable PositionTrackingReader reader;
+    public final CharSequence reference;
 
     /**
      * Constructs a new Token object to be placed on an AST.
      *
      * @param reference A reference to the original source of this token.
-     * @param start    The inclusive start index of this token.
-     * @param end      The exclusive end index of this token.
-     * @param offset   The column of the start index.
-     * @param type     The type of token.
-     * @param tokens   A list of any known tokens, in order.
+     * @param start     The inclusive start index of this token.
+     * @param end       The exclusive end index of this token.
+     * @param offset    The column of the start index.
+     * @param type      The type of token.
+     * @param tokens    A list of any known tokens, in order.
      */
-    protected TokenStream(final String reference, final int start, final int end,
-                       final int offset, final Type type, final List<Token> tokens) {
-        super(reference, start, end, offset, type);
+    protected TokenStream(final CharSequence reference, final int start, final int end,
+                          final int offset, final Type type, final List<Token> tokens) {
+        super(start, end, offset, type);
+        this.reference = reference;
         this.tokens = new ArrayList<>(tokens);
     }
 
     /**
      * Constructs a new Token object to be placed on an AST.
      *
-     * @param reference A reference to the original source of this token.
-     * @param start    The inclusive start index of this token.
-     * @param end      The exclusive end index of this token.
-     * @param offset   The column of the start index.
-     * @param type     The type of token.
+     * @param reader A reader for extracting tokens OTF.
+     * @param start  The inclusive start index of this token.
+     * @param end    The exclusive end index of this token.
+     * @param offset The column of the start index.
+     * @param type   The type of token.
      */
-    public TokenStream(final String reference, final int start, final int end,
+    public TokenStream(final @NotNull PositionTrackingReader reader, final int start, final int end,
                        final int offset, final Type type) {
-        this(reference, start, end, offset, type, Collections.emptyList());
+        super(start, end, offset, type);
+        this.tokens = new ArrayList<>();
+        this.reader = reader;
+        this.reference = reader.getFullText();
     }
 
     public String stringify() {
-        return this.stringify(1);
+        return this.stringify(1, true);
     }
 
-    protected String stringify(final int level) {
-        final Itr itr = this.iterator();
-        final StringBuilder sb = new StringBuilder();
-        sb.append("[\n");
-        if (itr.hasNext()) {
-            stringifySingle(sb, itr.next(), level);
+    protected String stringify(final int level, final boolean readToEnd) {
+        if (readToEnd) {
+            this.readToEnd();
         }
-        while (itr.hasNext()) {
-            sb.append('\n');
-            stringifySingle(sb, itr.next(), level);
+        final StringBuilder sb = new StringBuilder("[");
+        final List<Token> copy = new ArrayList<>(this.tokens);
+        for (final Token token : copy) {
+            this.stringifySingle(sb, token, level, readToEnd);
         }
-        sb.append('\n');
-        for (int i = 0; i < level - 1; i++) {
-            sb.append(' ');
+        if (this.reader != null || this.tokens.size() != copy.size()) {
+            this.writeNewLine(sb, level);
+            sb.append("<reading...>");
         }
+        this.writeNewLine(sb, level - 1);
         return sb.append("]").toString();
     }
 
-    private static void stringifySingle(final StringBuilder sb, final Token token, final int level) {
-        for (int i = 0; i < level; i++) {
-            sb.append(' ');
+    protected void readToEnd() {
+        final PositionTrackingReader reader = this.reader;
+        if (reader != null) {
+            synchronized (this) {
+                this.forEach(token -> {});
+            }
         }
+    }
+
+    private void stringifySingle(
+            final StringBuilder sb, final Token token, final int level, final boolean readToEnd) {
+        this.writeNewLine(sb, level);
         sb.append(token.type).append('(');
         if (token.type == Type.NUMBER) {
             sb.append(((NumberToken) token).number);
         } else if (token instanceof TokenStream) {
-            sb.append(((TokenStream) token).stringify(level + 1));
+            sb.append(((TokenStream) token).stringify(level + 1, readToEnd));
         } else {
-            final String text = token.getText()
+            final String text = token.textOf(this.reference)
                 .replace("\n", "\\n").replace("\t", "\\t");
             sb.append('\'').append(text).append('\'');
         }
         sb.append(')');
+    }
+
+    private void writeNewLine(final StringBuilder sb, final int level) {
+        sb.append('\n');
+        for (int i = 0; i < level; i++) {
+            sb.append(' ');
+        }
     }
 
     @Override
@@ -103,14 +127,29 @@ public class TokenStream extends Token implements Iterable<Token> {
         return false;
     }
 
+    @Override
+    public String toString() {
+        return this.stringify(1, false);
+    }
+
+    @Override
+    public void close() throws IOException {
+        final PositionTrackingReader reader;
+        synchronized (this) {
+            reader = this.reader;
+        }
+        if (reader != null) {
+            reader.close();
+        }
+    }
+
     public class Itr implements Iterator<Token> {
-        protected int textIndex;
-        protected int elementIndex;
-        protected int lineIndex;
-        protected int offset;
+        protected final PositionTrackingReader reader;
         protected Token next;
+        protected int elementIndex;
 
         protected Itr() {
+            this.reader = TokenStream.this.reader;
             this.search();
         }
 
@@ -128,11 +167,47 @@ public class TokenStream extends Token implements Iterable<Token> {
 
         protected void search() {
             this.next = this.peek();
+            if (this.reader != null && this.next == null) {
+                try {
+                    this.reader.close();
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                TokenStream.this.reader = null;
+            }
             this.elementIndex++;
         }
 
-        public void skipTo(final int index) {
-            this.textIndex = index;
+        protected int getTextIndex() {
+            if (this.reader != null) {
+                return this.reader.index;
+            } else if (this.next != null) {
+                return this.next.start;
+            } else if (tokens.isEmpty()) {
+                return 0;
+            }
+            return tokens.get(tokens.size() - 1).end;
+        }
+
+        public int skipLine() {
+            if (this.reader != null) {
+                try {
+                    this.reader.skipToNL();
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+                return this.reader.index;
+            }
+            while (this.next != null) {
+                if (this.next.type == Type.BREAK) {
+                    return this.next.start;
+                }
+                this.search();
+            }
+            if (tokens.isEmpty()) {
+                return 0;
+            }
+            return tokens.get(tokens.size() - 1).end;
         }
 
         public @Nullable Token peek() {
@@ -143,30 +218,32 @@ public class TokenStream extends Token implements Iterable<Token> {
             Token next = null;
             final int peekIndex = this.elementIndex + amount - 1;
             if (peekIndex < tokens.size()) {
-                final Token peek = tokens.get(peekIndex);
-                this.textIndex = peek.end;
-                return peek;
+                return tokens.get(peekIndex);
+            }
+            if (this.reader == null) {
+                return null;
             }
             for (int i = 0; i < amount; i++) {
-                next = Tokenizer.single(reference, this.textIndex, this.offset);
+                try {
+                    next = Tokenizer.single(this.reader);
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
                 if (next == null) {
                     return null;
                 }
-                if (next.type == Type.BREAK) {
-                    this.lineIndex = next.end;
-                    this.offset = 0;
-                } else {
-                    this.offset = next.end - this.lineIndex;
-                }
                 tokens.add(next);
-                this.textIndex = next.end;
             }
             return next;
         }
 
         public @Nullable Token previous() {
-            if (this.elementIndex > 0) {
-                return tokens.get(this.elementIndex - 1);
+            return this.previous(1);
+        }
+
+        public @Nullable Token previous(final int amount) {
+            if (this.elementIndex - amount >= 0) {
+                return tokens.get(this.elementIndex - amount);
             }
             return null;
         }

@@ -1,4 +1,4 @@
-package xjs.serialization.token;
+package xjs.performance.legacy.token;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Represents a 
  */
-public class ContainerToken extends TokenStream {
+public class LegacyContainerToken extends LegacyTokenStream {
 
     /**
      * Constructs a new Token object to be placed on an AST.
@@ -18,18 +18,18 @@ public class ContainerToken extends TokenStream {
      * @param offset   The column of the start index.
      * @param type     The type of token.
      */
-    public ContainerToken(
+    public LegacyContainerToken(
             final String reference, final int start, final int end,
-            final int offset, final Type type, final List<Token> tokens) {
+            final int offset, final Type type, final List<LegacyToken> tokens) {
         super(reference, start, end, offset, type, tokens);
     }
 
-    public Token get(final int i) {
+    public LegacyToken get(final int i) {
         return this.tokens.get(i);
     }
 
-    public Token getTokenFromStringIndex(final int i) {
-        for (final Token token : this.tokens) {
+    public LegacyToken getTokenFromStringIndex(final int i) {
+        for (final LegacyToken token : this.tokens) {
             if (i >= token.start && i < token.end) {
                 return token;
             }
@@ -46,14 +46,14 @@ public class ContainerToken extends TokenStream {
         return result != null ? result.index : -1;
     }
 
-    public @Nullable ContainerToken.Lookup lookup(final char symbol, final boolean exact) {
+    public @Nullable LegacyContainerToken.Lookup lookup(final char symbol, final boolean exact) {
         return this.lookup(symbol, 0, exact);
     }
 
-    public @Nullable ContainerToken.Lookup lookup(final char symbol, final int fromIndex, final boolean exact) {
+    public @Nullable LegacyContainerToken.Lookup lookup(final char symbol, final int fromIndex, final boolean exact) {
         for (int i = fromIndex; i < this.tokens.size(); i++) {
-            final Token token = this.tokens.get(i);
-            if (token.type == Type.SYMBOL && ((SymbolToken) token).symbol == symbol) {
+            final LegacyToken token = this.tokens.get(i);
+            if (token.type == Type.SYMBOL && ((LegacySymbolToken) token).symbol == symbol) {
                 final Lookup result = new Lookup(token, i);
                 if (exact && (result.followsOtherSymbol() || result.precedesOtherSymbol())) {
                     return this.lookup(symbol, i, true);
@@ -69,11 +69,11 @@ public class ContainerToken extends TokenStream {
         return result != null ? result.index : -1;
     }
 
-    public @Nullable ContainerToken.Lookup lookup(final String symbol, final boolean exact) {
+    public @Nullable LegacyContainerToken.Lookup lookup(final String symbol, final boolean exact) {
         return this.lookup(symbol, 0, exact);
     }
 
-    public @Nullable ContainerToken.Lookup lookup(final String symbol, final int fromIndex, final boolean exact) {
+    public @Nullable LegacyContainerToken.Lookup lookup(final String symbol, final int fromIndex, final boolean exact) {
         char c = symbol.charAt(0);
         final Lookup firstLookup = this.lookup(c, fromIndex, false);
         if (firstLookup == null) {
@@ -101,32 +101,37 @@ public class ContainerToken extends TokenStream {
         return firstLookup;
     }
 
-    public TokenStream slice(final int s, final int e) {
+    public LegacyTokenStream slice(final int s, final int e) {
         if (s == 0 && e == this.tokens.size()) {
             return this;
         } else if (s < 0 || e > this.tokens.size()) {
             throw new IllegalArgumentException(
                 String.format("slice: (%d, %d) exceeds markers: (0, %d)", s, e, tokens.size()));
         }
-        final Token first = this.tokens.get(s);
-        final Token last = this.tokens.get(e);
-        final List<Token> slice = this.tokens.subList(s, e);
-        return new ContainerToken(
-            this.reference.toString(), first.start, last.end, first.offset, Type.OPEN, slice);
+        final LegacyToken first = this.tokens.get(s);
+        final LegacyToken last = this.tokens.get(e);
+        final List<LegacyToken> slice = this.tokens.subList(s, e);
+        return new LegacyContainerToken(
+            this.reference, first.start, last.end, first.offset, Type.OPEN, slice);
+    }
+
+    @Override
+    public Itr iterator() {
+        return new Itr();
     }
 
     public class Lookup {
-        public final Token token;
+        public final LegacyToken token;
         public final int index;
 
-        protected Lookup(final Token token, final int index) {
+        protected Lookup(final LegacyToken token, final int index) {
             this.token = token;
             this.index = index;
         }
 
         public boolean followsOtherSymbol() {
             if (this.index > 0) {
-                final Token previous = tokens.get(this.index - 1);
+                final LegacyToken previous = tokens.get(this.index - 1);
                 return previous.type == Type.SYMBOL && this.token.start == previous.end;
             }
             return false;
@@ -134,7 +139,7 @@ public class ContainerToken extends TokenStream {
 
         public boolean precedesOtherSymbol() {
             if (this.index < tokens.size() - 1) {
-                final Token following = tokens.get(this.index + 1);
+                final LegacyToken following = tokens.get(this.index + 1);
                 return following.type == Type.SYMBOL && this.token.end == following.start;
             }
             return false;
@@ -142,12 +147,57 @@ public class ContainerToken extends TokenStream {
 
         public boolean isFollowedBy(final char symbol) {
             if (tokens.size() > this.index + 1) {
-                final Token following = tokens.get(index + 1);
+                final LegacyToken following = tokens.get(index + 1);
                 return following.type == Type.SYMBOL
                     && this.token.end == following.start
-                    && ((SymbolToken) following).symbol == symbol;
+                    && ((LegacySymbolToken) following).symbol == symbol;
             }
             return false;
+        }
+    }
+    
+    public class Itr extends LegacyTokenStream.Itr {
+        protected LegacyToken current;
+        protected int elementIndex;
+        
+        @Override
+        public boolean hasNext() {
+            return this.elementIndex < tokens.size();
+        }
+
+        @Override
+        public LegacyToken next() {
+            return this.current = tokens.get(this.elementIndex++);
+        }
+
+        @Override
+        public void skipTo(final int index) {
+            while (this.getTextIndex() < index) {
+                this.next();
+            }
+        }
+
+        protected int getTextIndex() {
+            if (this.current != null) {
+                return current.start;
+            }
+            return 0;
+        }
+
+        @Override
+        public @Nullable LegacyToken peek(final int amount) {
+            if (this.elementIndex + amount - 1 < tokens.size()) {
+                return null;
+            }
+            return tokens.get(this.elementIndex + amount - 1);
+        }
+
+        @Override
+        public @Nullable LegacyToken previous() {
+            if (this.elementIndex > 0) {
+                return tokens.get(this.elementIndex - 1);
+            }
+            return null;
         }
     }
 }

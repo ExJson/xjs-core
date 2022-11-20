@@ -1,28 +1,26 @@
-package xjs.serialization.token;
+package xjs.performance.legacy.token;
 
 import org.junit.jupiter.api.Test;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import xjs.exception.SyntaxException;
-import xjs.serialization.token.Token.Type;
-import xjs.serialization.util.PositionTrackingReader;
+import xjs.performance.legacy.token.LegacyToken.Type;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public final class TokenizerTest {
+public final class LegacyTokenizerTest {
 
     @Test
     public void single_parsesLineComment() {
         final String reference = "// Hello, world!";
         assertEquals(
             token(reference, Type.LINE),
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @Test
@@ -30,7 +28,7 @@ public final class TokenizerTest {
         final String reference = "# Hello, world!";
         assertEquals(
             token(reference, Type.LINE),
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @Test
@@ -38,7 +36,7 @@ public final class TokenizerTest {
         final String reference = "/*\nHello\nworld!\n*/";
         assertEquals(
             token(reference, Type.MULTI),
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @Test
@@ -46,7 +44,7 @@ public final class TokenizerTest {
         final String reference = "\"Hello, world!\"";
         assertEquals(
             token(reference, Type.DOUBLE),
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @Test
@@ -54,7 +52,7 @@ public final class TokenizerTest {
         final String reference = "'Hello, world!'";
         assertEquals(
             token(reference, Type.SINGLE),
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @Test
@@ -62,7 +60,7 @@ public final class TokenizerTest {
         final String reference = "'''\nHello\nworld!\n'''";
         assertEquals(
             token(reference, Type.TRIPLE),
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @Test
@@ -70,7 +68,7 @@ public final class TokenizerTest {
         final String reference = "1234";
         assertEquals(
             number(reference, 1234),
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @Test
@@ -78,7 +76,7 @@ public final class TokenizerTest {
         final String reference = "1234.5";
         assertEquals(
             number(reference, 1234.5),
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @Test
@@ -86,7 +84,7 @@ public final class TokenizerTest {
         final String reference = "1234.5E6";
         assertEquals(
             number(reference, 1234.5E6),
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @Test
@@ -94,15 +92,21 @@ public final class TokenizerTest {
         final String reference = "1234.5e+6";
         assertEquals(
             number(reference, 1234.5E+6),
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
-    @Test // cannot support splitting tokens without peek or side effects
-    public void single_parsesSignAfterNumber_asWord() {
+    @Test
+    public void single_parsesSignAfterNumber_asTwoTokens() {
         final String reference = "1234e+";
         assertEquals(
-            token(Type.WORD, 0, 6),
-            single(reference));
+            container(
+                reference,
+                Type.OPEN,
+                0,
+                6,
+                token(reference, Type.WORD, 0, 5),
+                symbol(reference, '+', 5, 6)),
+            LegacyTokenizer.containerize(reference));
     }
 
     @Test
@@ -110,7 +114,7 @@ public final class TokenizerTest {
         final String reference = "\n";
         assertEquals(
             token(reference, Type.BREAK),
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @ValueSource(strings = {"+", "-", "<", ">", "=", ":", "{", "}", "[", "]", "(", ")"})
@@ -118,31 +122,23 @@ public final class TokenizerTest {
     public void single_parsesSymbol(final String reference) {
         assertEquals(
             symbol(reference, reference.charAt(0)),
-            single(reference));
-    }
-
-    @Test
-    public void single_parsesWord() {
-        final String reference = "word";
-        assertEquals(
-            token(Type.WORD, 0, 4),
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @Test
     public void single_skipsWhitespace() {
         final String reference = " \t \t \t 'Hello, world!'";
         assertEquals(
-            token(Type.SINGLE, 7, reference.length()),
-            single(reference));
+            token(reference, Type.SINGLE, 7, reference.length()),
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @Test
     public void single_readsContainerElements_asSymbols() {
         final String reference = " {hello}";
         assertEquals(
-            symbol('{', 1, 2),
-            single(reference));
+            symbol(reference, '{', 1, 2),
+            LegacyTokenizer.single(reference, 0, 0));
     }
     
     @ValueSource(strings = {"'", "\"", "'''"})
@@ -150,14 +146,14 @@ public final class TokenizerTest {
     public void single_doesNotTolerate_UnclosedQuote(final String quote) {
         final String reference = quote + "hello, world!";
         assertThrows(SyntaxException.class, () ->
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @Test
     public void single_doesNotTolerate_UnclosedMultiLineComment() {
         final String reference = "/*hello, world!";
         assertThrows(SyntaxException.class, () ->
-            single(reference));
+            LegacyTokenizer.single(reference, 0, 0));
     }
 
     @Test
@@ -169,10 +165,10 @@ public final class TokenizerTest {
                 Type.BRACES,
                 0,
                 13,
-                token(Type.WORD, 1, 6),
-                symbol(',', 6, 7),
-                token(Type.WORD, 7, 12)),
-            Tokenizer.containerize(reference));
+                token(reference, Type.WORD, 1, 6),
+                symbol(reference, ',', 6, 7),
+                token(reference, Type.WORD, 7, 12)),
+            LegacyTokenizer.containerize(reference));
     }
 
     @Test
@@ -184,15 +180,15 @@ public final class TokenizerTest {
                 Type.BRACES,
                 0,
                 15,
-                token(Type.WORD, 1, 6),
-                symbol(',', 6, 7),
+                token(reference, Type.WORD, 1, 6),
+                symbol(reference, ',', 6, 7),
                 container(
                     reference,
                     Type.BRACKETS,
                     7,
                     14,
-                    token(Type.WORD, 8, 13))),
-            Tokenizer.containerize(reference));
+                    token(reference, Type.WORD, 8, 13))),
+            LegacyTokenizer.containerize(reference));
     }
 
     @Test
@@ -204,10 +200,10 @@ public final class TokenizerTest {
                 Type.BRACES,
                 0,
                 13,
-                token(Type.WORD, 1, 6),
-                symbol(',', 6, 7),
-                token(Type.WORD, 7, 12)),
-            Tokenizer.containerize(reference));
+                token(reference, Type.WORD, 1, 6),
+                symbol(reference, ',', 6, 7),
+                token(reference, Type.WORD, 7, 12)),
+            LegacyTokenizer.containerize(reference));
     }
 
     @Test
@@ -215,47 +211,39 @@ public final class TokenizerTest {
         final String reference = "{[}";
         final SyntaxException e =
             assertThrows(SyntaxException.class, () ->
-                Tokenizer.containerize(reference));
+                LegacyTokenizer.containerize(reference));
         assertTrue(e.getMessage().contains("Expected ']'"));
     }
 
     @Test
     public void stream_returnsLazilyEvaluatedTokens() {
-        final TokenStream stream = Tokenizer.stream("1234");
+        final LegacyTokenStream stream = LegacyTokenizer.stream("1234");
         stream.iterator().next();
         assertEquals(1, stream.tokens.size());
     }
-    
-    private static Token single(final String reference) {
-        try {
-            return Tokenizer.single(PositionTrackingReader.fromString(reference));
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+
+    private static LegacyToken token(final String reference, final Type type) {
+        return token(reference, type, 0, reference.length());
     }
 
-    private static Token token(final String reference, final Type type) {
-        return token(type, 0, reference.length());
+    private static LegacyToken token(final String reference, final Type type, final int s, final int e) {
+        return new LegacyToken(reference, s, e, s, type);
     }
 
-    private static Token token(final Type type, final int s, final int e) {
-        return new Token(s, e, s, type);
+    private static LegacyToken number(final String reference, final double number) {
+        return new LegacyNumberToken(reference, 0, reference.length(), 0, number);
     }
 
-    private static Token number(final String reference, final double number) {
-        return new NumberToken(0, reference.length(), 0, number);
+    private static LegacyToken symbol(final String reference, final char symbol) {
+        return symbol(reference, symbol, 0, reference.length());
     }
 
-    private static Token symbol(final String reference, final char symbol) {
-        return symbol(symbol, 0, reference.length());
+    private static LegacyToken symbol(final String reference, final char symbol, final int s, final int e) {
+        return new LegacySymbolToken(reference, s, e, s, symbol);
     }
 
-    private static Token symbol(final char symbol, final int s, final int e) {
-        return new SymbolToken(s, e, s, symbol);
-    }
-
-    private static Token container(
-            final String reference, final Type type, final int s, final int e, final Token... tokens) {
-        return new ContainerToken(reference, s, e, s, type, List.of(tokens));
+    private static LegacyToken container(
+            final String reference, final Type type, final int s, final int e, final LegacyToken... tokens) {
+        return new LegacyContainerToken(reference, s, e, s, type, List.of(tokens));
     }
 }
