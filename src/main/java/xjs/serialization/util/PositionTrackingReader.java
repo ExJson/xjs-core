@@ -19,7 +19,7 @@ public abstract class PositionTrackingReader implements Closeable {
 
     public int index;
     public int line;
-    public int lineOffset;
+    public int column;
     public int linesSkipped;
     public int current;
 
@@ -27,7 +27,9 @@ public abstract class PositionTrackingReader implements Closeable {
     protected int captureStart;
 
     protected PositionTrackingReader() {
+        this.index = -1;
         this.line = 1;
+        this.column = -1;
         this.captureStart = -1;
     }
 
@@ -35,20 +37,24 @@ public abstract class PositionTrackingReader implements Closeable {
         return new DirectStringReader(s);
     }
 
-    public static PositionTrackingReader fromIs(final InputStream is) {
-        return new DirectInputStreamReader(is, DEFAULT_BUFFER_SIZE);
+    public static PositionTrackingReader fromIs(final InputStream is) throws IOException {
+        return new DirectInputStreamReader(is, DEFAULT_BUFFER_SIZE, false);
     }
 
-    public static PositionTrackingReader fromIs(final InputStream is, final int size) {
+    public static PositionTrackingReader fromIs(
+            final InputStream is, final boolean captureFullText) throws IOException {
+        return new DirectInputStreamReader(is, DEFAULT_BUFFER_SIZE, captureFullText);
+    }
+
+    public static PositionTrackingReader fromIs(
+            final InputStream is, final int size, final boolean captureFullText) throws IOException {
         if (size < MIN_BUFFER_SIZE) {
             throw new IllegalArgumentException("buffer size < " + MIN_BUFFER_SIZE);
         }
-        return new DirectInputStreamReader(is, size);
+        return new DirectInputStreamReader(is, size, captureFullText);
     }
 
-    public abstract PositionTrackingReader captureFullText();
-
-    public abstract String getFullText();
+    public abstract CharSequence getFullText();
 
     protected abstract void appendToCapture();
 
@@ -71,18 +77,17 @@ public abstract class PositionTrackingReader implements Closeable {
     }
 
     public String readToEnd() throws IOException {
-        this.captureFullText();
         do {
             this.read();
         } while (!this.isEndOfText());
-        return this.getFullText();
+        return this.getFullText().toString();
     }
 
     public void startCapture() {
         if (this.capture == null) {
             this.capture = new StringBuilder();
         }
-        this.captureStart = this.index - 1;
+        this.captureStart = this.index;
     }
 
     public void pauseCapture() {
@@ -116,11 +121,23 @@ public abstract class PositionTrackingReader implements Closeable {
         }
     }
 
+    public void skipLineWhitespace() throws IOException {
+        while (this.isLineWhitespace()) {
+            this.read();
+        }
+    }
+
     public void skipToOffset(final int offset) throws IOException {
         for (int i = 0; i < offset; i++) {
             if (!this.isLineWhitespace()) {
                 return;
             }
+            this.read();
+        }
+    }
+
+    public void skipToNL() throws IOException {
+        while (this.current != '\n' && this.current != -1) {
             this.read();
         }
     }
@@ -156,7 +173,7 @@ public abstract class PositionTrackingReader implements Closeable {
         return Double.parseDouble(this.endCapture());
     }
 
-    protected boolean readDecimal() throws IOException {
+    public boolean readDecimal() throws IOException {
         if (!this.readIf('.')) {
             return false;
         }
@@ -167,7 +184,7 @@ public abstract class PositionTrackingReader implements Closeable {
         return true;
     }
 
-    protected boolean readExponent() throws IOException {
+    public boolean readExponent() throws IOException {
         if (!this.readIf('e') && !this.readIf('E')) {
             return false;
         }
@@ -270,16 +287,12 @@ public abstract class PositionTrackingReader implements Closeable {
         return this.current == -1;
     }
 
-    public int getColumn() {
-        return this.index - this.lineOffset - 1;
-    }
-
     public SyntaxException expected(final char expected) {
-        return SyntaxException.expected(expected, this.line, this.getColumn());
+        return SyntaxException.expected(expected, this.line, this.column);
     }
 
     public SyntaxException expected(final String expected) {
-        return SyntaxException.expected(expected, this.line, this.getColumn());
+        return SyntaxException.expected(expected, this.line, this.column);
     }
 
     public SyntaxException unexpected() {
@@ -287,11 +300,11 @@ public abstract class PositionTrackingReader implements Closeable {
     }
 
     public SyntaxException unexpected(final char unexpected) {
-        return SyntaxException.unexpected(unexpected, this.line, this.getColumn());
+        return SyntaxException.unexpected(unexpected, this.line, this.column);
     }
 
     public SyntaxException unexpected(final String unexpected) {
-        return SyntaxException.unexpected(unexpected, this.line, this.getColumn());
+        return SyntaxException.unexpected(unexpected, this.line, this.column);
     }
 
     private static class DirectInputStreamReader extends PositionTrackingReader {
@@ -302,27 +315,22 @@ public abstract class PositionTrackingReader implements Closeable {
         int bufferIndex;
         int fill;
 
-        DirectInputStreamReader(final InputStream is, final int size) {
+        DirectInputStreamReader(
+                final InputStream is, final int size, final boolean captureFullText) throws IOException {
             this.reader = new InputStreamReader(is, StandardCharsets.UTF_8);
             this.buffer = new char[size];
             this.bufferIndex = 0;
             this.fill = 0;
+            if (captureFullText) this.out = new StringBuilder();
+            this.read();
         }
 
         @Override
-        public DirectInputStreamReader captureFullText() {
-            if (this.out == null) {
-                this.out = new StringBuilder(this.buffer.length);
-            }
-            return this;
-        }
-
-        @Override
-        public String getFullText() {
+        public CharSequence getFullText() {
             if (this.out == null) {
                 throw new IllegalStateException("output not configured");
             }
-            return this.out.toString();
+            return this.out;
         }
 
         public void startCapture() {
@@ -354,6 +362,7 @@ public abstract class PositionTrackingReader implements Closeable {
                 this.fill = this.reader.read(this.buffer, 0, this.buffer.length);
                 this.bufferIndex = 0;
                 if (this.fill == -1) {
+                    this.index++;
                     this.current = -1;
                     return;
                 }
@@ -364,9 +373,10 @@ public abstract class PositionTrackingReader implements Closeable {
             if (this.current == '\n') {
                 this.line++;
                 this.linesSkipped++;
-                this.lineOffset = this.index;
+                this.column = -1;
             }
             this.index++;
+            this.column++;
             this.current = this.buffer[this.bufferIndex++];
         }
 
@@ -381,11 +391,7 @@ public abstract class PositionTrackingReader implements Closeable {
 
         DirectStringReader(final String s) {
             this.s = s;
-        }
-
-        @Override
-        public DirectStringReader captureFullText() {
-            return this;
+            this.read();
         }
 
         @Override
@@ -395,28 +401,28 @@ public abstract class PositionTrackingReader implements Closeable {
 
         @Override
         protected void appendToCapture() {
-            final int end = this.current == -1 ? this.index : this.index - 1;
-            this.capture.append(this.s, this.captureStart, end);
+            this.capture.append(this.s, this.captureStart, this.index);
         }
 
         @Override
         protected String slice() {
-            final int end = this.current == -1 ? this.index : this.index - 1;
-            return this.s.substring(this.captureStart, end);
+            return this.s.substring(this.captureStart, this.index);
         }
 
         @Override
         public void read() {
-            if (this.index == this.s.length()) {
+            if (this.index == this.s.length() - 1) {
+                this.index = this.s.length();
                 this.current = -1;
                 return;
             }
             if (this.current == '\n') {
                 this.line++;
                 this.linesSkipped++;
-                this.lineOffset = this.index;
+                this.column = -1;
             }
-            this.current = this.s.charAt(this.index++);
+            this.column++;
+            this.current = this.s.charAt(++this.index);
         }
 
         @Override

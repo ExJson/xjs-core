@@ -12,6 +12,7 @@ import xjs.exception.SyntaxException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -58,10 +59,10 @@ public final class PositionTrackingReaderTest {
     }
 
     @Test
-    public void reader_capturesFullText() {
+    public void reader_capturesFullText() throws IOException {
         for (final Sample sample : TestData.generateMixedSet()) {
             for (PositionTrackingReader reader : sample.getAllReaders()) {
-                assertEquals(sample.text, getFullOutput(reader),
+                assertEquals(sample.text, reader.readToEnd(),
                     reader.getClass().getSimpleName());
             }
         }
@@ -86,12 +87,11 @@ public final class PositionTrackingReaderTest {
         final Sample sample = new Sample(columns, NORMAL_BUFFER);
 
         for (final PositionTrackingReader reader : sample.getAllReaders()) {
-            reader.read();
             do {
                 if (reader.current != '\n') {
                     final int expectedColumn =
                         Integer.parseInt("" + (char) reader.current);
-                    assertEquals(expectedColumn, reader.getColumn(),
+                    assertEquals(expectedColumn, reader.column,
                         reader.getClass().getSimpleName());
                 }
                 reader.read();
@@ -105,9 +105,9 @@ public final class PositionTrackingReaderTest {
         final Sample sample = new Sample(columns, NORMAL_BUFFER);
 
         for (final PositionTrackingReader reader : sample.getAllReaders()) {
-            do {
+            while (!reader.isEndOfText()) {
                 reader.read();
-            } while (!reader.isEndOfText());
+            }
             assertEquals(300, reader.line,
                 reader.getClass().getSimpleName());
         }
@@ -117,7 +117,6 @@ public final class PositionTrackingReaderTest {
     public void readIf_doesNotAdvanceOnMismatch() throws IOException {
         final Sample sample = new Sample("abc", NORMAL_BUFFER);
         for (final PositionTrackingReader reader : sample.getAllReaders()) {
-            reader.read();
             assertFalse(reader.readIf('x'));
             assertTrue(reader.readIf('a'));
             assertFalse(reader.readIf('y'));
@@ -132,7 +131,6 @@ public final class PositionTrackingReaderTest {
     public void expect_throwsOnMismatch() throws IOException {
         final Sample sample = new Sample("abc", NORMAL_BUFFER);
         for (final PositionTrackingReader reader : sample.getAllReaders()) {
-            reader.read();
             assertFalse(reader.readIf('x'));
             assertTrue(reader.readIf('a'));
             assertThrows(SyntaxException.class, () ->
@@ -144,7 +142,6 @@ public final class PositionTrackingReaderTest {
     public void capture_capturesExactly() throws IOException {
         final Sample sample = new Sample("1234567891011", MINIMUM_BUFFER);
         for (final PositionTrackingReader reader : sample.getAllReaders()) {
-            reader.read();
             assertTrue(reader.readIf('1'));
             assertTrue(reader.readIf('2'));
             assertTrue(reader.readIf('3'));
@@ -161,7 +158,6 @@ public final class PositionTrackingReaderTest {
     public void pauseCapture_doesNotMangleCapture() throws IOException {
         final Sample sample = new Sample("1234567891011", MINIMUM_BUFFER);
         for (final PositionTrackingReader reader : sample.getAllReaders()) {
-            reader.read();
             assertTrue(reader.readIf('1'));
 
             reader.startCapture();
@@ -185,7 +181,6 @@ public final class PositionTrackingReaderTest {
     public void endCaptureEarly_doesNotMangleCapture() throws IOException {
         final Sample sample = new Sample("1234567891011", MINIMUM_BUFFER);
         for (final PositionTrackingReader reader : sample.getAllReaders()) {
-            reader.read();
             assertTrue(reader.readIf('1'));
 
             reader.startCapture();
@@ -204,7 +199,6 @@ public final class PositionTrackingReaderTest {
     public void readNumber_readsFullNumber() throws IOException {
         final Sample sample = new Sample("123456789", MINIMUM_BUFFER);
         for (final PositionTrackingReader reader : sample.getAllReaders()) {
-            reader.read();
             assertEquals(123456789, reader.readNumber());
         }
     }
@@ -215,7 +209,6 @@ public final class PositionTrackingReaderTest {
         final String text = "'Hello, world!'";
         final Sample sample = new Sample(quote + text + quote, MINIMUM_BUFFER);
         for (final PositionTrackingReader reader : sample.getAllReaders()) {
-            reader.read();
             assertEquals(text, reader.readQuoted(quote));
         }
     }
@@ -226,7 +219,6 @@ public final class PositionTrackingReaderTest {
         final String text = "\\t\\n\\u1234";
         final Sample sample = new Sample(quote + text + quote, MINIMUM_BUFFER);
         for (final PositionTrackingReader reader : sample.getAllReaders()) {
-            reader.read();
             assertEquals("\t\n\u1234", reader.readQuoted(quote));
         }
     }
@@ -234,7 +226,6 @@ public final class PositionTrackingReaderTest {
     private static String parseFullText(final PositionTrackingReader reader) {
         final StringBuilder sb = new StringBuilder();
         try {
-            reader.read();
             while (reader.current != -1) {
                 sb.append((char) reader.current);
                 reader.read();
@@ -243,18 +234,6 @@ public final class PositionTrackingReaderTest {
             throw new RuntimeException(e);
         }
         return sb.toString();
-    }
-
-    private static String getFullOutput(final PositionTrackingReader reader) {
-        reader.captureFullText();
-        try {
-            do {
-                reader.read();
-            } while (reader.current != -1);
-        } catch (final Exception e) {
-            throw new RuntimeException(e);
-        }
-        return reader.getFullText();
     }
 
     private record TestData(List<Sample> samples) implements Iterable<Sample> {
@@ -296,9 +275,7 @@ public final class PositionTrackingReaderTest {
         }
 
         List<PositionTrackingReader> getAllReaders() {
-            return List.of(
-                    this.getStringReader(),
-                    this.getCharBufferedReader());
+            return List.of(this.getStringReader(), this.getCharBufferedReader());
         }
 
         PositionTrackingReader getStringReader() {
@@ -306,7 +283,11 @@ public final class PositionTrackingReaderTest {
         }
 
         PositionTrackingReader getCharBufferedReader() {
-            return PositionTrackingReader.fromIs(this.getInputStream(), this.bufferSize);
+            try {
+                return PositionTrackingReader.fromIs(this.getInputStream(), this.bufferSize, true);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
 
         InputStream getInputStream() {
