@@ -5,9 +5,25 @@ package xjs.serialization.token;
  * or any other sequence of tokens.
  */
 public class Token {
+
+    /**
+     * The inclusive start index of this token.
+     */
     public final int start;
+
+    /**
+     * The exclusive end index of this token.
+     */
     public final int end;
+
+    /**
+     * The column of the start index.
+     */
     public final int offset;
+
+    /**
+     * The type of token.
+     */
     public final Type type;
 
     /**
@@ -25,6 +41,13 @@ public class Token {
         this.type = type;
     }
 
+    /**
+     * Creates a slice of the given {@link CharSequence} representing
+     * the region described by this token.
+     *
+     * @param reference The reference text being sliced.
+     * @return The string subsequence of the given reference text.
+     */
     public String textOf(final CharSequence reference) {
         return reference.subSequence(this.start, this.end).toString();
     }

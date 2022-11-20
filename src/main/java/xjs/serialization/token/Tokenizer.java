@@ -10,22 +10,55 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A handful of utilities for streaming and containerizing tokens.
+ *
+ * <p>In the future, this API may be exposed to extenders. In the
+ * meantime, users will have to provide fully-custom tokenizers
+ * to support some exotic formats.
+ */
 public final class Tokenizer {
 
     private Tokenizer() {}
 
+    /**
+     * Generates a lazily-evaluated {@link TokenStream stream of
+     * tokens} from the input text.
+     *
+     * @param text The full reference and source of tokens.
+     * @return A new {@link TokenStream}.
+     */
     public static TokenStream stream(final String text) {
-        return stream(text, 0, text.length(), 0);
+        return new TokenStream(PositionTrackingReader.fromString(text), 0, text.length(), 0, Type.OPEN);
     }
 
-    public static TokenStream stream(final String text, final int s, final int e, final int o) {
-        return new TokenStream(PositionTrackingReader.fromString(text), s, e, o, Type.OPEN);
-    }
-
+    /**
+     * Generates a lazily-evaluated {@link TokenStream stream of tokens}
+     * wrapping an {@link InputStream}.
+     *
+     * @param is The source of tokens being parsed.
+     * @return A new {@link TokenStream}.
+     * @throws IOException If the initial read operation throws an exception.
+     */
     public static TokenStream stream(final InputStream is) throws IOException {
         return new TokenStream(PositionTrackingReader.fromIs(is, true), 0, 0, 0, Type.OPEN);
     }
 
+    /**
+     * Reads a single, non-container token from the given reader.
+     *
+     * <p><b>Note:</b> there is a <b>known bug</b> with this method.
+     * Numbers with incomplete exponents will <em>not</em> be returned
+     * as multiple symbols and will instead be returned as a single
+     * word. This violates the contract that symbol characters--including
+     * <code>-</code> and <code>+</code>--will always be represented as
+     * {@link SymbolToken symbol tokens}. An eventual fix is expected,
+     * but the exact solution has not yet been determined.
+     *
+     * @param reader A reader tracking characters and positional data.
+     * @return The next possible token, or else <code>null</code>.
+     * @throws IOException If the given reader throws an exception.
+     */
     public static @Nullable Token single(final PositionTrackingReader reader) throws IOException {
         reader.skipLineWhitespace();
         if (reader.isEndOfText()) {
@@ -153,18 +186,36 @@ public final class Tokenizer {
         return new NumberToken(i, reader.index, o, number);
     }
 
+    /**
+     * Generates a recursive {@link ContainerToken} data structure from
+     * the given source.
+     *
+     * @param is The source of characters being decoded.
+     * @return A recursive {@link Token} data structure.
+     * @throws IOException If the reader throws an exception at any point.
+     */
     public static ContainerToken containerize(final InputStream is) throws IOException {
         return containerize(stream(is));
     }
 
+    /**
+     * Generates a recursive {@link ContainerToken} data structure from
+     * the given full text.
+     *
+     * @param text The full reference and source of tokens.
+     * @return A recursive {@link Token} data structure.
+     */
     public static ContainerToken containerize(final String text) {
-        return containerize(text, 0, text.length(), 0);
+        return containerize(stream(text));
     }
 
-    public static ContainerToken containerize(final String text, final int s, final int e, final int o) {
-        return containerize(stream(text, s, e, o));
-    }
-
+    /**
+     * Generates a recursive {@link ContainerToken} data structure from
+     * an existing {@link TokenStream stream of tokens}.
+     *
+     * @param stream An existing stream of tokens.
+     * @return A recursive {@link Token} data structure.
+     */
     public static ContainerToken containerize(final TokenStream stream) {
         if (stream instanceof ContainerToken) {
             return (ContainerToken) stream;

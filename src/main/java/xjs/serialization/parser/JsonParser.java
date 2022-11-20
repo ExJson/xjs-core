@@ -27,11 +27,10 @@ public class JsonParser implements ValueParser {
 
     public JsonParser(final File file, final int bufferSize) throws IOException {
         this.reader = PositionTrackingReader.fromIs(
-            new FileInputStream(file), bufferSize);
+            new FileInputStream(file), bufferSize, true);
     }
 
     public @NotNull JsonValue parse() throws IOException {
-        this.reader.read();
         this.reader.skipWhitespace();
         final int linesAbove = this.reader.linesSkipped;
         final JsonValue result =

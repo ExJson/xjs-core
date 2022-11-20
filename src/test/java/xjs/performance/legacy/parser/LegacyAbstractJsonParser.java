@@ -1,4 +1,4 @@
-package xjs.performance.legacy;
+package xjs.performance.legacy.parser;
 
 import xjs.core.JsonNumber;
 import xjs.core.JsonValue;
@@ -14,7 +14,7 @@ import java.io.*;
  * may be redesigned in a future pre-release, as not every field shown here is
  * used by all provided subclasses.
  */
-public abstract class AbstractJsonParser implements ValueParser {
+public abstract class LegacyAbstractJsonParser implements ValueParser {
 
     protected static final int MIN_BUFFER_SIZE = 10;
     protected static final int DEFAULT_BUFFER_SIZE = 1024;
@@ -40,20 +40,20 @@ public abstract class AbstractJsonParser implements ValueParser {
      *                       |  index           fill
      */
 
-    protected AbstractJsonParser(final String text) {
+    protected LegacyAbstractJsonParser(final String text) {
         this(new StringReader(text),
             Math.max(MIN_BUFFER_SIZE, Math.min(DEFAULT_BUFFER_SIZE, text.length())));
     }
 
-    protected AbstractJsonParser(final File file) throws IOException {
+    protected LegacyAbstractJsonParser(final File file) throws IOException {
         this(new FileReader(file));
     }
 
-    protected AbstractJsonParser(final Reader reader) {
+    protected LegacyAbstractJsonParser(final Reader reader) {
         this(reader, DEFAULT_BUFFER_SIZE);
     }
 
-    protected AbstractJsonParser(final Reader reader, final int buffer) {
+    protected LegacyAbstractJsonParser(final Reader reader, final int buffer) {
         this.reader = reader;
         this.buffer = new char[buffer];
         this.line = 1;

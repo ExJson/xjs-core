@@ -1,16 +1,15 @@
-package xjs.performance.legacy;
+package xjs.performance.legacy.parser;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xjs.core.*;
-import xjs.serialization.parser.AbstractJsonParser;
 import xjs.serialization.util.ImplicitStringUtils;
 import xjs.serialization.util.StringContext;
 
 import java.io.*;
 import java.util.Arrays;
 
-public class LegacyXjsParser extends AbstractJsonParser {
+public class LegacyXjsParser extends LegacyAbstractJsonParser {
 
     protected final String text;
     protected final StringBuilder commentBuffer;

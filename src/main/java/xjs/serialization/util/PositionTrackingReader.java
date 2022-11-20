@@ -17,10 +17,31 @@ public abstract class PositionTrackingReader implements Closeable {
     protected static final int DEFAULT_BUFFER_SIZE = 1024;
     protected static final int MIN_BUFFER_SIZE = 8;
 
+    /**
+     * The index of the current character.
+     */
     public int index;
+
+    /**
+     * The line number, starting at 1.
+     */
     public int line;
+
+    /**
+     * The column of the current character.
+     */
     public int column;
+
+    /**
+     * The number of lines read since the last time whitespace was skipped.
+     *
+     * <p><b>Note:</b> This API may change in the future.
+     */
     public int linesSkipped;
+
+    /**
+     * The current character, or else -1.
+     */
     public int current;
 
     protected StringBuilder capture;
@@ -33,19 +54,58 @@ public abstract class PositionTrackingReader implements Closeable {
         this.captureStart = -1;
     }
 
+    /**
+     * Generates an efficient reader optimized for existing strings.
+     *
+     * @param s The <em>full</em> text being parsed.
+     * @return A new reader for parsers and tokenizers.
+     */
     public static PositionTrackingReader fromString(final String s) {
         return new DirectStringReader(s);
     }
 
+    /**
+     * Generates a reader optimized for {@link InputStream}s and disk IO.
+     *
+     * <p>Unlike {@link Reader}, users should be aware that read calls
+     * are <b>not synchronized</b>. This utility is <b>not thread safe</b>,
+     * does not flush the underlying {@link InputStream}, and deliberately
+     * dodges some of the {@link Reader} API contract.
+     *
+     * @param is The source of characters being iterated over.
+     * @return A new reader for parsers and tokenizers.
+     * @throws IOException If the initial read operation fails.
+     */
     public static PositionTrackingReader fromIs(final InputStream is) throws IOException {
         return new DirectInputStreamReader(is, DEFAULT_BUFFER_SIZE, false);
     }
 
+    /**
+     * Variant of {@link #fromIs(InputStream)} specifying whether to capture
+     * the full text of the input. This text can be returned at any point
+     * by calling {@link #getFullText}. Callers should be aware that the
+     * text output <em>will</em> change as the reader progresses.
+     *
+     * @param is              The source of characters being iterated over.
+     * @param captureFullText Whether to preserve the full text input.
+     * @return A new reader for parsers and tokenizers.
+     * @throws IOException If the initial read operation fails.
+     */
     public static PositionTrackingReader fromIs(
             final InputStream is, final boolean captureFullText) throws IOException {
         return new DirectInputStreamReader(is, DEFAULT_BUFFER_SIZE, captureFullText);
     }
 
+    /**
+     * Variant of {@link #fromIs(InputStream, boolean)} specifying the size
+     * of the buffer used by the reader.
+     *
+     * @param is              The source of characters being iterated over.
+     * @param size            The size of the underlying character buffer.
+     * @param captureFullText Whether to preserve the full text input.
+     * @return A new reader for parsers and tokenizers.
+     * @throws IOException If the initial read operation fails.
+     */
     public static PositionTrackingReader fromIs(
             final InputStream is, final int size, final boolean captureFullText) throws IOException {
         if (size < MIN_BUFFER_SIZE) {
@@ -54,14 +114,38 @@ public abstract class PositionTrackingReader implements Closeable {
         return new DirectInputStreamReader(is, size, captureFullText);
     }
 
+    /**
+     * Returns the full text of the input, or as much as has been read up
+     * to this point.
+     *
+     * <p>Users should be aware that the return value of this method may
+     * <b>mutate</b> over time.
+     *
+     * @return The full text of the input.
+     * @throws UnsupportedOperationException If the reader is not configured
+     *                                       to capture the full text input.
+     */
     public abstract CharSequence getFullText();
 
     protected abstract void appendToCapture();
 
     protected abstract String slice();
 
+    /**
+     * Advances the reader by a single character.
+     *
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public abstract void read() throws IOException;
 
+    /**
+     * Advances the reader by a single character, <em>if</em> the current
+     * character equals the input.
+     *
+     * @param c The expected character at this position.
+     * @return True, if the current character matches the input.
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public boolean readIf(final char c) throws IOException {
         if (this.current != c) {
             return false;
@@ -70,12 +154,26 @@ public abstract class PositionTrackingReader implements Closeable {
         return true;
     }
 
+    /**
+     * Advances the reader by a single character, <em>if</em> the current
+     * character equals the input. If the input <em>does not</em> match,
+     * a syntax exception will be throws.
+     *
+     * @param c The expected character at this position.
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public void expect(final char c) throws IOException {
         if (!this.readIf(c)) {
             throw this.expected(c);
         }
     }
 
+    /**
+     * Advances the reader to the very end of the input.
+     *
+     * @return The full text input to the reader.
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public String readToEnd() throws IOException {
         do {
             this.read();
@@ -83,6 +181,11 @@ public abstract class PositionTrackingReader implements Closeable {
         return this.getFullText().toString();
     }
 
+    /**
+     * Marks the current position as the beginning of a <b>capture</b>.
+     *
+     * <p>The end of this capture can be exposed by calling {@link #endCapture}.
+     */
     public void startCapture() {
         if (this.capture == null) {
             this.capture = new StringBuilder();
@@ -90,11 +193,19 @@ public abstract class PositionTrackingReader implements Closeable {
         this.captureStart = this.index;
     }
 
+    /**
+     * Excludes a sequence of characters from the capture output.
+     */
     public void pauseCapture() {
         this.appendToCapture();
         this.captureStart = -1;
     }
 
+    /**
+     * Terminates the capture, generating new string value from the contents.
+     *
+     * @return The full text of the capture buffer.
+     */
     public String endCapture() {
         final String captured;
         if (this.capture.length() > 0) {
@@ -108,10 +219,22 @@ public abstract class PositionTrackingReader implements Closeable {
         return captured;
     }
 
+    /**
+     * Skips all whitespace from the current point.
+     *
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public void skipWhitespace() throws IOException {
         this.skipWhitespace(true);
     }
 
+    /**
+     * Skips whitespace and optionally resets the {@link #linesSkipped}
+     * counter to 0.
+     *
+     * @param reset Whether to reset the {@link #linesSkipped} counter.
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public void skipWhitespace(final boolean reset) throws IOException {
         if (reset) {
             this.linesSkipped = 0;
@@ -121,12 +244,23 @@ public abstract class PositionTrackingReader implements Closeable {
         }
     }
 
+    /**
+     * Skips all whitespace without advancing to the next line.
+     *
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public void skipLineWhitespace() throws IOException {
         while (this.isLineWhitespace()) {
             this.read();
         }
     }
 
+    /**
+     * Skips the given number of whitespace characters.
+     *
+     * @param offset The offset (e.g. expected column) to read to.
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public void skipToOffset(final int offset) throws IOException {
         for (int i = 0; i < offset; i++) {
             if (!this.isLineWhitespace()) {
@@ -136,12 +270,23 @@ public abstract class PositionTrackingReader implements Closeable {
         }
     }
 
+    /**
+     * Skips <em>all</em> characters until the next new line or end of input.
+     *
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public void skipToNL() throws IOException {
         while (this.current != '\n' && this.current != -1) {
             this.read();
         }
     }
 
+    /**
+     * Advances the reader if the current character is a digit.
+     *
+     * @return true, if the current character is a digit.
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public boolean readDigit() throws IOException {
         if (!this.isDigit()) {
             return false;
@@ -150,12 +295,25 @@ public abstract class PositionTrackingReader implements Closeable {
         return true;
     }
 
+    /**
+     * Reads all possible digits from the current point.
+     *
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public void readAllDigits() throws IOException {
         while (this.isDigit()) {
             this.read();
         }
     }
 
+    /**
+     * Reads a formatted number from the current index. If the reader
+     * encounters a syntax error, a {@link SyntaxException} will be
+     * thrown.
+     *
+     * @return The parsed number.
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public double readNumber() throws IOException {
         this.startCapture();
         this.readIf('-');
@@ -173,6 +331,14 @@ public abstract class PositionTrackingReader implements Closeable {
         return Double.parseDouble(this.endCapture());
     }
 
+    /**
+     * Reads a decimal value as part of a number. If a decimal
+     * is found but further digits are <em>not</em>, a {@link
+     * SyntaxException} will be thrown.
+     *
+     * @return true, if a decimal was found.
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public boolean readDecimal() throws IOException {
         if (!this.readIf('.')) {
             return false;
@@ -184,6 +350,14 @@ public abstract class PositionTrackingReader implements Closeable {
         return true;
     }
 
+    /**
+     * Reads an exponent value as part of a number. If an exponent
+     * indicator is found, but further digits are <em>not</em>, a
+     * {@link SyntaxException} will be thrown.
+     *
+     * @return true, if an exponent was found.
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public boolean readExponent() throws IOException {
         if (!this.readIf('e') && !this.readIf('E')) {
             return false;
@@ -198,6 +372,15 @@ public abstract class PositionTrackingReader implements Closeable {
         return true;
     }
 
+    /**
+     * Reads a single or double-quoted string from the current index.
+     * If the reader encounters a syntax error, a {@link SyntaxException}
+     * will be thrown.
+     *
+     * @param quote The type of quote being read.
+     * @return The parsed contents of this string.
+     * @throws IOException If the underlying reader throws an exception.
+     */
     public String readQuoted(final char quote) throws IOException {
         this.read();
         this.startCapture();
@@ -262,10 +445,22 @@ public abstract class PositionTrackingReader implements Closeable {
         this.read();
     }
 
+    /**
+     * Returns whether the current character is any form of non line break
+     * character.
+     *
+     * @return true, if the current character is line whitespace.
+     */
     public boolean isLineWhitespace() {
         return this.current == ' ' || this.current == '\t' || this.current == '\r';
     }
 
+    /**
+     * Returns whether the current character is <em>any kind</em> of
+     * whitespace character.
+     *
+     * @return true, if the current character is whitespace.
+     */
     public boolean isWhitespace() {
         return this.current == ' '
             || this.current == '\t'
@@ -273,36 +468,85 @@ public abstract class PositionTrackingReader implements Closeable {
             || this.current == '\r';
     }
 
+    /**
+     * Returns whether the current character is a digit.
+     *
+     * @return true, if the current character is a digit.
+     */
     public boolean isDigit() {
         return this.current >= '0' && this.current <= '9';
     }
 
+    /**
+     * Returns whether the current character is a <em>hex</em> digit.
+     *
+     * @return true, if the current character is a hex digit.
+     */
     public boolean isHexDigit() {
         return this.current >= '0' && this.current <= '9'
             || this.current >= 'a' && this.current <= 'f'
             || this.current >= 'A' && this.current <= 'F';
     }
 
+    /**
+     * Returns whether the reader has run out of text to read.
+     *
+     * @return true, if the reader has run out of text to read.
+     */
     public boolean isEndOfText() {
         return this.current == -1;
     }
 
+    /**
+     * Returns a syntax exception indicating that a character was
+     * expected at the current position.
+     *
+     * @param expected The expected character.
+     * @return A new syntax exception.
+     */
     public SyntaxException expected(final char expected) {
         return SyntaxException.expected(expected, this.line, this.column);
     }
 
+    /**
+     * Returns a syntax exception indicating that <em>something</em>
+     * was expected.
+     *
+     * @param expected A description of the expected characters.
+     * @return A new syntax exception.
+     */
     public SyntaxException expected(final String expected) {
         return SyntaxException.expected(expected, this.line, this.column);
     }
 
+    /**
+     * Returns a syntax exception indicating that the current character
+     * was not expected.
+     *
+     * @return A new syntax exception.
+     */
     public SyntaxException unexpected() {
         return this.unexpected((char) this.current);
     }
 
+    /**
+     * Returns a syntax exception indicating that a character was
+     * <em>not</em> expected at the current position.
+     *
+     * @param unexpected The expected character.
+     * @return A new syntax exception.
+     */
     public SyntaxException unexpected(final char unexpected) {
         return SyntaxException.unexpected(unexpected, this.line, this.column);
     }
 
+    /**
+     * Returns a syntax exception indicating that something was not
+     * expected at the current position.
+     *
+     * @param unexpected A description of the unexpected characters.
+     * @return A new syntax exception.
+     */
     public SyntaxException unexpected(final String unexpected) {
         return SyntaxException.unexpected(unexpected, this.line, this.column);
     }
@@ -328,7 +572,7 @@ public abstract class PositionTrackingReader implements Closeable {
         @Override
         public CharSequence getFullText() {
             if (this.out == null) {
-                throw new IllegalStateException("output not configured");
+                throw new UnsupportedOperationException("output not configured");
             }
             return this.out;
         }

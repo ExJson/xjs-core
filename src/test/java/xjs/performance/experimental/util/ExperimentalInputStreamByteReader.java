@@ -1,4 +1,4 @@
-package xjs.performance.experimental;
+package xjs.performance.experimental.util;
 
 import org.jetbrains.annotations.Nullable;
 import xjs.serialization.util.PositionTrackingReader;
@@ -10,7 +10,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 
-public class InputStreamByteReader extends PositionTrackingReader {
+public class ExperimentalInputStreamByteReader extends PositionTrackingReader {
     final InputStream is;
     final CharsetDecoder decoder;
     final byte[] buffer;
@@ -22,7 +22,7 @@ public class InputStreamByteReader extends PositionTrackingReader {
     int overflow;
     boolean finishedReading;
 
-    public InputStreamByteReader(final InputStream is, final int size) {
+    public ExperimentalInputStreamByteReader(final InputStream is, final int size, final boolean captureFullText) {
         this.is = is;
         this.decoder = StandardCharsets.UTF_8.newDecoder();
         this.buffer = new byte[size];
@@ -30,15 +30,8 @@ public class InputStreamByteReader extends PositionTrackingReader {
         this.charsOut = CharBuffer.allocate(size / 2);
         this.bufferOffset = 0;
         this.overflow = 0;
+        if (captureFullText) this.out = new StringBuilder();
         this.finishedReading = false;
-    }
-
-    @Override
-    public InputStreamByteReader captureFullText() {
-        if (this.out == null) {
-            this.out = new StringBuilder(this.buffer.length / 2);
-        }
-        return this;
     }
 
     @Override
@@ -85,8 +78,9 @@ public class InputStreamByteReader extends PositionTrackingReader {
         if (this.current == '\n') {
             this.line++;
             this.linesSkipped++;
-            this.lineOffset = this.bufferOffset + this.index;
+            this.column = -1;
         }
+        this.column++;
         this.current = this.charsOut.array()[this.index++];
     }
 
@@ -115,11 +109,6 @@ public class InputStreamByteReader extends PositionTrackingReader {
             this.out.append(
                 this.charsOut.array(), this.charsOut.arrayOffset(), this.charsOut.position());
         }
-    }
-
-    @Override
-    public int getColumn() {
-        return this.bufferOffset + this.index - this.lineOffset - 1;
     }
 
     @Override
