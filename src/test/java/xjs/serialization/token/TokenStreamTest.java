@@ -1,9 +1,7 @@
 package xjs.serialization.token;
 
 import org.junit.jupiter.api.Test;
-import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;
-import xjs.serialization.parser.XjsParser;
 import xjs.serialization.token.Token.Type;
 
 import java.util.Iterator;
@@ -38,19 +36,6 @@ public final class TokenStreamTest {
 
         assertEquals(number(1, 0, 1), iterator.next());
         assertThrows(SyntaxException.class, iterator::next);
-    }
-
-    @Test
-    public void lol_whatAmIDoing() {
-        final JsonValue t1 = new XjsParser("[123,,'pog',[[[]]],{}]").parse();
-        final JsonValue t2 = new XjsParser("[123,456,789]").parse();
-        final JsonValue t3 = new XjsParser("'''\ntest'''").parse();
-        final JsonValue t4 = new XjsParser("\n//hello\n1").parse();
-        final JsonValue t5 = new XjsParser("k:v").parse();
-        final JsonValue t6 = new XjsParser("k : v, k2: v2 v2.2").parse();
-        final JsonValue t7 = new XjsParser("[justOneValue]").parse();
-        final JsonValue t8 = new XjsParser("[]//noValues").parse();
-        final JsonValue t9 = new XjsParser("{}//noValues").parse();
     }
 
     @Test

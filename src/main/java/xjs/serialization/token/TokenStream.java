@@ -200,25 +200,6 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
             this.closeIfEmpty();
         }
 
-        public int getNextIndex() {
-            if (this.reader != null) {
-                return this.reader.index;
-            } else if (this.next != null) {
-                return this.next.start;
-            } else if (tokens.isEmpty()) {
-                return start;
-            }
-            return tokens.get(tokens.size() - 1).end;
-        }
-
-        public int getLastIndex() {
-            final Token current = this.peek(0);
-            if (current != null) {
-                return current.end;
-            }
-            return this.getNextIndex();
-        }
-
         public String getText() {
             final Token t = this.peekOrParent();
             return this.getText(t.start, t.end);
@@ -234,27 +215,6 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
 
         public TokenStream getParent() {
             return TokenStream.this;
-        }
-
-        public int skipLine() {
-            if (this.reader != null) {
-                try {
-                    this.reader.skipToNL();
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-                return this.reader.index;
-            }
-            while (this.next != null) {
-                if (this.next.type == Type.BREAK) {
-                    return this.next.start;
-                }
-                this.read();
-            }
-            if (tokens.isEmpty()) {
-                return 0;
-            }
-            return tokens.get(tokens.size() - 1).end;
         }
 
         public @Nullable Token peek() {
@@ -287,11 +247,6 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
                 tokens.add(next);
             }
             return next;
-        }
-
-        public Token getPreviousOrParent() {
-            final Token previous = this.peek(-1);
-            return previous != null ? previous : TokenStream.this;
         }
     }
 }
