@@ -73,7 +73,7 @@ public final class Tokenizer {
             return quote(reader, s, o, c);
         } else if (c == '\n') {
             reader.read();
-            return new Token(s, s + 1, o, Type.BREAK);
+            return new SymbolToken(s, s + 1, o, Type.BREAK, '\n');
         } else if (c == '.') {
             return dot(reader, s, o);
         } else if (Character.isDigit(c)) {
@@ -86,36 +86,21 @@ public final class Tokenizer {
             final PositionTrackingReader reader, final int i, final int o, final char quote) throws IOException {
         final String parsed = reader.readQuoted(quote);
         if (parsed.isEmpty() && quote == '\'' && reader.readIf('\'')) {
-            return triple(reader, i, o);
+            final String multi = reader.readMulti(false);
+            return new StringToken(i, reader.index, o, Type.TRIPLE_QUOTE, multi);
         }
-        final Type type = quote == '\'' ? Type.SINGLE : Type.DOUBLE;
+        final Type type = quote == '\'' ? Type.SINGLE_QUOTE : Type.DOUBLE_QUOTE;
         return new StringToken(i, reader.index, o, type, parsed);
-    }
-
-    private static Token triple(final PositionTrackingReader reader, final int i, final int o) throws IOException {
-        int quotes = 0;
-        while (!reader.isEndOfText()) {
-            final char c = (char) reader.current;
-            if (c == '\\') {
-                quotes = 0;
-                reader.read();
-                continue;
-            }
-            quotes = c == '\'' ? quotes + 1 : 0;
-            reader.read();
-            if (quotes == 3) {
-                return new Token(i, reader.index, o, Type.TRIPLE);
-            }
-        }
-        throw reader.expected("end of multiline string (\"'''\")");
     }
 
     private static Token comment(
             final PositionTrackingReader reader, char c, final int i, final int o) throws IOException {
         reader.read();
         if (c == '#' || reader.readIf('/')) {
-            reader.skipToNL();
-            return new Token(i, reader.index, o, Type.LINE);
+            final int lastChar = reader.skipToNL();
+            final Type type = c == '#'
+                ? Type.HASH_COMMENT : Type.LINE_COMMENT;
+            return new Token(i, lastChar + 1, o, type);
         } else if (!reader.readIf('*')) {
             return new SymbolToken(i, i + 1, o, c);
         }
@@ -124,7 +109,7 @@ public final class Tokenizer {
             c = (char) reader.current;
             reader.read();
             if (asterisk && c == '/') {
-                return new Token(i, reader.index, o, Type.MULTI);
+                return new Token(i, reader.index, o, Type.BLOCK_COMMENT);
             }
             asterisk = c == '*';
         }

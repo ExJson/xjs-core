@@ -52,6 +52,16 @@ public class Token {
         return reference.subSequence(this.start, this.end).toString();
     }
 
+    /**
+     * Determines whether this token represents the given symbol.
+     *
+     * @param symbol The expected symbol.
+     * @return true, if this token matches the symbol.
+     */
+    public boolean isSymbol(final char symbol) {
+        return false;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o instanceof Token) {
@@ -92,17 +102,17 @@ public class Token {
         /**
          * A single-quoted string.
          */
-        SINGLE,
+        SINGLE_QUOTE,
 
         /**
          * A double-quoted string.
          */
-        DOUBLE,
+        DOUBLE_QUOTE,
 
         /**
          * A triple-quoted string.
          */
-        TRIPLE,
+        TRIPLE_QUOTE,
 
         /**
          * An open stream of tokens with no encapsulation.
@@ -125,14 +135,19 @@ public class Token {
         PARENTHESES,
 
         /**
-         * A single-line comment
+         * A single-line, hash-style comment
          */
-        LINE,
+        HASH_COMMENT,
 
         /**
-         * A multi-line comment
+         * A single-line, C-style comment
          */
-        MULTI,
+        LINE_COMMENT,
+
+        /**
+         * A multi-line, block comment
+         */
+        BLOCK_COMMENT,
 
         /**
          * A line-break, either \n or \r\n

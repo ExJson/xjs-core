@@ -5,11 +5,12 @@ import org.jetbrains.annotations.Nullable;
 import xjs.exception.SyntaxException;
 import xjs.serialization.JsonContext;
 import xjs.serialization.parser.XjsParser;
+import xjs.serialization.token.Tokenizer;
 import xjs.transform.JsonCollectors;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Map;
@@ -281,11 +282,7 @@ public final class Json {
      * @return A new {@link JsonValue} representing the input.
      */
     public static JsonValue parse(final String xjs) {
-        try {
-            return new XjsParser(xjs).parse();
-        } catch (final IOException unreachable) {
-            throw new IllegalStateException(unreachable);
-        }
+        return new XjsParser(xjs).parse();
     }
 
     /**
@@ -295,8 +292,8 @@ public final class Json {
      * @param xjs A reader providing the raw contents  in JSON, XJS, or JSON-C format.
      * @return A new {@link JsonValue} representing the input.
      */
-    public static JsonValue parse(final Reader xjs) throws IOException {
-        return new XjsParser(xjs).parse();
+    public static JsonValue parse(final InputStream xjs) throws IOException {
+    return new XjsParser(Tokenizer.containerize(xjs)).parse();
     }
 
     /**

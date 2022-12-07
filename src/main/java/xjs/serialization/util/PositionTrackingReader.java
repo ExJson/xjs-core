@@ -259,26 +259,34 @@ public abstract class PositionTrackingReader implements Closeable {
      * Skips the given number of whitespace characters.
      *
      * @param offset The offset (e.g. expected column) to read to.
+     * @return The number of whitespace characters skipped.
      * @throws IOException If the underlying reader throws an exception.
      */
-    public void skipToOffset(final int offset) throws IOException {
+    public int skipToOffset(final int offset) throws IOException {
         for (int i = 0; i < offset; i++) {
             if (!this.isLineWhitespace()) {
-                return;
+                return i + 1;
             }
             this.read();
         }
+        return offset;
     }
 
     /**
      * Skips <em>all</em> characters until the next new line or end of input.
      *
+     * @return The last index of a non-whitespace character.
      * @throws IOException If the underlying reader throws an exception.
      */
-    public void skipToNL() throws IOException {
+    public int skipToNL() throws IOException {
+        int last = this.index;
         while (this.current != '\n' && this.current != -1) {
+            if (!this.isLineWhitespace()) {
+                last = this.index;
+            }
             this.read();
         }
+        return last;
     }
 
     /**
@@ -443,6 +451,62 @@ public abstract class PositionTrackingReader implements Closeable {
                 throw this.expected("valid escape sequence");
         }
         this.read();
+    }
+
+    /**
+     * Reads a standard multiline string in XJS or Hjson format.
+     *
+     * @param readQuotes Whether to read the first three quotes of the token.
+     * @return The parsed text of the token.
+     * @throws IOException If the underlying reader throws an exception.
+     */
+    public String readMulti(final boolean readQuotes) throws IOException {
+        if (readQuotes) {
+            this.expect('\'');
+            this.expect('\'');
+            this.expect('\'');
+        }
+        final StringBuilder sb = new StringBuilder();
+        final int offset = this.column - 3;
+
+        this.skipLineWhitespace();
+        if (this.current == '\n') {
+            this.read();
+            this.skipToOffset(offset);
+        }
+
+        int triple = 0;
+        while (true) {
+            if (this.current < 0) {
+                throw this.expected("end of multiline string (''')");
+            } else if (this.current == '\'') {
+                triple++;
+                this.read();
+                if (triple == 3) {
+                    if (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\n') {
+                        sb.deleteCharAt(sb.length() - 1);
+                    }
+                    return sb.toString();
+                } else {
+                    continue;
+                }
+            } else {
+                while (triple > 0) {
+                    sb.append('\'');
+                    triple--;
+                }
+            }
+            if (this.current == '\n') {
+                sb.append('\n');
+                this.read();
+                this.skipToOffset(offset);
+            } else {
+                if (this.current != '\r') {
+                    sb.append((char) this.current);
+                }
+                this.read();
+            }
+        }
     }
 
     /**

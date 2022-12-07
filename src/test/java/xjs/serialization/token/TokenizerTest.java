@@ -21,7 +21,7 @@ public final class TokenizerTest {
     public void single_parsesLineComment() {
         final String reference = "// Hello, world!";
         assertEquals(
-            token(reference, Type.LINE),
+            token(reference, Type.LINE_COMMENT),
             single(reference));
     }
 
@@ -29,15 +29,15 @@ public final class TokenizerTest {
     public void single_parsesHashComment() {
         final String reference = "# Hello, world!";
         assertEquals(
-            token(reference, Type.LINE),
+            token(reference, Type.HASH_COMMENT),
             single(reference));
     }
 
     @Test
-    public void single_parsesMultiComment() {
+    public void single_parseBlockComment() {
         final String reference = "/*\nHello\nworld!\n*/";
         assertEquals(
-            token(reference, Type.MULTI),
+            token(reference, Type.BLOCK_COMMENT),
             single(reference));
     }
 
@@ -45,7 +45,7 @@ public final class TokenizerTest {
     public void single_parsesDoubleQuote() {
         final String reference = "\"Hello, world!\"";
         assertEquals(
-            token(reference, Type.DOUBLE),
+            token(reference, Type.DOUBLE_QUOTE),
             single(reference));
     }
 
@@ -53,7 +53,7 @@ public final class TokenizerTest {
     public void single_parsesSingleQuote() {
         final String reference = "'Hello, world!'";
         assertEquals(
-            token(reference, Type.SINGLE),
+            token(reference, Type.SINGLE_QUOTE),
             single(reference));
     }
 
@@ -61,7 +61,7 @@ public final class TokenizerTest {
     public void single_parsesTripleQuote() {
         final String reference = "'''\nHello\nworld!\n'''";
         assertEquals(
-            token(reference, Type.TRIPLE),
+            token(reference, Type.TRIPLE_QUOTE),
             single(reference));
     }
 
@@ -133,7 +133,7 @@ public final class TokenizerTest {
     public void single_skipsWhitespace() {
         final String reference = " \t \t \t 'Hello, world!'";
         assertEquals(
-            token(Type.SINGLE, 7, reference.length()),
+            token(Type.SINGLE_QUOTE, 7, reference.length()),
             single(reference));
     }
 

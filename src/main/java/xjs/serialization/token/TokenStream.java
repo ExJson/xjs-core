@@ -150,7 +150,8 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
 
         protected Itr() {
             this.reader = TokenStream.this.reader;
-            this.search();
+            this.elementIndex = -1;
+            this.read();
         }
 
         @Override
@@ -161,12 +162,21 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
         @Override
         public Token next() {
             final Token current = this.next;
-            this.search();
+            this.read();
             return current;
         }
 
-        protected void search() {
-            this.next = this.peek();
+        public Token peekOrParent() {
+            return this.next != null ? this.next : TokenStream.this;
+        }
+
+        protected void read() {
+            this.elementIndex++;
+            this.next = this.peek(1);
+            this.closeIfEmpty();
+        }
+
+        protected void closeIfEmpty() {
             if (this.reader != null && this.next == null) {
                 try {
                     this.reader.close();
@@ -175,18 +185,55 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
                 }
                 TokenStream.this.reader = null;
             }
-            this.elementIndex++;
         }
 
-        protected int getTextIndex() {
+        public void skipTo(final int index) {
+            final int amount = index - this.elementIndex;
+            this.next = this.peek(amount + 1);
+            this.elementIndex = index;
+            this.closeIfEmpty();
+        }
+
+        public void skip(final int amount) {
+            this.next = this.peek(amount + 1);
+            this.elementIndex = this.elementIndex + amount;
+            this.closeIfEmpty();
+        }
+
+        public int getNextIndex() {
             if (this.reader != null) {
                 return this.reader.index;
             } else if (this.next != null) {
                 return this.next.start;
             } else if (tokens.isEmpty()) {
-                return 0;
+                return start;
             }
             return tokens.get(tokens.size() - 1).end;
+        }
+
+        public int getLastIndex() {
+            final Token current = this.peek(0);
+            if (current != null) {
+                return current.end;
+            }
+            return this.getNextIndex();
+        }
+
+        public String getText() {
+            final Token t = this.peekOrParent();
+            return this.getText(t.start, t.end);
+        }
+
+        public String getText(final int s, final int e) {
+            return this.getReference().subSequence(s, e).toString();
+        }
+
+        public CharSequence getReference() {
+            return reference;
+        }
+
+        public TokenStream getParent() {
+            return TokenStream.this;
         }
 
         public int skipLine() {
@@ -202,7 +249,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
                 if (this.next.type == Type.BREAK) {
                     return this.next.start;
                 }
-                this.search();
+                this.read();
             }
             if (tokens.isEmpty()) {
                 return 0;
@@ -211,19 +258,24 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
         }
 
         public @Nullable Token peek() {
-            return this.peek(1);
+            return this.next;
+        }
+
+        public Token peek(final int amount, final Token defaultValue) {
+            final Token peek = this.peek(amount);
+            return peek != null ? peek : defaultValue;
         }
 
         public @Nullable Token peek(final int amount) {
             Token next = null;
             final int peekIndex = this.elementIndex + amount - 1;
-            if (peekIndex < tokens.size()) {
+            if (peekIndex >= 0 && peekIndex < tokens.size()) {
                 return tokens.get(peekIndex);
             }
             if (this.reader == null) {
                 return null;
             }
-            for (int i = 0; i < amount; i++) {
+            while (tokens.size() < this.elementIndex + amount) {
                 try {
                     next = Tokenizer.single(this.reader);
                 } catch (final IOException e) {
@@ -237,15 +289,9 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
             return next;
         }
 
-        public @Nullable Token previous() {
-            return this.previous(1);
-        }
-
-        public @Nullable Token previous(final int amount) {
-            if (this.elementIndex - amount >= 0) {
-                return tokens.get(this.elementIndex - amount);
-            }
-            return null;
+        public Token getPreviousOrParent() {
+            final Token previous = this.peek(-1);
+            return previous != null ? previous : TokenStream.this;
         }
     }
 }

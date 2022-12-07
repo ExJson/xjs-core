@@ -395,8 +395,12 @@ public abstract class JsonValue implements Serializable {
         if (this.linesBetween < 0) this.linesBetween = metadata.linesBetween;
         if (this.hasFlag(JelFlags.NULL)) this.flags = metadata.flags;
 
-        if (this.comments == null && metadata.comments != null) {
-            this.comments = metadata.comments.copy();
+        if (this.comments == null) {
+            if (metadata.comments != null) {
+                this.comments = metadata.comments.copy();
+            }
+        } else if (metadata.comments != null) {
+            this.comments.appendAll(metadata.comments);
         }
         return this;
     }

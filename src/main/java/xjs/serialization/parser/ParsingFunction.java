@@ -23,8 +23,8 @@ public interface ParsingFunction {
      * @return The {@link JsonValue} being represented by the file.
      * @throws IOException If the underlying {@link FileReader} throws an exception.
      * @throws SyntaxException if the file is syntactically invalid.
-     * @see AbstractJsonParser#AbstractJsonParser(File)
-     * @see AbstractJsonParser#parse()
+     * @see JsonParser#JsonParser(File)
+     * @see JsonParser#parse()
      */
     JsonValue parse(final File file) throws IOException;
 

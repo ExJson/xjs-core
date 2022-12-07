@@ -227,7 +227,7 @@ public final class XjsWriterTest {
             5: {
               6: [ 7, 8, 9 ]
             }
-            """;
+            """; // todo: confirm with .get("5").setLinesAbove(-1)
         final JsonObject object = new XjsParser(input).parse().asObject();
         assertEquals(expected, write(object, options));
     }

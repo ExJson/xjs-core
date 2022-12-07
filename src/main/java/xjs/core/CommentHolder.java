@@ -93,11 +93,11 @@ public class CommentHolder {
      */
     public String getData(final CommentType type) {
         switch (type) {
-            case HEADER: return this.headerData != null ? this.headerData : "";
-            case EOL: return this.eolData != null ? this.eolData : "";
-            case FOOTER: return this.footerData != null ? this.footerData : "";
-            case VALUE: return this.valueData != null ? this.valueData : "";
-            default: return this.interiorData != null ? this.interiorData : "";
+            case HEADER: return emptyIfNull(this.headerData);
+            case EOL: return emptyIfNull(this.eolData);
+            case FOOTER: return emptyIfNull(this.footerData);
+            case VALUE: return emptyIfNull(this.valueData);
+            default: return emptyIfNull(this.interiorData);
         }
     }
 
@@ -160,6 +160,35 @@ public class CommentHolder {
             return this.setData(type, CommentUtils.format(style, text));
         }
         return this.setData(type, data + "\n" + CommentUtils.format(style, text));
+    }
+
+    /**
+     * Appends raw comment data of each position into this holder.
+     *
+     * @param comments Another comment holder containing any number of comments.
+     * @return <code>this</code>, for method chaining.
+     */
+    public CommentHolder appendAll(final CommentHolder comments) {
+        if (comments.headerData != null) {
+            this.headerData = emptyIfNull(this.headerData) + comments.headerData;
+        }
+        if (comments.eolData != null) {
+            this.eolData = emptyIfNull(this.eolData) + comments.eolData;
+        }
+        if (comments.footerData != null) {
+            this.footerData = emptyIfNull(this.footerData) + comments.footerData;
+        }
+        if (comments.valueData != null) {
+            this.valueData = emptyIfNull(this.valueData) + comments.valueData;
+        }
+        if (comments.interiorData != null) {
+            this.interiorData = emptyIfNull(this.interiorData) + comments.interiorData;
+        }
+        return this;
+    }
+
+    private static String emptyIfNull(final String comment) {
+        return comment != null ? comment : "";
     }
 
     /**

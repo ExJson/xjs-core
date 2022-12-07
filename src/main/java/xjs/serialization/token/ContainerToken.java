@@ -1,11 +1,35 @@
 package xjs.serialization.token;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
- * Represents a 
+ * Represents a series of tokens encapsulated recursively.
+ *
+ * <p>Unlike the regular {@link TokenStream stream variant},
+ * the ContainerToken subclass includes all container types:
+ * {@link Type#BRACES}, {@link Type#BRACKETS}, and
+ * {@link Type#PARENTHESES}.
+ *
+ * <p>For example, the following tokens:
+ *
+ * <pre>{@code
+ *   (a[b]c)
+ * }</pre>
+ *
+ * <p>Would be represented as the following container token:
+ *
+ * <pre>{@code
+ *   PARENTHESES([
+ *     WORD('a'),
+ *     BRACKETS([
+ *       WORD('b')
+ *     ]),
+ *     WORD('c')
+ *   ])
+ * }</pre>
  */
 public class ContainerToken extends TokenStream {
 
@@ -28,32 +52,20 @@ public class ContainerToken extends TokenStream {
         return this.tokens.get(i);
     }
 
-    public Token getTokenFromStringIndex(final int i) {
-        for (final Token token : this.tokens) {
-            if (i >= token.start && i < token.end) {
-                return token;
-            }
-        }
-        throw new IllegalStateException("no token at index: " + i);
-    }
-
     public int size() {
         return this.tokens.size();
     }
 
-    public int indexOf(final char symbol, final boolean exact) {
-        final Lookup result = this.lookup(symbol, exact);
-        return result != null ? result.index : -1;
-    }
-
+    @ApiStatus.Experimental
     public @Nullable ContainerToken.Lookup lookup(final char symbol, final boolean exact) {
         return this.lookup(symbol, 0, exact);
     }
 
+    @ApiStatus.Experimental
     public @Nullable ContainerToken.Lookup lookup(final char symbol, final int fromIndex, final boolean exact) {
         for (int i = fromIndex; i < this.tokens.size(); i++) {
             final Token token = this.tokens.get(i);
-            if (token.type == Type.SYMBOL && ((SymbolToken) token).symbol == symbol) {
+            if (token.isSymbol(symbol)) {
                 final Lookup result = new Lookup(token, i);
                 if (exact && (result.followsOtherSymbol() || result.precedesOtherSymbol())) {
                     return this.lookup(symbol, i, true);
@@ -64,15 +76,12 @@ public class ContainerToken extends TokenStream {
         return null;
     }
 
-    public int indexOf(final String symbol, final boolean exact) {
-        final Lookup result = this.lookup(symbol, exact);
-        return result != null ? result.index : -1;
-    }
-
+    @ApiStatus.Experimental
     public @Nullable ContainerToken.Lookup lookup(final String symbol, final boolean exact) {
         return this.lookup(symbol, 0, exact);
     }
 
+    @ApiStatus.Experimental
     public @Nullable ContainerToken.Lookup lookup(final String symbol, final int fromIndex, final boolean exact) {
         char c = symbol.charAt(0);
         final Lookup firstLookup = this.lookup(c, fromIndex, false);
@@ -101,6 +110,7 @@ public class ContainerToken extends TokenStream {
         return firstLookup;
     }
 
+    @ApiStatus.Experimental
     public TokenStream slice(final int s, final int e) {
         if (s == 0 && e == this.tokens.size()) {
             return this;
@@ -140,12 +150,12 @@ public class ContainerToken extends TokenStream {
             return false;
         }
 
+        @ApiStatus.Experimental
         public boolean isFollowedBy(final char symbol) {
             if (tokens.size() > this.index + 1) {
                 final Token following = tokens.get(index + 1);
-                return following.type == Type.SYMBOL
-                    && this.token.end == following.start
-                    && ((SymbolToken) following).symbol == symbol;
+                return this.token.end == following.start
+                    && following.isSymbol(symbol);
             }
             return false;
         }
