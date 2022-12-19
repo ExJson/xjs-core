@@ -69,7 +69,7 @@ public final class Tokenizer {
         final int o = reader.column;
         if (c == '/' || c == '#') {
             return comment(reader, c, s, o);
-        } else if (c == '\'' || c == '\"') {
+        } else if (c == '\'' || c == '"') {
             return quote(reader, s, o, c);
         } else if (c == '\n') {
             reader.read();

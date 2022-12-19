@@ -192,7 +192,7 @@ public final class XjsParserTest extends CommonParserTest {
     @ParameterizedTest
     @CsvSource({"/*interior*/", "#interior", "//interior"})
     public void parse_preservesInteriorComment_inContainer(final String comment) {
-        assertEquals(comment,
+        assertEquals(comment + "\n",
             this.parse("{\n" + comment + "\n}").getComments().getData(CommentType.INTERIOR));
     }
 

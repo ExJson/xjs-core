@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 /**
  * A series of options which may be used to stylize the output of any
- * {@link AbstractJsonWriter}.
+ * {@link ElementWriter}.
  *
  * <p>Note that much of the formatting will additionally be configured
  * directly in the {@link JsonValue} metadata. It is possible that, in

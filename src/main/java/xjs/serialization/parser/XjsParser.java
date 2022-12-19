@@ -56,7 +56,7 @@ public class XjsParser extends CommentedTokenParser {
                 break;
             }
         } while (this.readNextMember(object));
-        this.setComment(CommentType.FOOTER, false);
+        this.setComment(CommentType.FOOTER);
         this.setLinesTrailing();
         this.expectEndOfText();
         return this.takeFormatting(object);
@@ -97,7 +97,7 @@ public class XjsParser extends CommentedTokenParser {
             this.read();
         }
         this.skipWhitespace();
-        this.setComment(CommentType.HEADER, true);
+        this.setComment(CommentType.HEADER);
         this.setLinesAbove();
 
         final JsonValue result = this.readValue();
@@ -105,7 +105,7 @@ public class XjsParser extends CommentedTokenParser {
         this.skipWhitespace();
 
         this.prependLinesSkippedToComment();
-        this.setComment(CommentType.FOOTER, false);
+        this.setComment(CommentType.FOOTER);
         this.expectEndOfText();
         return this.takeFormatting(result);
     }
@@ -144,7 +144,7 @@ public class XjsParser extends CommentedTokenParser {
     }
 
     protected boolean readNextMember(final JsonObject object) {
-        this.setComment(CommentType.HEADER, true);
+        this.setComment(CommentType.HEADER);
         this.setLinesAbove();
 
         final String key = this.readKey();
@@ -153,7 +153,7 @@ public class XjsParser extends CommentedTokenParser {
         this.expect(':');
         this.skipWhitespace();
 
-        this.setComment(CommentType.VALUE, false);
+        this.setComment(CommentType.VALUE);
         this.setLinesBetween();
 
         final JsonValue value = this.readValue();
@@ -204,7 +204,7 @@ public class XjsParser extends CommentedTokenParser {
     }
 
     protected boolean readNextElement(final JsonArray array) {
-        this.setComment(CommentType.HEADER, true);
+        this.setComment(CommentType.HEADER);
         this.setLinesAbove();
 
         final JsonValue value = this.readValue();
@@ -221,10 +221,10 @@ public class XjsParser extends CommentedTokenParser {
         if (this.readIf(',')) {
             this.readComments(false);
             this.readNl();
-            this.setComment(CommentType.EOL, true);
+            this.setComment(CommentType.EOL);
             return true;
         } else if (this.readNl()) {
-            this.setComment(CommentType.EOL, true);
+            this.setComment(CommentType.EOL);
             this.skipWhitespace(false);
             this.readIf(',');
             return true;
@@ -234,18 +234,13 @@ public class XjsParser extends CommentedTokenParser {
 
     protected <T extends JsonContainer> T closeContainer(
             final T container) {
-        return this.closeContainer(container, true);
-    }
-
-    protected <T extends JsonContainer> T closeContainer(
-            final T container, final boolean trim) {
-        this.setComment(CommentType.INTERIOR, trim);
+        this.setComment(CommentType.INTERIOR);
         this.setLinesTrailing();
         this.takeFormatting(container);
         this.pop();
         this.read();
         this.readComments(false);
-        this.setComment(CommentType.EOL, true);
+        this.setComment(CommentType.EOL);
         return container;
     }
 

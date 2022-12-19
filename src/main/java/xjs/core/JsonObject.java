@@ -568,6 +568,17 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     /**
+     * Retrieves the key of the member at the giuen index.
+     *
+     * @param index The index of the key being inspected.
+     * @return The key corresponding to the given index.
+     * @throws IndexOutOfBoundsException If the index is out of bounds for this container.
+     */
+    public String getKey(final int index) {
+        return this.keys.get(index);
+    }
+
+    /**
      * Removes a single value from this container by key.
      *
      * @param key The key of the value being purged.
@@ -752,8 +763,10 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     private class MemberIterator implements Iterator<Member> {
-        final Iterator<String> keys = JsonObject.this.keys.iterator();
-        final Iterator<JsonReference> references = references().iterator();
+        final Iterator<String> keys =
+            JsonObject.this.keys.iterator();
+        final Iterator<JsonReference> references =
+            JsonObject.this.references.iterator();
         int index = 0;
 
         @Override

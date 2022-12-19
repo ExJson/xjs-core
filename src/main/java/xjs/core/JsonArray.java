@@ -544,7 +544,8 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
     }
 
     private class ElementIterator implements Iterator<Element> {
-        final Iterator<JsonReference> references = references().iterator();
+        final Iterator<JsonReference> references =
+            JsonArray.this.references.iterator();
         int index = 0;
 
         @Override

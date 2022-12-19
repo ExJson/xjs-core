@@ -4,6 +4,8 @@ package xjs.core;
  * This class represents the specific type of comment to be used in conjunction with a {@link JsonValue}.
  * Comments can be placed by calling {@link CommentHolder#set(CommentType, CommentStyle, String)}
  * or another such variant.
+ *
+ * // todo: define specific expectations for newline characters at end of comments
  */
 public enum CommentType {
 

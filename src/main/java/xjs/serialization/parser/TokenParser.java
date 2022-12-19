@@ -8,6 +8,7 @@ import xjs.serialization.token.Token;
 import xjs.serialization.token.Token.Type;
 import xjs.serialization.token.TokenStream;
 import xjs.serialization.token.Tokenizer;
+import xjs.serialization.util.BufferedStack;
 
 public abstract class TokenParser implements ValueParser {
 
@@ -16,7 +17,8 @@ public abstract class TokenParser implements ValueParser {
     protected static final TokenStream.Itr EMPTY_ITERATOR =
         EMPTY_VALUE.iterator();
 
-    protected final BufferedTokenStack stack;
+    protected final BufferedStack.OfTwo<
+        TokenStream.Itr, JsonContainer> stack;
     protected final TokenStream root;
     protected final CharSequence reference;
     protected JsonContainer formatting;
@@ -25,7 +27,7 @@ public abstract class TokenParser implements ValueParser {
     protected int linesSkipped;
 
     protected TokenParser(final TokenStream root) {
-        this.stack = new BufferedTokenStack();
+        this.stack = BufferedStack.ofTwo();
         this.root = root;
         // Reference can be mutable and may expand lazily
         this.reference = root.reference;
@@ -65,8 +67,8 @@ public abstract class TokenParser implements ValueParser {
             return false;
         }
         this.stack.pop();
-        this.iterator = this.stack.getIterator();
-        this.formatting = this.stack.getFormatting();
+        this.iterator = this.stack.getFirst();
+        this.formatting = this.stack.getSecond();
         return true;
     }
 
@@ -248,42 +250,5 @@ public abstract class TokenParser implements ValueParser {
     protected SyntaxException unexpected(final String unexpected) {
         return SyntaxException.unexpected(
             unexpected, this.current.start, this.current.offset);
-    }
-
-    protected static class BufferedTokenStack {
-        private Object[] stack = new Object[10];
-        private int index;
-
-        protected boolean isEmpty() {
-            return this.index == 0;
-        }
-
-        protected void push(
-                final TokenStream.Itr iterator, final JsonContainer formatting) {
-            if (this.index >= this.stack.length) {
-                this.grow();
-            }
-            this.stack[this.index] = iterator;
-            this.stack[this.index + 1] = formatting;
-            this.index += 2;
-        }
-
-        private void grow() {
-            final Object[] newStack = new Object[this.stack.length + 10];
-            System.arraycopy(this.stack, 0, newStack, 0, this.index);
-            this.stack = newStack;
-        }
-
-        protected void pop() {
-            this.index -= 2;
-        }
-
-        protected TokenStream.Itr getIterator() {
-            return (TokenStream.Itr) this.stack[this.index];
-        }
-
-        protected JsonContainer getFormatting() {
-            return (JsonContainer) this.stack[this.index + 1];
-        }
     }
 }

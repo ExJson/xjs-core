@@ -19,8 +19,8 @@ public interface WritingFunction {
      * @param value   The value being written into the writer.
      * @param options The options used to indicate output formatting.
      * @throws IOException If an exception is thrown in writing to the file.
-     * @see AbstractJsonWriter#AbstractJsonWriter(File, JsonWriterOptions)
-     * @see AbstractJsonWriter#write(JsonValue)
+     * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
+     * @see ElementWriter#write(JsonValue)
      */
     void write(final File file, final JsonValue value, final JsonWriterOptions options) throws IOException;
 

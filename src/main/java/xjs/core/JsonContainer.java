@@ -3,7 +3,7 @@ package xjs.core;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xjs.exception.SyntaxException;
-import xjs.serialization.writer.AbstractJsonWriter;
+import xjs.serialization.writer.ElementWriter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -104,7 +104,7 @@ public abstract class JsonContainer extends JsonValue {
      *
      * <p>Note that, when this value has not been configured, it will default to -1. In
      * this case, the formatting will be determined on a contextual basis by the
-     * {@link AbstractJsonWriter writer}.
+     * {@link ElementWriter writer}.
      *
      * @return The number of newline characters at the very end of this container.
      */

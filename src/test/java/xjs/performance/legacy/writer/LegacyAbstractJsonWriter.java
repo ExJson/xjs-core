@@ -1,9 +1,11 @@
-package xjs.serialization.writer;
+package xjs.performance.legacy.writer;
 
 import xjs.core.CommentType;
 import xjs.core.JsonContainer;
 import xjs.core.JsonValue;
 import xjs.serialization.JsonContext;
+import xjs.serialization.writer.JsonWriterOptions;
+import xjs.serialization.writer.ValueWriter;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -14,7 +16,7 @@ import java.math.BigDecimal;
 /**
  * A basic writer type providing a writer and some formatting options.
  */
-public abstract class AbstractJsonWriter implements ValueWriter {
+public abstract class LegacyAbstractJsonWriter implements ValueWriter {
 
     protected final boolean format;
     protected final Writer tw;
@@ -30,13 +32,13 @@ public abstract class AbstractJsonWriter implements ValueWriter {
     protected final int maxSpacing;
     protected final int defaultSpacing;
     protected final boolean smartSpacing;
-    protected String separator;
+    protected final String separator;
 
-    protected AbstractJsonWriter(final File file, final boolean format) throws IOException {
+    protected LegacyAbstractJsonWriter(final File file, final boolean format) throws IOException {
         this(new FileWriter(file), format);
     }
 
-    protected AbstractJsonWriter(final Writer writer, final boolean format) {
+    protected LegacyAbstractJsonWriter(final Writer writer, final boolean format) {
         this.format = format;
         this.tw = writer;
         this.eol = JsonContext.getEol();
@@ -54,11 +56,11 @@ public abstract class AbstractJsonWriter implements ValueWriter {
         this.separator = format ? " " : "";
     }
 
-    protected AbstractJsonWriter(final File file, final JsonWriterOptions options) throws IOException {
+    protected LegacyAbstractJsonWriter(final File file, final JsonWriterOptions options) throws IOException {
         this(new FileWriter(file), options);
     }
 
-    protected AbstractJsonWriter(final Writer writer, final JsonWriterOptions options) {
+    protected LegacyAbstractJsonWriter(final Writer writer, final JsonWriterOptions options) {
         this.format = true;
         this.tw = writer;
         this.eol = options.getEol();
@@ -175,6 +177,7 @@ public abstract class AbstractJsonWriter implements ValueWriter {
         if (this.allowCondense && value.isContainer()) {
             final JsonContainer c = value.asContainer();
             if (!c.isEmpty()) {
+
                 if (c.getReference(0).getOnly().getLinesAbove() != 0) {
                     return false;
                 } // Intentionally shallow check for formatting purposes

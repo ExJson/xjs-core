@@ -9,6 +9,8 @@ import xjs.performance.experimental.util.ExperimentalInputStreamByteReader;
 import xjs.performance.legacy.parser.LegacyXjsParser;
 import xjs.performance.legacy.token.LegacyTokenStream;
 import xjs.performance.legacy.token.LegacyTokenizer;
+import xjs.performance.legacy.writer.LegacyJsonWriter;
+import xjs.performance.legacy.writer.LegacyXjsWriter;
 import xjs.serialization.parser.JsonParser;
 import xjs.serialization.parser.XjsParser;
 import xjs.serialization.token.TokenStream;
@@ -102,6 +104,16 @@ public class PerformanceTest {
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public String legacyXjsWritingSample() throws IOException {
+        final StringWriter sw = new StringWriter();
+        new LegacyXjsWriter(sw, true).write(XJS_WRITING_SAMPLE);
+        return sw.toString();
+    }
+
+    @Benchmark
+    @Threads(4)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public JsonValue jsonParsingSample() throws IOException {
         return new JsonParser(JSON_SAMPLE).parse();
     }
@@ -113,6 +125,16 @@ public class PerformanceTest {
     public String jsonWritingSample() throws IOException {
         final StringWriter sw = new StringWriter();
         new JsonWriter(sw, true).write(JSON_WRITING_SAMPLE);
+        return sw.toString();
+    }
+
+    @Benchmark
+    @Threads(4)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public String legacyJsonWritingSample() throws IOException {
+        final StringWriter sw = new StringWriter();
+        new LegacyJsonWriter(sw, true).write(JSON_WRITING_SAMPLE);
         return sw.toString();
     }
 

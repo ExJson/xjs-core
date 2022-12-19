@@ -7,7 +7,6 @@ import xjs.core.*;
 import xjs.serialization.JsonContext;
 import xjs.serialization.parser.XjsParser;
 
-import java.io.IOException;
 import java.io.StringWriter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -91,7 +90,7 @@ public final class XjsWriterTest {
     }
 
     @Test
-    public void write_condensedArray_withMultipleLinesTrailing_writesLines() {
+    public void write_condensedArray_withLinesTrailing_writesLines() {
         assertEquals("[ 1, 2, 3\n]", write(Json.array(1, 2, 3).condense().setLinesTrailing(1)));
     }
 
@@ -197,20 +196,18 @@ public final class XjsWriterTest {
                 .add("5", new JsonArray().add(6).add(7).add(8).condense())
                 .add("9", "0");
         final String expected = """
-
             1: '2'
               
             3: '4'
               
             5: [ 6, 7, 8 ]
               
-            9: '0'
-            """;
+            9: '0'""";
         assertEquals(expected, write(object, options));
     }
 
     @Test
-    public void write_withMinAndMaxSpacing_overridesConfiguredSpacing_ignoringCondensed() throws IOException {
+    public void write_withMinAndMaxSpacing_overridesConfiguredSpacing_ignoringCondensed() {
         final JsonWriterOptions options = new JsonWriterOptions().setMinSpacing(2).setMaxSpacing(2);
         final String input = """
             1: '2'
@@ -219,15 +216,13 @@ public final class XjsWriterTest {
               6: [ 7, 8, 9 ]
             }""";
         final String expected = """
-
             1: '2'
             
             3: '4'
             
             5: {
               6: [ 7, 8, 9 ]
-            }
-            """; // todo: confirm with .get("5").setLinesAbove(-1)
+            }""";
         final JsonObject object = new XjsParser(input).parse().asObject();
         assertEquals(expected, write(object, options));
     }
@@ -255,7 +250,7 @@ public final class XjsWriterTest {
     }
 
     @Test
-    public void parse_thenRewrite_preservesComplexFormatting() throws IOException {
+    public void parse_thenRewrite_preservesComplexFormatting() {
         final String expected = """
             
             # Header
@@ -264,7 +259,7 @@ public final class XjsWriterTest {
               1
             2: // Value
              
-              2 # E0l
+              2 # Eol
             /* header */
             z:
             
@@ -272,8 +267,8 @@ public final class XjsWriterTest {
               y
             
             a: /* Value */ [
-              3, 4
-              { 5: 5, 6: 6 /* eol */ }
+              3, 4 // eol
+              { 5: 5, 6: 6 /* int */ }
               [ /* interior */ ]
               
               
@@ -297,8 +292,7 @@ public final class XjsWriterTest {
             
             b: '})](*&(*%#&)!'
             c: { : }
-            d: [,,,]
-            """;
+            d: [,,,]""";
         assertEquals(expected, write(new XjsParser(expected).parse()));
     }
 
@@ -378,7 +372,7 @@ public final class XjsWriterTest {
     }
 
     @Test
-    public void write_withSmartSpacing_separatesContainers() throws IOException {
+    public void write_withSmartSpacing_separatesContainers() {
         final String input = """
             a: 1
             b: 2
@@ -424,25 +418,25 @@ public final class XjsWriterTest {
     }
 
     @Test
-    public void write_withOmitQuotes_removesQuotes_fromSingleLineValues() throws IOException {
+    public void write_withOmitQuotes_doesNotRemoveQuotes_fromSingleLineValues() {
         final JsonValue value = new XjsParser("k: 'quoted'").parse();
-        assertEquals("k: quoted", write(value, new JsonWriterOptions().setOmitQuotes(true)));
+        assertEquals("k: 'quoted'", write(value, new JsonWriterOptions().setOmitQuotes(true)));
     }
 
     @Test
-    public void write_withOmitQuotes_andUnbalancedValue_doesNotOmitQuotes() throws IOException {
+    public void write_withOmitQuotes_andUnbalancedValue_doesNotOmitQuotes() {
         final JsonValue value = new XjsParser("k: 'quoted)'").parse();
         assertEquals("k: 'quoted)'", write(value, new JsonWriterOptions().setOmitQuotes(true)));
     }
 
     @Test
-    public void write_withOmitQuotes_andCommentLikeValue_doesNotOmitQuotes() throws IOException {
+    public void write_withOmitQuotes_andCommentLikeValue_doesNotOmitQuotes() {
         final JsonValue value = new XjsParser("k: '#quoted'").parse();
         assertEquals("k: '#quoted'", write(value, new JsonWriterOptions().setOmitQuotes(true)));
     }
 
     @Test
-    public void write_withOmitQuotes_andValueStartingWithPunctuation_doesNotOmitQuotes() throws IOException {
+    public void write_withOmitQuotes_andValueStartingWithPunctuation_doesNotOmitQuotes() {
         final JsonValue value = new XjsParser("k: '{quoted}'").parse();
         assertEquals("k: '{quoted}'", write(value, new JsonWriterOptions().setOmitQuotes(true)));
     }

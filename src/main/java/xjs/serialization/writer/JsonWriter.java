@@ -1,13 +1,12 @@
 package xjs.serialization.writer;
 
-import xjs.core.JsonObject;
 import xjs.core.JsonValue;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 
-public class JsonWriter extends AbstractJsonWriter {
+public class JsonWriter extends ElementWriter {
 
     public JsonWriter(final File file, final boolean format) throws IOException {
         super(file, format);
@@ -26,33 +25,20 @@ public class JsonWriter extends AbstractJsonWriter {
     }
 
     @Override
-    public void write(final JsonValue value, final int level) throws IOException {
-        final boolean condensed = this.isCondensed(value);
-        JsonValue previous = null;
+    protected void write() throws IOException {
+        this.writeAbove();
+        this.writeValue();
+    }
+
+    protected void writeValue() throws IOException {
+        final JsonValue value = this.current();
 
         switch (value.getType()) {
             case OBJECT:
-                this.open(value.asObject(), condensed, '{');
-                for (final JsonObject.Member member : value.asObject()) {
-                    this.delimit(previous != null, member.getOnly().getLinesAbove());
-                    this.writeLinesAbove(level + 1, value, previous, condensed, member.getOnly());
-                    this.writeQuoted(member.getKey(), '"');
-                    this.tw.write(':');
-                    this.separate(level + 2, member.getOnly());
-                    this.write(member.getOnly(), level + 1);
-                    previous = member.getOnly();
-                }
-                this.close(value.asObject(), condensed, level, '}');
+                this.writeObject();
                 break;
             case ARRAY:
-                this.open(value.asArray(), condensed, '[');
-                for (final JsonValue v : value.asArray().visitAll()) {
-                    this.delimit(previous != null, v.getLinesAbove());
-                    this.writeLinesAbove(level + 1, value, previous, condensed, v);
-                    this.write(v, level + 1);
-                    previous = v;
-                }
-                this.close(value.asArray(), condensed, level, ']');
+                this.writeArray();
                 break;
             case NUMBER:
                 this.writeNumber(value.asDouble());
@@ -63,5 +49,38 @@ public class JsonWriter extends AbstractJsonWriter {
             default:
                 this.tw.write(value.toString());
         }
+    }
+
+    protected void writeObject() throws IOException {
+        this.open('{');
+        while (this.current != null) {
+            this.writeNextMember();
+            this.next();
+        }
+        this.close('}');
+    }
+
+    protected void writeNextMember() throws IOException {
+        this.writeAbove();
+        this.writeQuoted(this.key(), '"');
+        this.tw.write(':');
+        this.writeBetween();
+        this.writeValue();
+        this.delimit();
+    }
+
+    protected void writeArray() throws IOException {
+        this.open('[');
+        while (this.current != null) {
+            this.writeNextElement();
+            this.next();
+        }
+        this.close(']');
+    }
+
+    protected void writeNextElement() throws IOException {
+        this.writeAbove();
+        this.writeValue();
+        this.delimit();
     }
 }

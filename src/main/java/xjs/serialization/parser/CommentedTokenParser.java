@@ -76,24 +76,47 @@ public abstract class CommentedTokenParser extends TokenParser {
         }
     }
 
-    protected void setComment(final CommentType type, final boolean trim) {
-        final String comment = this.takeComment(trim);
+    protected void setComment(final CommentType type) {
+        final String comment = this.takeComment(type);
         if (!comment.isEmpty()) {
             this.formatting.getComments().setData(type, comment);
         }
     }
 
-    protected String takeComment(final boolean trim) {
+    protected String takeComment(final CommentType type) {
         if (this.commentBuffer.length() == 0) {
             return "";
         }
         // line comments _must_ have newlines,
         // so they will be added later.
-        if (trim && this.commentBuffer.charAt(this.commentBuffer.length() - 1) == '\n') {
-            this.commentBuffer.setLength(this.commentBuffer.length() - 1);
+        if (this.commentHasNl()) {
+            if (this.shouldTakeNl(type)) {
+                this.trimComment();
+                this.linesSkipped++;
+            } else if (this.shouldTrimNl(type)) {
+                this.trimComment();
+            }
         }
         final String comment = this.commentBuffer.toString();
         this.commentBuffer.setLength(0);
         return comment;
+    }
+
+    // header comments always include a newline
+    protected final boolean shouldTrimNl(final CommentType type) {
+        return type == CommentType.HEADER;
+    }
+
+    // eol comments go to eol, but do not include the newline
+    protected final boolean shouldTakeNl(final CommentType type) {
+        return type == CommentType.EOL;
+    }
+
+    protected final boolean commentHasNl() {
+        return this.commentBuffer.charAt(this.commentBuffer.length() - 1) == '\n';
+    }
+
+    protected final void trimComment() {
+        this.commentBuffer.setLength(this.commentBuffer.length() - 1);
     }
 }
