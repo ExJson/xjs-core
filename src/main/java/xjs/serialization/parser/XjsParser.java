@@ -111,6 +111,10 @@ public class XjsParser extends CommentedTokenParser {
     }
 
     protected JsonValue readValue() {
+        return this.readValue(this.current.offset());
+    }
+
+    protected JsonValue readValue(final int offset) {
         if (this.current.isSymbol(',')) {
             return new JsonString("", StringType.IMPLICIT);
         }
@@ -120,7 +124,7 @@ public class XjsParser extends CommentedTokenParser {
             case BRACES:
                 return this.readObject();
             default:
-                final JsonValue value = this.readImplicit();
+                final JsonValue value = this.readImplicit(offset);
                 this.read();
                 return value;
         }
@@ -147,6 +151,7 @@ public class XjsParser extends CommentedTokenParser {
         this.setComment(CommentType.HEADER);
         this.setLinesAbove();
 
+        final int offset = this.current.offset();
         final String key = this.readKey();
 
         this.skipWhitespace();
@@ -156,7 +161,7 @@ public class XjsParser extends CommentedTokenParser {
         this.setComment(CommentType.VALUE);
         this.setLinesBetween();
 
-        final JsonValue value = this.readValue();
+        final JsonValue value = this.readValue(offset);
 
         object.add(key, value);
 
@@ -172,7 +177,7 @@ public class XjsParser extends CommentedTokenParser {
 
         final int start = this.current.start();
         final int offset = this.current.offset();
-        final int linesBefore = this.linesSkipped;
+        final int lineBefore = this.current.line();
 
         final int skipped =
             this.skipTo(':', false, false);
@@ -183,7 +188,7 @@ public class XjsParser extends CommentedTokenParser {
             return ((StringToken) previous).parsed;
         }
         final int end = previous.end();
-        return this.getText(linesBefore, start, offset, end);
+        return this.getText(lineBefore, start, offset, end);
     }
 
     protected JsonArray readArray() {
@@ -244,10 +249,9 @@ public class XjsParser extends CommentedTokenParser {
         return container;
     }
 
-    protected JsonValue readImplicit() {
+    protected JsonValue readImplicit(final int offset) {
         final int start = this.current.start();
-        final int offset = this.current.offset();
-        final int linesBefore = this.linesSkipped;
+        final int lineBefore = this.current.line();
         final int numTokens = this.skipTo(',', true, true);
         if (numTokens == 0) {
             switch (this.current.type()) {
@@ -262,7 +266,7 @@ public class XjsParser extends CommentedTokenParser {
             }
         }
         final int end = this.current.end();
-        final String text = this.getText(linesBefore, start, offset, end);
+        final String text = this.getText(lineBefore, start, offset, end);
         switch (text) {
             case "true": return JsonLiteral.jsonTrue();
             case "false": return JsonLiteral.jsonFalse();
@@ -272,10 +276,9 @@ public class XjsParser extends CommentedTokenParser {
     }
 
     protected String getText(
-            final int linesBefore, final int start, final int offset, final int end) {
+            final int lineBefore, final int start, final int offset, final int end) {
         // optimization to avoid redundant text analysis.
-        // todo: unreachable condition
-        if (this.linesSkipped > linesBefore) {
+        if (lineBefore < this.current.lastLine()) {
             return this.buildImplicitText(start, offset, end);
         }
         return this.iterator.getText(start, end);
@@ -289,8 +292,8 @@ public class XjsParser extends CommentedTokenParser {
         for (int i = start; i < end; i++) {
             char c = reference.charAt(i);
             if (c == '\n') {
-                sb.append(reference, marker, i);
-                i = this.skipToOffset(i, offset);
+                sb.append(reference, marker, i + 1);
+                i = this.skipToOffset(i + 1, offset);
                 marker = i;
             } else if (c == '\\' && i < end - 1) {
                 sb.append(reference, marker, i);

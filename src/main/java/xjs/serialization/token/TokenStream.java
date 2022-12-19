@@ -10,6 +10,7 @@ import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Represents any sequence of other tokens.
@@ -120,6 +121,11 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
         for (int i = 0; i < level; i++) {
             sb.append(' ');
         }
+    }
+
+    @Override
+    public int lastLine() {
+        return this.lastLine;
     }
 
     @Override

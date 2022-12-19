@@ -175,7 +175,7 @@ public class XjsWriter extends CommentedElementWriter {
                 this.writeMulti(value);
                 break;
             case IMPLICIT:
-                this.tw.write(value); // todo: write indented
+                this.writeIndented(value);
                 break;
             default:
                 throw new IllegalStateException("unreachable");

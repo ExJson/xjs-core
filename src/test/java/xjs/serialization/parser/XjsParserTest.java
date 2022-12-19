@@ -147,6 +147,20 @@ public final class XjsParserTest extends CommonParserTest {
         assertEquals("0\n 1\n  2", this.parse(text).asObject().getAsserted("multi").asString());
     }
 
+    @Test
+    public void multilineImplicitString_preservesIndentation_bySubsequentLines() {
+        final String text = """
+            a: {
+              b: c {
+                d e
+              }
+            }
+            """;
+        final JsonObject parsed = this.parse(text).asObject();
+        assertEquals("c {\n  d e\n}",
+            parsed.getAsserted("a").asObject().getAsserted("b").asString());
+    }
+
     @ParameterizedTest
     @CsvSource({"/*header*/", "#header", "//header"})
     public void parse_preservesHeaderComment_atTopOfFile(final String comment) {
