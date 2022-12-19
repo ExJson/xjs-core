@@ -127,10 +127,10 @@ public final class TokenStreamTest {
     }
 
     private static Token number(final double number, final int s, final int e) {
-        return new NumberToken(s, e, s, number);
+        return new NumberToken(s, e, 0, s, number);
     }
 
     private static Token token(final Type type, final int s, final int e) {
-        return new Token(s, e, s, type);
+        return new Token(s, e, 0, s, type);
     }
 }

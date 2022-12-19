@@ -93,7 +93,7 @@ public class XjsParser extends CommentedTokenParser {
     }
 
     protected JsonValue readClosedRoot() {
-        if (this.current.type == Type.OPEN) {
+        if (this.current.type() == Type.OPEN) {
             this.read();
         }
         this.skipWhitespace();
@@ -114,7 +114,7 @@ public class XjsParser extends CommentedTokenParser {
         if (this.current.isSymbol(',')) {
             return new JsonString("", StringType.IMPLICIT);
         }
-        switch (this.current.type) {
+        switch (this.current.type()) {
             case BRACKETS:
                 return this.readArray();
             case BRACES:
@@ -170,8 +170,8 @@ public class XjsParser extends CommentedTokenParser {
             return "";
         }
 
-        final int start = this.current.start;
-        final int offset = this.current.offset;
+        final int start = this.current.start();
+        final int offset = this.current.offset();
         final int linesBefore = this.linesSkipped;
 
         final int skipped =
@@ -182,7 +182,7 @@ public class XjsParser extends CommentedTokenParser {
         if (skipped == 0 && previous instanceof StringToken) {
             return ((StringToken) previous).parsed;
         }
-        final int end = previous.end;
+        final int end = previous.end();
         return this.getText(linesBefore, start, offset, end);
     }
 
@@ -245,12 +245,12 @@ public class XjsParser extends CommentedTokenParser {
     }
 
     protected JsonValue readImplicit() {
-        final int start = this.current.start;
-        final int offset = this.current.offset;
+        final int start = this.current.start();
+        final int offset = this.current.offset();
         final int linesBefore = this.linesSkipped;
         final int numTokens = this.skipTo(',', true, true);
         if (numTokens == 0) {
-            switch (this.current.type) {
+            switch (this.current.type()) {
                 case NUMBER: return Json.value(
                     ((NumberToken) this.current).number);
                 case SINGLE_QUOTE: return new JsonString(
@@ -261,7 +261,7 @@ public class XjsParser extends CommentedTokenParser {
                     ((StringToken) this.current).parsed, StringType.MULTI);
             }
         }
-        final int end = this.current.end;
+        final int end = this.current.end();
         final String text = this.getText(linesBefore, start, offset, end);
         switch (text) {
             case "true": return JsonLiteral.jsonTrue();
@@ -274,6 +274,7 @@ public class XjsParser extends CommentedTokenParser {
     protected String getText(
             final int linesBefore, final int start, final int offset, final int end) {
         // optimization to avoid redundant text analysis.
+        // todo: unreachable condition
         if (this.linesSkipped > linesBefore) {
             return this.buildImplicitText(start, offset, end);
         }

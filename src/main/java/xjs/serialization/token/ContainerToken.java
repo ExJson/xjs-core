@@ -37,15 +37,18 @@ public class ContainerToken extends TokenStream {
      * Constructs a new Token object to be placed on an AST.
      *
      * @param reference A reference to the original source of this token.
-     * @param start    The inclusive start index of this token.
-     * @param end      The exclusive end index of this token.
-     * @param offset   The column of the start index.
-     * @param type     The type of token.
+     * @param start     The inclusive start index of this token.
+     * @param end       The exclusive end index of this token.
+     * @param line      The inclusive line number of this token.
+     * @param lastLine  The inclusive end line number of this token.
+     * @param offset    The column of the start index.
+     * @param type      The type of token.
      */
     public ContainerToken(
             final String reference, final int start, final int end,
-            final int offset, final Type type, final List<Token> tokens) {
-        super(reference, start, end, offset, type, tokens);
+            final int line, final int lastLine, final int offset,
+            final Type type, final List<Token> tokens) {
+        super(reference, start, end, line, lastLine, offset, type, tokens);
     }
 
     public Token get(final int i) {
@@ -122,7 +125,7 @@ public class ContainerToken extends TokenStream {
         final Token last = this.tokens.get(e);
         final List<Token> slice = this.tokens.subList(s, e);
         return new ContainerToken(
-            this.reference.toString(), first.start, last.end, first.offset, Type.OPEN, slice);
+            this.reference.toString(), first.start, last.end, first.line, last.line, first.offset, Type.OPEN, slice);
     }
 
     public class Lookup {

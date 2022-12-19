@@ -9,34 +9,41 @@ public class Token {
     /**
      * The inclusive start index of this token.
      */
-    public final int start;
+    protected int start;
 
     /**
      * The exclusive end index of this token.
      */
-    public final int end;
+    protected int end;
+
+    /**
+     * The inclusive line number of this token.
+     */
+    protected int line;
 
     /**
      * The column of the start index.
      */
-    public final int offset;
+    protected int offset;
 
     /**
      * The type of token.
      */
-    public final Type type;
+    protected Type type;
 
     /**
      * Constructs a new Token object to be placed on an AST.
      *
      * @param start    The inclusive start index of this token.
      * @param end      The exclusive end index of this token.
+     * @param line     The inclusive line number of this token.
      * @param offset   The column of the start index.
      * @param type     The type of token.
      */
-    public Token(final int start, final int end, final int offset, final Type type) {
+    public Token(final int start, final int end, final int line, final int offset, final Type type) {
         this.start = start;
         this.end = end;
+        this.line = line;
         this.offset = offset;
         this.type = type;
     }
@@ -62,12 +69,37 @@ public class Token {
         return false;
     }
 
+    public int start() {
+        return this.start;
+    }
+
+    public int end() {
+        return this.end;
+    }
+
+    public int line() {
+        return this.line;
+    }
+
+    public int lastLine() {
+        return this.line;
+    }
+
+    public int offset() {
+        return this.offset;
+    }
+
+    public Type type() {
+        return this.type;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o instanceof Token) {
             final Token t = (Token) o;
             return this.start == t.start
                 && this.end == t.end
+                && this.line == t.line
                 && this.offset == t.offset
                 && this.type == t.type;
         }
@@ -76,7 +108,7 @@ public class Token {
 
     @Override
     public String toString() {
-        return this.type + "(start:" + this.start + ",end:" + this.end + ",offset:" + this.offset + ")";
+        return this.type + "(start:" + this.start + ",end:" + this.end + ",line:" + this.line + ",offset:" + this.offset + ")";
     }
 
     /**

@@ -6,8 +6,8 @@ public class ExperimentalTripleParser {
 
     public static String parseTriple(final CharSequence reference, final Token t) {
         final StringBuilder sb = new StringBuilder();
-        final int start = t.start + 3;
-        final int end = t.end - 3;
+        final int start = t.start() + 3;
+        final int end = t.end() - 3;
 
         if (start == end) {
             return "";
@@ -20,7 +20,7 @@ public class ExperimentalTripleParser {
             c = reference.charAt(++i);
         }
 
-        final int offset = t.offset;
+        final int offset = t.offset();
         if (c == '\n') {
             i = skipToOffset(reference,i + 1, offset);
         }

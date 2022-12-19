@@ -39,12 +39,13 @@ public class NumberToken extends Token {
      *
      * @param start     The inclusive start index of this token.
      * @param end       The exclusive end index of this token.
+     * @param line      The inclusive line number of this token.
      * @param offset    The column of the start index.
      * @param number    The number captured by the token.
      */
     public NumberToken(
-            final int start, final int end, final int offset, final double number) {
-        super(start, end, offset, Type.NUMBER);
+            final int start, final int end, final int line, final int offset, final double number) {
+        super(start, end, line, offset, Type.NUMBER);
         this.number = number;
     }
 }

@@ -26,6 +26,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
     protected final List<Token> tokens;
     protected volatile @Nullable PositionTrackingReader reader;
     public final CharSequence reference;
+    protected int lastLine;
 
     /**
      * Constructs a new Token object to be placed on an AST.
@@ -33,32 +34,39 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
      * @param reference A reference to the original source of this token.
      * @param start     The inclusive start index of this token.
      * @param end       The exclusive end index of this token.
+     * @param line      The inclusive line number of this token.
+     * @param lastLine  The inclusive end line number of this token.
      * @param offset    The column of the start index.
      * @param type      The type of token.
      * @param tokens    A list of any known tokens, in order.
      */
     protected TokenStream(final CharSequence reference, final int start, final int end,
-                          final int offset, final Type type, final List<Token> tokens) {
-        super(start, end, offset, type);
+                          final int line, final int lastLine, final int offset,
+                          final Type type, final List<Token> tokens) {
+        super(start, end, line, offset, type);
         this.reference = reference;
         this.tokens = new ArrayList<>(tokens);
+        this.lastLine = lastLine;
     }
 
     /**
      * Constructs a new Token object to be placed on an AST.
      *
-     * @param reader A reader for extracting tokens OTF.
-     * @param start  The inclusive start index of this token.
-     * @param end    The exclusive end index of this token.
-     * @param offset The column of the start index.
-     * @param type   The type of token.
+     * @param reader   A reader for extracting tokens OTF.
+     * @param start    The inclusive start index of this token.
+     * @param end      The exclusive end index of this token.
+     * @param line     The inclusive line number of this token.
+     * @param lastLine The inclusive end line number of this token.
+     * @param offset   The column of the start index.
+     * @param type     The type of token.
      */
     public TokenStream(final @NotNull PositionTrackingReader reader, final int start, final int end,
-                       final int offset, final Type type) {
-        super(start, end, offset, type);
+                       final int line, final int lastLine, final int offset, final Type type) {
+        super(start, end, line, offset, type);
         this.tokens = new ArrayList<>();
         this.reader = reader;
         this.reference = reader.getFullText();
+        this.lastLine = lastLine;
     }
 
     public String stringify() {
@@ -122,7 +130,9 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
     @Override
     public boolean equals(final Object o) {
         if (o instanceof TokenStream) {
-            return super.equals(o) && this.tokens.equals(((TokenStream) o).tokens);
+            return super.equals(o)
+                && this.lastLine == ((TokenStream) o).lastLine
+                && this.tokens.equals(((TokenStream) o).tokens);
         }
         return false;
     }
@@ -172,12 +182,17 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
 
         protected void read() {
             this.elementIndex++;
-            this.next = this.peek(1);
-            this.closeIfEmpty();
+            final Token next = this.peek(1);
+            this.next = next;
+            if (next != null) {
+                this.tryClose();
+                TokenStream.this.end = next.end;
+                TokenStream.this.lastLine = next.line;
+            }
         }
 
-        protected void closeIfEmpty() {
-            if (this.reader != null && this.next == null) {
+        protected void tryClose() {
+            if (this.reader != null) {
                 try {
                     this.reader.close();
                 } catch (final IOException e) {
@@ -191,13 +206,13 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
             final int amount = index - this.elementIndex;
             this.next = this.peek(amount + 1);
             this.elementIndex = index;
-            this.closeIfEmpty();
+            this.tryClose();
         }
 
         public void skip(final int amount) {
             this.next = this.peek(amount + 1);
             this.elementIndex = this.elementIndex + amount;
-            this.closeIfEmpty();
+            this.tryClose();
         }
 
         public String getText() {

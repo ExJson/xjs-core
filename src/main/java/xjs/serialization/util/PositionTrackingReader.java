@@ -18,17 +18,17 @@ public abstract class PositionTrackingReader implements Closeable {
     protected static final int MIN_BUFFER_SIZE = 8;
 
     /**
-     * The index of the current character.
+     * The index of the current character, starting at 0.
      */
     public int index;
 
     /**
-     * The line number, starting at 1.
+     * The line number, starting at 0.
      */
     public int line;
 
     /**
-     * The column of the current character.
+     * The column of the current character, starting at 0.
      */
     public int column;
 
@@ -49,7 +49,7 @@ public abstract class PositionTrackingReader implements Closeable {
 
     protected PositionTrackingReader() {
         this.index = -1;
-        this.line = 1;
+        this.line = 0;
         this.column = -1;
         this.captureStart = -1;
     }

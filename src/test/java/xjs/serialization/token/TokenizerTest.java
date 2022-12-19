@@ -239,11 +239,11 @@ public final class TokenizerTest {
     }
 
     private static Token token(final Type type, final int s, final int e) {
-        return new Token(s, e, s, type);
+        return new Token(s, e, 0, s, type);
     }
 
     private static Token number(final String reference, final double number) {
-        return new NumberToken(0, reference.length(), 0, number);
+        return new NumberToken(0, reference.length(), 0, 0, number);
     }
 
     private static Token symbol(final String reference, final char symbol) {
@@ -251,11 +251,11 @@ public final class TokenizerTest {
     }
 
     private static Token symbol(final char symbol, final int s, final int e) {
-        return new SymbolToken(s, e, s, symbol);
+        return new SymbolToken(s, e, 0, s, symbol);
     }
 
     private static Token container(
             final String reference, final Type type, final int s, final int e, final Token... tokens) {
-        return new ContainerToken(reference, s, e, s, type, List.of(tokens));
+        return new ContainerToken(reference, s, e, 0, 0, s, type, List.of(tokens));
     }
 }

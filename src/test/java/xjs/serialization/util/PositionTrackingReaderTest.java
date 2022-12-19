@@ -108,7 +108,7 @@ public final class PositionTrackingReaderTest {
             while (!reader.isEndOfText()) {
                 reader.read();
             }
-            assertEquals(300, reader.line,
+            assertEquals(299, reader.line,
                 reader.getClass().getSimpleName());
         }
     }

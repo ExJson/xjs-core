@@ -29,12 +29,14 @@ public class StringToken extends Token {
      *
      * @param start  The inclusive start index of this token.
      * @param end    The exclusive end index of this token.
+     * @param line   The inclusive line number of this token.
      * @param offset The column of the start index.
      * @param type   The type of string represented by the token.
      * @param parsed The un-escaped, parsed text.
      */
-    public StringToken(final int start, final int end, final int offset, final Type type, final String parsed) {
-        super(start, end, offset, type);
+    public StringToken(
+            final int start, final int end, final int line, final int offset, final Type type, final String parsed) {
+        super(start, end, line, offset, type);
         this.parsed = parsed;
     }
 }

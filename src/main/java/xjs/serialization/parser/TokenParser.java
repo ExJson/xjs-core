@@ -4,16 +4,18 @@ import xjs.core.JsonArray;
 import xjs.core.JsonContainer;
 import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;
+import xjs.serialization.token.ContainerToken;
 import xjs.serialization.token.Token;
 import xjs.serialization.token.Token.Type;
 import xjs.serialization.token.TokenStream;
-import xjs.serialization.token.Tokenizer;
 import xjs.serialization.util.BufferedStack;
+
+import java.util.ArrayList;
 
 public abstract class TokenParser implements ValueParser {
 
     protected static final TokenStream EMPTY_VALUE =
-        Tokenizer.stream("");
+        new ContainerToken("", 0, 0, 0, 0, 0, Type.OPEN, new ArrayList<>());
     protected static final TokenStream.Itr EMPTY_ITERATOR =
         EMPTY_VALUE.iterator();
 
@@ -81,7 +83,7 @@ public abstract class TokenParser implements ValueParser {
     }
 
     protected boolean readNl() {
-        if (this.current.type == Type.BREAK) {
+        if (this.current.type() == Type.BREAK) {
             this.read();
             this.flagLineAsSkipped();
             return true;
@@ -131,7 +133,7 @@ public abstract class TokenParser implements ValueParser {
     }
 
     protected boolean consumeWhitespace(final Token t, final boolean nl) {
-        if (nl && t.type == Type.BREAK) {
+        if (nl && t.type() == Type.BREAK) {
             this.flagLineAsSkipped();
             return true;
         }
@@ -162,7 +164,7 @@ public abstract class TokenParser implements ValueParser {
         int peekAmount = 1;
         while (t != null) { // newlines would only be inside of containers for values
             if (t.isSymbol(symbol)
-                    || (nl && t.type == Type.BREAK)) {
+                    || (nl && t.type() == Type.BREAK)) {
                 itr.skip(peekAmount - 1);
                 this.current = lastRecorded;
                 return peekAmount - 1;
@@ -220,7 +222,7 @@ public abstract class TokenParser implements ValueParser {
 
     protected void expectEndOfText() {
         if (!this.stack.isEmpty() || this.iterator.hasNext()) {
-            throw this.unexpected(this.current.type + " before end of file");
+            throw this.unexpected(this.current.type() + " before end of file");
         }
     }
 
@@ -234,21 +236,21 @@ public abstract class TokenParser implements ValueParser {
 
     protected SyntaxException expected(final char expected) {
         return SyntaxException.expected(
-            expected, this.current.start, this.current.offset);
+            expected, this.current.line(), this.current.offset());
     }
 
     protected SyntaxException expected(final String expected) {
         return SyntaxException.expected(
-            expected, this.current.start, this.current.offset);
+            expected, this.current.line(), this.current.offset());
     }
 
     protected SyntaxException unexpected(final char unexpected) {
         return SyntaxException.unexpected(
-            unexpected, this.current.start, this.current.offset);
+            unexpected, this.current.line(), this.current.offset());
     }
 
     protected SyntaxException unexpected(final String unexpected) {
         return SyntaxException.unexpected(
-            unexpected, this.current.start, this.current.offset);
+            unexpected, this.current.line(), this.current.offset());
     }
 }

@@ -54,11 +54,12 @@ public class SymbolToken extends Token {
      *
      * @param start    The inclusive start index of this token.
      * @param end      The exclusive end index of this token.
+     * @param line   The inclusive line number of this token.
      * @param offset   The column of the start index.
      * @param symbol   The raw symbol represented by this token.
      */
-    public SymbolToken(final int start, final int end, final int offset, final char symbol) {
-        this(start, end, offset, Type.SYMBOL, symbol);
+    public SymbolToken(final int start, final int end, final int line, final int offset, final char symbol) {
+        this(start, end, line, offset, Type.SYMBOL, symbol);
     }
 
     /**
@@ -66,13 +67,14 @@ public class SymbolToken extends Token {
      *
      * @param start    The inclusive start index of this token.
      * @param end      The exclusive end index of this token.
+     * @param line   The inclusive line number of this token.
      * @param offset   The column of the start index.
      * @param type     The type of token.
      * @param symbol   The raw symbol represented by this token.
      */
     public SymbolToken(
-            final int start, final int end, final int offset, final Type type, final char symbol) {
-        super(start, end, offset, type);
+            final int start, final int end, final int line, final int offset, final Type type, final char symbol) {
+        super(start, end, line, offset, type);
         this.symbol = symbol;
     }
 

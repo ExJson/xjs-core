@@ -17,7 +17,7 @@ public abstract class CommentedTokenParser extends TokenParser {
     @Override
     protected boolean consumeWhitespace(
             final Token t, final boolean nl) {
-        switch (t.type) {
+        switch (t.type()) {
             case HASH_COMMENT:
             case LINE_COMMENT:
                 this.appendComment(t);
@@ -45,19 +45,19 @@ public abstract class CommentedTokenParser extends TokenParser {
 
     protected void appendComment(final Token t) {
         this.commentBuffer.append(
-            this.reference, t.start, t.end);
+            this.reference, t.start(), t.end());
     }
 
     protected void appendMultilineComment(final Token t) {
-        int lineStart = t.start;
-        int lastChar = t.start;
-        for (int i = t.start; i < t.end; i++) {
+        int lineStart = t.start();
+        int lastChar = t.start();
+        for (int i = t.start(); i < t.end(); i++) {
             final char c = this.reference.charAt(i);
             if (c == '\n') {
                 this.commentBuffer.append(
                     this.reference, lineStart, lastChar + 1);
                 this.commentBuffer.append('\n');
-                i = this.skipToOffset(i + 1, t.offset);
+                i = this.skipToOffset(i + 1, t.offset());
                 lineStart = i;
             } else if (!Character.isWhitespace(c)) {
                 lastChar = i;
