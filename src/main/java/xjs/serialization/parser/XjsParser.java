@@ -1,15 +1,7 @@
 package xjs.serialization.parser;
 
 import org.jetbrains.annotations.NotNull;
-import xjs.core.CommentType;
-import xjs.core.Json;
-import xjs.core.JsonArray;
-import xjs.core.JsonContainer;
-import xjs.core.JsonLiteral;
-import xjs.core.JsonObject;
-import xjs.core.JsonString;
-import xjs.core.JsonValue;
-import xjs.core.StringType;
+import xjs.core.*;
 import xjs.serialization.token.ContainerToken;
 import xjs.serialization.token.NumberToken;
 import xjs.serialization.token.StringToken;
@@ -47,66 +39,28 @@ public class XjsParser extends CommentedTokenParser {
 
     protected JsonObject readOpenRoot() {
         final JsonObject object = new JsonObject();
-        this.read();
-        this.skipWhitespace();
-        this.splitOpenHeader(object);
-        do {
-            this.skipWhitespace(false);
+        this.next();
+        this.readAboveOpenRoot(object);
+        while (true) {
+            this.readWhitespace(false);
             if (this.isEndOfContainer()) {
                 break;
             }
-        } while (this.readNextMember(object));
-        this.setComment(CommentType.FOOTER);
-        this.setLinesTrailing();
-        this.expectEndOfText();
+            this.readNextMember(object);
+        }
+        this.readBottom();
         return this.takeFormatting(object);
-    }
-
-    protected void splitOpenHeader(final JsonObject root) {
-        if (this.commentBuffer.length() > 0) {
-            final String header = this.commentBuffer.toString();
-            final int end = this.getLastGap(header);
-            if (end > 0) {
-                root.getComments().setData(CommentType.HEADER, header.substring(0, end));
-                root.setLinesAbove(this.linesSkipped);
-                this.commentBuffer.delete(0, header.indexOf('\n', end + 1) + 1);
-                this.linesSkipped = 0;
-            }
-        }
-    }
-
-    private int getLastGap(final String s) {
-        for (int i = s.length() - 1; i > 0; i--) {
-            if (s.charAt(i) != '\n') {
-                continue;
-            }
-            while (i > 1) {
-                final char next = s.charAt(--i);
-                if (next == '\n') {
-                    return i;
-                } else if (next != ' ' && next != '\t' && next != '\r') {
-                    break;
-                }
-            }
-        }
-        return -1;
     }
 
     protected JsonValue readClosedRoot() {
         if (this.current.type() == Type.OPEN) {
-            this.read();
+            this.next();
         }
-        this.skipWhitespace();
-        this.setComment(CommentType.HEADER);
-        this.setLinesAbove();
-
+        this.readAbove();
         final JsonValue result = this.readValue();
 
-        this.skipWhitespace();
-
-        this.prependLinesSkippedToComment();
-        this.setComment(CommentType.FOOTER);
-        this.expectEndOfText();
+        this.readAfter();
+        this.readBottom();
         return this.takeFormatting(result);
     }
 
@@ -125,49 +79,38 @@ public class XjsParser extends CommentedTokenParser {
                 return this.readObject();
             default:
                 final JsonValue value = this.readImplicit(offset);
-                this.read();
+                this.next();
                 return value;
         }
     }
 
     protected JsonObject readObject() {
         final JsonObject object = new JsonObject();
-        this.push();
-        if (!this.iterator.hasNext()) {
-            return this.closeContainer(object);
+        if (!this.open()) {
+            return this.close(object);
         }
-        this.read();
-        this.skipWhitespace();
-        do { // todo: can there be unexpected symbols?
-            this.skipWhitespace(false);
+        while (true) {
+            this.readWhitespace(false);
             if (this.isEndOfContainer()) {
-                return this.closeContainer(object);
+                return this.close(object);
             }
-        } while (this.readNextMember(object));
-        return this.closeContainer(object);
+            this.readNextMember(object);
+        }
     }
 
-    protected boolean readNextMember(final JsonObject object) {
-        this.setComment(CommentType.HEADER);
-        this.setLinesAbove();
+    protected void readNextMember(final JsonObject object) {
+        this.setAbove();
 
         final int offset = this.current.offset();
         final String key = this.readKey();
 
-        this.skipWhitespace();
-        this.expect(':');
-        this.skipWhitespace();
-
-        this.setComment(CommentType.VALUE);
-        this.setLinesBetween();
+        this.readBetween(':');
 
         final JsonValue value = this.readValue(offset);
-
         object.add(key, value);
 
-        final boolean delimiter = this.readDelimiter();
+        this.readDelimiter();
         this.takeFormatting(value);
-        return delimiter;
     }
 
     protected String readKey() {
@@ -182,7 +125,7 @@ public class XjsParser extends CommentedTokenParser {
         final int skipped =
             this.skipTo(':', false, false);
         final Token previous = this.current;
-        this.read();
+        this.next();
 
         if (skipped == 0 && previous instanceof StringToken) {
             return ((StringToken) previous).parsed;
@@ -193,59 +136,57 @@ public class XjsParser extends CommentedTokenParser {
 
     protected JsonArray readArray() {
         final JsonArray array = new JsonArray();
-        this.push();
-        if (!this.iterator.hasNext()) {
-            return this.closeContainer(array);
+        if (!this.open()) {
+            return this.close(array);
         }
-        this.read();
-        this.skipWhitespace();
-        do { // todo: can there be unexpected symbols?
-            this.skipWhitespace(false);
+        while (true) {
+            this.readWhitespace(false);
             if (this.isEndOfContainer()) {
-                return this.closeContainer(array);
+                return this.close(array);
             }
-        } while (this.readNextElement(array));
-        return this.closeContainer(array);
+            this.readNextElement(array);
+        }
     }
 
-    protected boolean readNextElement(final JsonArray array) {
-        this.setComment(CommentType.HEADER);
-        this.setLinesAbove();
+    protected void readNextElement(final JsonArray array) {
+        this.setAbove();
 
         final JsonValue value = this.readValue();
-
         array.add(value);
 
-        final boolean delimiter = this.readDelimiter();
+        this.readDelimiter();
         this.takeFormatting(value);
-        return delimiter;
     }
 
-    protected boolean readDelimiter() {
-        this.readComments(false);
+    protected void readDelimiter() {
+        this.readLineWhitespace(false);
         if (this.readIf(',')) {
-            this.readComments(false);
+            this.readLineWhitespace(false);
             this.readNl();
             this.setComment(CommentType.EOL);
-            return true;
         } else if (this.readNl()) {
             this.setComment(CommentType.EOL);
-            this.skipWhitespace(false);
+            this.readWhitespace(false);
             this.readIf(',');
-            return true;
         }
-        return false;
     }
 
-    protected <T extends JsonContainer> T closeContainer(
+    protected boolean open() {
+        this.push();
+        if (this.isEndOfContainer()) {
+            return false;
+        }
+        this.next();
+        this.readWhitespace();
+        return true;
+    }
+
+    protected <T extends JsonContainer> T close(
             final T container) {
-        this.setComment(CommentType.INTERIOR);
-        this.setLinesTrailing();
+        this.setTrailing();
         this.takeFormatting(container);
         this.pop();
-        this.read();
-        this.readComments(false);
-        this.setComment(CommentType.EOL);
+        this.next();
         return container;
     }
 
@@ -298,7 +239,7 @@ public class XjsParser extends CommentedTokenParser {
             } else if (c == '\\' && i < end - 1) {
                 sb.append(reference, marker, i);
                 c = reference.charAt(++i);
-                if (!this.shouldUnescape(c)) {
+                if (c != '\r' && c != '\n') {
                     sb.append('\\');
                 }
                 sb.append(c);
@@ -307,15 +248,6 @@ public class XjsParser extends CommentedTokenParser {
         }
         sb.append(reference, marker, end);
         return sb.toString();
-    }
-
-    protected boolean shouldUnescape(final char c) {
-        return c == '\n'
-            || c == '}'
-            || c == ']'
-            || c == ')'
-            || c == ':'
-            || c == ',';
     }
 
     @Override

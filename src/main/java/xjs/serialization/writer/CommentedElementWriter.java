@@ -104,7 +104,7 @@ public abstract class CommentedElementWriter extends ElementWriter {
         final String data =
             this.getComment(CommentType.EOL);
         final boolean separatorWritten =
-            this.peek().getLinesAbove() == 0;
+            this.getLinesAbove(this.peek()) == 0;
         if (!separatorWritten) {
             this.tw.write(this.separator);
         }

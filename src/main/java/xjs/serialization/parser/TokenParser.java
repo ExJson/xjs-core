@@ -38,7 +38,7 @@ public abstract class TokenParser implements ValueParser {
         this.current = root;
     }
 
-    protected void read() {
+    protected void next() {
         final TokenStream.Itr itr = this.iterator;
         if (itr == EMPTY_ITERATOR) {
             return;
@@ -76,7 +76,7 @@ public abstract class TokenParser implements ValueParser {
 
     protected boolean readIf(final char symbol) {
         if (this.current.isSymbol(symbol)) {
-            this.read();
+            this.next();
             return true;
         }
         return false;
@@ -84,7 +84,7 @@ public abstract class TokenParser implements ValueParser {
 
     protected boolean readNl() {
         if (this.current.type() == Type.BREAK) {
-            this.read();
+            this.next();
             this.flagLineAsSkipped();
             return true;
         }
@@ -99,19 +99,19 @@ public abstract class TokenParser implements ValueParser {
         return this.current == EMPTY_VALUE;
     }
 
-    protected void skipWhitespace() {
-        this.skipWhitespace(true, true);
+    protected void readWhitespace() {
+        this.readWhitespace(true, true);
     }
 
-    protected void skipWhitespace(final boolean resetLinesSkipped) {
-        this.skipWhitespace(resetLinesSkipped, true);
+    protected void readWhitespace(final boolean resetLinesSkipped) {
+        this.readWhitespace(resetLinesSkipped, true);
     }
 
-    protected void readComments(final boolean resetLinesSkipped) {
-        this.skipWhitespace(resetLinesSkipped, false);
+    protected void readLineWhitespace(final boolean resetLinesSkipped) {
+        this.readWhitespace(resetLinesSkipped, false);
     }
 
-    protected void skipWhitespace(
+    protected void readWhitespace(
             final boolean resetLinesSkipped, final boolean nl) {
         if (resetLinesSkipped) {
             this.linesSkipped = 0;
@@ -183,16 +183,37 @@ public abstract class TokenParser implements ValueParser {
         throw this.expectedSymbolOrNL(symbol, nl);
     }
 
-    protected void setLinesAbove() {
+    protected void setAbove() {
         this.formatting.setLinesAbove(this.takeLinesSkipped());
     }
 
-    protected void setLinesBetween() {
+    protected void setBetween() {
         this.formatting.setLinesBetween(this.takeLinesSkipped());
     }
 
-    protected void setLinesTrailing() {
+    protected void setTrailing() {
         this.formatting.setLinesTrailing(this.takeLinesSkipped());
+    }
+
+    protected void readAbove() {
+        this.readWhitespace(false);
+        this.setAbove();
+    }
+
+    protected void readBetween(final char kvSeparator) {
+        this.readWhitespace();
+        this.expect(kvSeparator);
+        this.readWhitespace();
+        this.setBetween();
+    }
+
+    protected void readAfter() {
+        this.readLineWhitespace(false);
+    }
+
+    protected void readBottom() {
+        this.readWhitespace(false);
+        this.expectEndOfText();
     }
 
     protected int takeLinesSkipped() {

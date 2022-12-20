@@ -1,6 +1,7 @@
 package xjs.serialization.parser;
 
 import xjs.core.CommentType;
+import xjs.core.JsonObject;
 import xjs.serialization.token.Token;
 import xjs.serialization.token.TokenStream;
 
@@ -41,6 +42,44 @@ public abstract class CommentedTokenParser extends TokenParser {
         } else {
             this.linesSkipped++;
         }
+    }
+
+    @Override
+    protected void setAbove() {
+        this.setComment(CommentType.HEADER);
+        super.setAbove();
+    }
+
+    @Override
+    protected void setBetween() {
+        this.setComment(CommentType.VALUE);
+        super.setBetween();
+    }
+
+    @Override
+    protected void setTrailing() {
+        this.setComment(CommentType.INTERIOR);
+        super.setTrailing();
+    }
+
+    protected void readAboveOpenRoot(final JsonObject root) {
+        this.readWhitespace();
+        this.splitOpenHeader(root);
+    }
+
+    @Override
+    protected void readAfter() {
+        this.readLineWhitespace(false);
+        this.setComment(CommentType.EOL);
+    }
+
+    @Override
+    protected void readBottom() {
+        this.readWhitespace(false);
+
+        this.prependLinesSkippedToComment();
+        this.setComment(CommentType.FOOTER);
+        this.expectEndOfText();
     }
 
     protected void appendComment(final Token t) {
@@ -118,5 +157,34 @@ public abstract class CommentedTokenParser extends TokenParser {
 
     protected final void trimComment() {
         this.commentBuffer.setLength(this.commentBuffer.length() - 1);
+    }
+
+    protected void splitOpenHeader(final JsonObject root) {
+        if (this.commentBuffer.length() > 0) {
+            final String header = this.commentBuffer.toString();
+            final int end = this.getLastGap(header);
+            if (end > 0) {
+                root.getComments().setData(CommentType.HEADER, header.substring(0, end));
+                root.setLinesAbove(this.linesSkipped);
+                this.commentBuffer.delete(0, header.indexOf('\n', end + 1) + 1);
+            }
+        }
+    }
+
+    private int getLastGap(final String s) {
+        for (int i = s.length() - 1; i > 0; i--) {
+            if (s.charAt(i) != '\n') {
+                continue;
+            }
+            while (i > 1) {
+                final char next = s.charAt(--i);
+                if (next == '\n') {
+                    return i;
+                } else if (next != ' ' && next != '\t' && next != '\r') {
+                    break;
+                }
+            }
+        }
+        return -1;
     }
 }
