@@ -3,7 +3,6 @@ package xjs.serialization.token;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import xjs.serialization.util.PositionTrackingReader;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -25,9 +24,8 @@ import java.util.List;
  */
 public class TokenStream extends Token implements Iterable<Token>, Closeable {
     protected final List<Token> tokens;
-    protected volatile @Nullable PositionTrackingReader reader;
+    protected volatile @Nullable Tokenizer tokenizer;
     public final CharSequence reference;
-    protected int lastLine;
 
     /**
      * Constructs a new Token object to be placed on an AST.
@@ -44,30 +42,22 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
     protected TokenStream(final CharSequence reference, final int start, final int end,
                           final int line, final int lastLine, final int offset,
                           final Type type, final List<Token> tokens) {
-        super(start, end, line, offset, type);
+        super(start, end, line, lastLine, offset, type);
         this.reference = reference;
         this.tokens = new ArrayList<>(tokens);
-        this.lastLine = lastLine;
     }
 
     /**
      * Constructs a new Token object to be placed on an AST.
      *
-     * @param reader   A reader for extracting tokens OTF.
-     * @param start    The inclusive start index of this token.
-     * @param end      The exclusive end index of this token.
-     * @param line     The inclusive line number of this token.
-     * @param lastLine The inclusive end line number of this token.
-     * @param offset   The column of the start index.
-     * @param type     The type of token.
+     * @param tokenizer A tokenizer for generating tokens OTF.
+     * @param type      The type of token.
      */
-    public TokenStream(final @NotNull PositionTrackingReader reader, final int start, final int end,
-                       final int line, final int lastLine, final int offset, final Type type) {
-        super(start, end, line, offset, type);
+    public TokenStream(final @NotNull Tokenizer tokenizer, final Type type) {
+        super(tokenizer.reader.index, -1, tokenizer.reader.line, -1, tokenizer.reader.index, type);
         this.tokens = new ArrayList<>();
-        this.reader = reader;
-        this.reference = reader.getFullText();
-        this.lastLine = lastLine;
+        this.tokenizer = tokenizer;
+        this.reference = tokenizer.reader.getFullText();
     }
 
     /**
@@ -104,7 +94,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
         for (final Token token : copy) {
             this.stringifySingle(sb, token, level, readToEnd);
         }
-        if (this.reader != null || this.tokens.size() != copy.size()) {
+        if (this.tokenizer != null || this.tokens.size() != copy.size()) {
             this.writeNewLine(sb, level);
             sb.append("<reading...>");
         }
@@ -113,8 +103,8 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
     }
 
     protected void readToEnd() {
-        final PositionTrackingReader reader = this.reader;
-        if (reader != null) {
+        final Tokenizer tokenizer = this.tokenizer;
+        if (tokenizer != null) {
             synchronized (this) {
                 this.forEach(token -> {});
             }
@@ -145,11 +135,6 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
     }
 
     @Override
-    public int lastLine() {
-        return this.lastLine;
-    }
-
-    @Override
     public Itr iterator() {
         return new Itr();
     }
@@ -171,22 +156,22 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
 
     @Override
     public void close() throws IOException {
-        final PositionTrackingReader reader;
+        final Tokenizer tokenizer;
         synchronized (this) {
-            reader = this.reader;
+            tokenizer = this.tokenizer;
         }
-        if (reader != null) {
-            reader.close();
+        if (tokenizer != null) {
+            tokenizer.close();
         }
     }
 
     public class Itr implements Iterator<Token> {
-        protected final PositionTrackingReader reader;
+        protected final Tokenizer tokenizer;
         protected Token next;
         protected int elementIndex;
 
         protected Itr() {
-            this.reader = TokenStream.this.reader;
+            this.tokenizer = TokenStream.this.tokenizer;
             this.elementIndex = -1;
             this.read();
         }
@@ -219,16 +204,17 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
         }
 
         protected void tryClose() {
-            if (this.reader != null) {
+            if (this.tokenizer != null && this.next != null) {
                 try {
-                    this.reader.close();
+                    this.tokenizer.close();
                 } catch (final IOException e) {
                     e.printStackTrace();
                 }
-                TokenStream.this.reader = null;
+                TokenStream.this.tokenizer = null;
             }
         }
 
+        @ApiStatus.Experimental
         public void skipTo(final int index) {
             final int amount = index - this.elementIndex;
             this.next = this.peek(amount + 1);
@@ -236,10 +222,15 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
             this.tryClose();
         }
 
+        @ApiStatus.Experimental
         public void skip(final int amount) {
             this.next = this.peek(amount + 1);
             this.elementIndex = this.elementIndex + amount;
             this.tryClose();
+        }
+
+        public int getIndex() {
+            return this.elementIndex;
         }
 
         public String getText() {
@@ -274,12 +265,12 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
             if (peekIndex >= 0 && peekIndex < tokens.size()) {
                 return tokens.get(peekIndex);
             }
-            if (this.reader == null) {
+            if (this.tokenizer == null) {
                 return null;
             }
             while (tokens.size() < this.elementIndex + amount) {
                 try {
-                    next = Tokenizer.single(this.reader);
+                    next = this.tokenizer.single();
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }

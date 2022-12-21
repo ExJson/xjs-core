@@ -22,6 +22,11 @@ public class Token {
     protected int line;
 
     /**
+     * The inclusive line number at the end of this token.
+     */
+    protected int lastLine;
+
+    /**
      * The column of the start index.
      */
     protected int offset;
@@ -44,9 +49,31 @@ public class Token {
         this.start = start;
         this.end = end;
         this.line = line;
+        this.lastLine = line;
         this.offset = offset;
         this.type = type;
     }
+
+    /**
+     * Constructs a new Token object to be placed on an AST.
+     *
+     * @param start    The inclusive start index of this token.
+     * @param end      The exclusive end index of this token.
+     * @param line     The inclusive line number of this token.
+     * @param lastLine The inclusive end line number of this token.
+     * @param offset   The column of the start index.
+     * @param type     The type of token.
+     */
+    public Token(
+            final int start, final int end, final int line, final int lastLine, final int offset, final Type type) {
+        this.start = start;
+        this.end = end;
+        this.line = line;
+        this.lastLine = lastLine;
+        this.offset = offset;
+        this.type = type;
+    }
+
 
     /**
      * Creates a slice of the given {@link CharSequence} representing
@@ -82,7 +109,7 @@ public class Token {
     }
 
     public int lastLine() {
-        return this.line;
+        return this.lastLine;
     }
 
     public int offset() {

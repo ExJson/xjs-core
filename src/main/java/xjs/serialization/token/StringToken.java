@@ -39,4 +39,22 @@ public class StringToken extends Token {
         super(start, end, line, offset, type);
         this.parsed = parsed;
     }
+
+    /**
+     * Constructs a new Token object to be placed on an AST.
+     *
+     * @param start    The inclusive start index of this token.
+     * @param end      The exclusive end index of this token.
+     * @param line     The inclusive line number of this token.
+     * @param lastLine The inclusive line number at the end of this token.
+     * @param offset   The column of the start index.
+     * @param type     The type of string represented by the token.
+     * @param parsed   The un-escaped, parsed text.
+     */
+    public StringToken(
+            final int start, final int end, final int line, final int lastLine,
+            final int offset, final Type type, final String parsed) {
+        super(start, end, line, lastLine, offset, type);
+        this.parsed = parsed;
+    }
 }

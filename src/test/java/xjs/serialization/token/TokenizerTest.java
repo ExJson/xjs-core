@@ -228,7 +228,7 @@ public final class TokenizerTest {
     
     private static Token single(final String reference) {
         try {
-            return Tokenizer.single(PositionTrackingReader.fromString(reference));
+            return new Tokenizer(PositionTrackingReader.fromString(reference)).single();
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

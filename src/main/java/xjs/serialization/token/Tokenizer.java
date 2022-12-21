@@ -5,23 +5,64 @@ import xjs.exception.SyntaxException;
 import xjs.serialization.token.Token.Type;
 import xjs.serialization.util.PositionTrackingReader;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A handful of utilities for streaming and containerizing tokens.
- *
- * <p>In the future, this API may be exposed to extenders. In the
- * meantime, users will have to provide fully-custom tokenizers
- * to support some exotic formats.
- *
- * Todo: expand line counting semantics to string and comment tokens.
+ * Basic type responsible for streaming and containerizing tokens.
  */
-public final class Tokenizer {
+public class Tokenizer implements Closeable {
 
-    private Tokenizer() {}
+    /**
+     * A reader tracking characters and positional data.
+     */
+    protected final PositionTrackingReader reader;
+
+    /**
+     * Begins parsing tokens when given a typically ongoing input.
+     *
+     * @param is Any source of character bytes.
+     * @throws IOException If the reader fails to parse any initial bytes.
+     */
+    public Tokenizer(final InputStream is) throws IOException {
+        this(PositionTrackingReader.fromIs(is, true));
+    }
+
+    /**
+     * Begins parsing tokens when given a full text as the source.
+     *
+     * @param text The full text and source of tokens.
+     */
+    public Tokenizer(final String text) {
+        this(PositionTrackingReader.fromString(text));
+    }
+
+    /**
+     * Begins parsing tokens from any other source.
+     *
+     * @param reader A reader providing characters and positional data.
+     */
+    public Tokenizer(final PositionTrackingReader reader) {
+        this.reader = reader;
+    }
+
+    /**
+     * Exposes the reader directly to provide additional context to any
+     * callers and facilitate parsing exotic formats.
+     *
+     * @return The underlying reader.
+     */
+    public PositionTrackingReader getReader() {
+        return this.reader;
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.reader.close();
+    }
 
     /**
      * Generates a lazily-evaluated {@link TokenStream stream of
@@ -31,7 +72,7 @@ public final class Tokenizer {
      * @return A new {@link TokenStream}.
      */
     public static TokenStream stream(final String text) {
-        return new TokenStream(PositionTrackingReader.fromString(text), 0, text.length(), 0, 0, 0, Type.OPEN);
+        return new TokenStream(new Tokenizer(text), Type.OPEN);
     }
 
     /**
@@ -43,7 +84,7 @@ public final class Tokenizer {
      * @throws IOException If the initial read operation throws an exception.
      */
     public static TokenStream stream(final InputStream is) throws IOException {
-        return new TokenStream(PositionTrackingReader.fromIs(is, true), 0, 0, 0, 0, 0, Type.OPEN);
+        return new TokenStream(new Tokenizer(is), Type.OPEN);
     }
 
     /**
@@ -57,11 +98,10 @@ public final class Tokenizer {
      * {@link SymbolToken symbol tokens}. An eventual fix is expected,
      * but the exact solution has not yet been determined.
      *
-     * @param reader A reader tracking characters and positional data.
      * @return The next possible token, or else <code>null</code>.
      * @throws IOException If the given reader throws an exception.
      */
-    public static @Nullable Token single(final PositionTrackingReader reader) throws IOException {
+    protected @Nullable Token single() throws IOException {
         reader.skipLineWhitespace();
         if (reader.isEndOfText()) {
             return null;
@@ -71,33 +111,32 @@ public final class Tokenizer {
         final int l = reader.line;
         final int o = reader.column;
         if (c == '/' || c == '#') {
-            return comment(reader, c, s, l, o);
+            return this.comment(c, s, l, o);
         } else if (c == '\'' || c == '"') {
-            return quote(reader, s, l, o, c);
+            return this.quote(s, l, o, c);
         } else if (c == '\n') {
             reader.read();
             return new SymbolToken(s, s + 1, l, o, Type.BREAK, '\n');
         } else if (c == '.') {
-            return dot(reader, s, l, o);
+            return this.dot(s, l, o);
         } else if (Character.isDigit(c)) {
-            return number(reader, s, l, o);
+            return this.number(s, l, o);
         }
-        return word(reader, s, l, o);
+        return this.word(s, l, o);
     }
 
-    private static Token quote(
-            final PositionTrackingReader reader, final int i, final int l, final int o, final char quote) throws IOException {
+    protected Token quote(
+            final int i, final int l, final int o, final char quote) throws IOException {
         final String parsed = reader.readQuoted(quote);
         if (parsed.isEmpty() && quote == '\'' && reader.readIf('\'')) {
             final String multi = reader.readMulti(false);
-            return new StringToken(i, reader.index, l, o, Type.TRIPLE_QUOTE, multi);
+            return new StringToken(i, reader.index, l, reader.line, o, Type.TRIPLE_QUOTE, multi);
         }
         final Type type = quote == '\'' ? Type.SINGLE_QUOTE : Type.DOUBLE_QUOTE;
         return new StringToken(i, reader.index, l, o, type, parsed);
     }
 
-    private static Token comment(
-            final PositionTrackingReader reader, char c, final int i, final int l, final int o) throws IOException {
+    protected Token comment(char c, final int i, final int l, final int o) throws IOException {
         reader.read();
         if (c == '#' || reader.readIf('/')) {
             final int lastChar = reader.skipToNL();
@@ -112,15 +151,14 @@ public final class Tokenizer {
             c = (char) reader.current;
             reader.read();
             if (asterisk && c == '/') {
-                return new Token(i, reader.index, l, o, Type.BLOCK_COMMENT);
+                return new Token(i, reader.index, l, reader.line, o, Type.BLOCK_COMMENT);
             }
             asterisk = c == '*';
         }
         throw reader.expected("end of multiline comment ('*/')");
     }
 
-    private static Token word(
-            final PositionTrackingReader reader, final int i, final int l, final int o) throws IOException {
+    protected Token word(final int i, final int l, final int o) throws IOException {
         do {
             final char c = (char) reader.current;
             if (c == '_' || Character.isLetterOrDigit(c)) {
@@ -135,24 +173,22 @@ public final class Tokenizer {
         return new Token(i, reader.index, l, o, Type.WORD);
     }
 
-    private static Token dot(
-            final PositionTrackingReader reader, final int i, final int l, final int o) throws IOException {
+    protected Token dot(final int i, final int l, final int o) throws IOException {
         reader.read();
         if (reader.isDigit()) {
-            return number(reader, i, l, o);
+            return this.number(i, l, o);
         }
         return new SymbolToken(i, i + 1, l, o, '.');
     }
 
-    private static Token number(
-            final PositionTrackingReader reader, int i, final int l, final int o) throws IOException {
+    protected Token number(int i, final int l, final int o) throws IOException {
         reader.startCapture();
         if (reader.current != '0') { // ???
             reader.readAllDigits();
         }
         if (reader.readIf('.')) {
             if (!reader.isDigit()) {
-                return parseNumber(reader, i, l, o);
+                return this.parseNumber(i, l, o);
             }
             reader.readAllDigits();
         }
@@ -165,11 +201,10 @@ public final class Tokenizer {
             }
             reader.readAllDigits();
         }
-        return parseNumber(reader, i, l, o);
+        return this.parseNumber(i, l, o);
     }
 
-    private static NumberToken parseNumber(
-            final PositionTrackingReader reader, final int i, final int l, final int o) {
+    protected NumberToken parseNumber(final int i, final int l, final int o) {
         final double number = Double.parseDouble(reader.endCapture());
         return new NumberToken(i, reader.index, l, o, number);
     }
