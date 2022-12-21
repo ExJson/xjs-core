@@ -16,6 +16,8 @@ import java.util.List;
  * <p>In the future, this API may be exposed to extenders. In the
  * meantime, users will have to provide fully-custom tokenizers
  * to support some exotic formats.
+ *
+ * Todo: expand line counting semantics to string and comment tokens.
  */
 public final class Tokenizer {
 

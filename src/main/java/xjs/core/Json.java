@@ -291,9 +291,10 @@ public final class Json {
      *
      * @param xjs A reader providing the raw contents  in JSON, XJS, or JSON-C format.
      * @return A new {@link JsonValue} representing the input.
+     * @throws IOException If any error occurs in reading from the stream.
      */
     public static JsonValue parse(final InputStream xjs) throws IOException {
-    return new XjsParser(Tokenizer.containerize(xjs)).parse();
+        return new XjsParser(Tokenizer.containerize(xjs)).parse();
     }
 
     /**

@@ -1,5 +1,6 @@
 package xjs.serialization.token;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xjs.serialization.util.PositionTrackingReader;
@@ -19,7 +20,7 @@ import java.util.List;
  * by this object:
  *
  * <pre>
- *    { k : v }
+ *   { k : v }
  * </pre>
  */
 public class TokenStream extends Token implements Iterable<Token>, Closeable {
@@ -69,6 +70,27 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
         this.lastLine = lastLine;
     }
 
+    /**
+     * Generates a String representation of the underlying tokens,
+     * evaluating any un-parsed tokens, as needed.
+     *
+     * <p>For example, the following tokens:
+     *
+     * <pre>
+     *   { k : v }
+     * </pre>
+     *
+     * <p>Will be printed as follows:
+     *
+     * <pre>
+     *   BRACES([
+     *     WORD('k')
+     *     SYMBOL(':')
+     *     WORD('v')
+     *   ])
+     * </pre>
+     */
+    @ApiStatus.Experimental
     public String stringify() {
         return this.stringify(1, true);
     }

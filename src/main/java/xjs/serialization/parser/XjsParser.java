@@ -13,16 +13,36 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
+/**
+ * Parses a stream of {@link Token tokens} in XJS into a {@link
+ * JsonObject JSON object}.
+ */
 public class XjsParser extends CommentedTokenParser {
 
+    /**
+     * Constructs the parser when given a file in XJS format.
+     *
+     * @param file The file containing XJS data.
+     * @throws IOException If an error occurs when reading the file.
+     */
     public XjsParser(final File file) throws IOException {
         this(Tokenizer.containerize(new FileInputStream(file)));
     }
 
+    /**
+     * Constructs the parser from raw text data in XJS format.
+     *
+     * @param text The JSON text in XJS format.
+     */
     public XjsParser(final String text) {
         this(Tokenizer.containerize(text));
     }
 
+    /**
+     * Constructs the parser from a know set of tokens in XJS format.
+     *
+     * @param root The root token container.
+     */
     public XjsParser(final ContainerToken root) {
         super(root);
     }
@@ -39,7 +59,7 @@ public class XjsParser extends CommentedTokenParser {
 
     protected JsonObject readOpenRoot() {
         final JsonObject object = new JsonObject();
-        this.next();
+        this.read();
         this.readAboveOpenRoot(object);
         while (true) {
             this.readWhitespace(false);
@@ -54,7 +74,7 @@ public class XjsParser extends CommentedTokenParser {
 
     protected JsonValue readClosedRoot() {
         if (this.current.type() == Type.OPEN) {
-            this.next();
+            this.read();
         }
         this.readAbove();
         final JsonValue result = this.readValue();
@@ -79,7 +99,7 @@ public class XjsParser extends CommentedTokenParser {
                 return this.readObject();
             default:
                 final JsonValue value = this.readImplicit(offset);
-                this.next();
+                this.read();
                 return value;
         }
     }
@@ -125,7 +145,7 @@ public class XjsParser extends CommentedTokenParser {
         final int skipped =
             this.skipTo(':', false, false);
         final Token previous = this.current;
-        this.next();
+        this.read();
 
         if (skipped == 0 && previous instanceof StringToken) {
             return ((StringToken) previous).parsed;
@@ -159,9 +179,9 @@ public class XjsParser extends CommentedTokenParser {
     }
 
     protected void readDelimiter() {
-        this.readLineWhitespace(false);
+        this.readLineWhitespace();
         if (this.readIf(',')) {
-            this.readLineWhitespace(false);
+            this.readLineWhitespace();
             this.readNl();
             this.setComment(CommentType.EOL);
         } else if (this.readNl()) {
@@ -176,7 +196,7 @@ public class XjsParser extends CommentedTokenParser {
         if (this.isEndOfContainer()) {
             return false;
         }
-        this.next();
+        this.read();
         this.readWhitespace();
         return true;
     }
@@ -186,7 +206,7 @@ public class XjsParser extends CommentedTokenParser {
         this.setTrailing();
         this.takeFormatting(container);
         this.pop();
-        this.next();
+        this.read();
         return container;
     }
 
@@ -234,7 +254,7 @@ public class XjsParser extends CommentedTokenParser {
             char c = reference.charAt(i);
             if (c == '\n') {
                 sb.append(reference, marker, i + 1);
-                i = this.skipToOffset(i + 1, offset);
+                i = this.getActualOffset(i + 1, offset);
                 marker = i;
             } else if (c == '\\' && i < end - 1) {
                 sb.append(reference, marker, i);

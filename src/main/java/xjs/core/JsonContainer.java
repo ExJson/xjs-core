@@ -638,6 +638,7 @@ public abstract class JsonContainer extends JsonValue {
      * Generates a list of JSON path strings indicating which paths have or have not
      * been used.
      *
+     * @param filter A filter describing which paths to acquire.
      * @return A list of JSON path strings for each used or unused value.
      */
     public abstract List<String> getPaths(final PathFilter filter);

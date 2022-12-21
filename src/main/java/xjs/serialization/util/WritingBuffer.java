@@ -73,9 +73,9 @@ public class WritingBuffer extends Writer {
         this.fill = 0;
     }
 
-  /**
-   * Does not close or flush the wrapped writer.
-   */
+    /**
+     * Does not close or flush the wrapped writer.
+     */
     @Override
     public void close() throws IOException {
     }

@@ -7,6 +7,14 @@ import xjs.serialization.token.TokenStream;
 
 import java.util.Arrays;
 
+/**
+ * Specialized implementation of {@link TokenParser} designed to tolerate
+ * commented JSON formats. This class provides utilities for storing and
+ * applying comments to the output, as well as overrides to neatly mesh
+ * this logic into the existing interface where possible.
+ *
+ * @see TokenParser
+ */
 public abstract class CommentedTokenParser extends TokenParser {
     final StringBuilder commentBuffer;
 
@@ -62,6 +70,13 @@ public abstract class CommentedTokenParser extends TokenParser {
         super.setTrailing();
     }
 
+    /**
+     * Splits any comments above an open root object (supported formats
+     * only) into a root header and a first value header.
+     *
+     * @param root The root {@link JsonObject} where this data will be
+     *             stored.
+     */
     protected void readAboveOpenRoot(final JsonObject root) {
         this.readWhitespace();
         this.splitOpenHeader(root);
@@ -69,7 +84,7 @@ public abstract class CommentedTokenParser extends TokenParser {
 
     @Override
     protected void readAfter() {
-        this.readLineWhitespace(false);
+        this.readLineWhitespace();
         this.setComment(CommentType.EOL);
     }
 
@@ -82,11 +97,22 @@ public abstract class CommentedTokenParser extends TokenParser {
         this.expectEndOfText();
     }
 
+    /**
+     * Appends the given token to the comment buffer.
+     *
+     * @param t Any token representing a comment.
+     */
     protected void appendComment(final Token t) {
         this.commentBuffer.append(
             this.reference, t.start(), t.end());
     }
 
+    /**
+     * Variant of {@link #appendComment} where the given comment
+     * is known to occupy multiple lines of space.
+     *
+     * @param t Any token representing a comment.
+     */
     protected void appendMultilineComment(final Token t) {
         int lineStart = t.start();
         int lastChar = t.start();
@@ -96,7 +122,7 @@ public abstract class CommentedTokenParser extends TokenParser {
                 this.commentBuffer.append(
                     this.reference, lineStart, lastChar + 1);
                 this.commentBuffer.append('\n');
-                i = this.skipToOffset(i + 1, t.offset());
+                i = this.getActualOffset(i + 1, t.offset());
                 lineStart = i;
             } else if (!Character.isWhitespace(c)) {
                 lastChar = i;
@@ -106,6 +132,11 @@ public abstract class CommentedTokenParser extends TokenParser {
             this.reference, lineStart, lastChar + 1);
     }
 
+    /**
+     * For each line skipped, appends a newline character to the
+     * <em>beginning</em> of the comment buffer, resetting the
+     * counter to 0.
+     */
     protected void prependLinesSkippedToComment() {
         if (this.linesSkipped > 1) {
             final char[] lines = new char[this.linesSkipped - 1];
@@ -115,6 +146,12 @@ public abstract class CommentedTokenParser extends TokenParser {
         }
     }
 
+    /**
+     * Applies the contents of the comment buffer to the formatting
+     * output as the given <em>type</em> of comment.
+     *
+     * @param type The type of comment being set.
+     */
     protected void setComment(final CommentType type) {
         final String comment = this.takeComment(type);
         if (!comment.isEmpty()) {
@@ -122,6 +159,13 @@ public abstract class CommentedTokenParser extends TokenParser {
         }
     }
 
+    /**
+     * Returns the full text of the comment buffer, cropping it
+     * according to the rules defined in {@link CommentType}.
+     *
+     * @param type The type of comment currently in the buffer.
+     * @return The text of the comment buffer.
+     */
     protected String takeComment(final CommentType type) {
         if (this.commentBuffer.length() == 0) {
             return "";
@@ -155,10 +199,36 @@ public abstract class CommentedTokenParser extends TokenParser {
         return this.commentBuffer.charAt(this.commentBuffer.length() - 1) == '\n';
     }
 
+    /**
+     * Removes the last character (usually a newline character) from the
+     * comment buffer.
+     */
     protected final void trimComment() {
         this.commentBuffer.setLength(this.commentBuffer.length() - 1);
     }
 
+    /**
+     * Splits the contents of the comment buffer into a header of the
+     * root JSON object and one of the first member in the object.
+     *
+     * <p>For example, assume the following comments:
+     *
+     * <pre>
+     *     // first
+     *     // second
+     *
+     *     // third
+     *
+     *     // fourth
+     *     key: value
+     * </pre>
+     *
+     * <p>This method pairs the first, second, and third comment with
+     * the root object, and the fourth comment with the key-value pair.
+     *
+     * @param root The root {@link JsonObject} where the data will be
+     *             stored.
+     */
     protected void splitOpenHeader(final JsonObject root) {
         if (this.commentBuffer.length() > 0) {
             final String header = this.commentBuffer.toString();
