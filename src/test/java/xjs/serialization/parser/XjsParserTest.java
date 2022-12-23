@@ -56,6 +56,12 @@ public final class XjsParserTest extends CommonParserTest {
     }
 
     @Test
+    public void parse_doesNotTolerate_nonDelimitedContainers() {
+        assertThrows(SyntaxException.class,
+            () -> this.parse("[[][]]"));
+    }
+
+    @Test
     public void singleComma_inArray_isEmptyImplicitString() {
         assertTrue(new JsonArray().add("")
             .matches(this.parse("[,]")));
@@ -200,7 +206,7 @@ public final class XjsParserTest extends CommonParserTest {
     @CsvSource({"/*eol*/", "#eol", "//eol"})
     public void parse_preservesEolComment_afterValue(final String comment) {
         assertEquals(comment,
-            this.parse("k:v" + comment + "\n").asObject().get(0).getComments().getData(CommentType.EOL));
+            this.parse("k:v" + comment).asObject().get(0).getComments().getData(CommentType.EOL));
     }
 
     @ParameterizedTest

@@ -1,7 +1,14 @@
 package xjs.serialization.parser;
 
 import org.jetbrains.annotations.NotNull;
-import xjs.core.*;
+import xjs.core.CommentType;
+import xjs.core.Json;
+import xjs.core.JsonArray;
+import xjs.core.JsonLiteral;
+import xjs.core.JsonObject;
+import xjs.core.JsonString;
+import xjs.core.JsonValue;
+import xjs.core.StringType;
 import xjs.serialization.token.ContainerToken;
 import xjs.serialization.token.NumberToken;
 import xjs.serialization.token.StringToken;
@@ -109,16 +116,16 @@ public class XjsParser extends CommentedTokenParser {
         if (!this.open()) {
             return this.close(object);
         }
-        while (true) {
+        do {
             this.readWhitespace(false);
             if (this.isEndOfContainer()) {
                 return this.close(object);
             }
-            this.readNextMember(object);
-        }
+        } while(this.readNextMember(object));
+        return this.close(object);
     }
 
-    protected void readNextMember(final JsonObject object) {
+    protected boolean readNextMember(final JsonObject object) {
         this.setAbove();
 
         final int offset = this.current.offset();
@@ -129,8 +136,9 @@ public class XjsParser extends CommentedTokenParser {
         final JsonValue value = this.readValue(offset);
         object.add(key, value);
 
-        this.readDelimiter();
+        final boolean delimiter = this.readDelimiter();
         this.takeFormatting(value);
+        return delimiter;
     }
 
     protected String readKey() {
@@ -159,55 +167,42 @@ public class XjsParser extends CommentedTokenParser {
         if (!this.open()) {
             return this.close(array);
         }
-        while (true) {
+        do {
             this.readWhitespace(false);
             if (this.isEndOfContainer()) {
                 return this.close(array);
             }
-            this.readNextElement(array);
-        }
+        } while (this.readNextElement(array));
+        return this.close(array);
     }
 
-    protected void readNextElement(final JsonArray array) {
+    protected boolean readNextElement(final JsonArray array) {
         this.setAbove();
 
         final JsonValue value = this.readValue();
         array.add(value);
 
-        this.readDelimiter();
+        final boolean delimiter = this.readDelimiter();
         this.takeFormatting(value);
+        return delimiter;
     }
 
-    protected void readDelimiter() {
+    protected boolean readDelimiter() {
         this.readLineWhitespace();
         if (this.readIf(',')) {
             this.readLineWhitespace();
             this.readNl();
             this.setComment(CommentType.EOL);
+            return true;
         } else if (this.readNl()) {
             this.setComment(CommentType.EOL);
             this.readWhitespace(false);
             this.readIf(',');
+            return true;
+        } else if (this.isEndOfText()) {
+            this.setComment(CommentType.EOL);
         }
-    }
-
-    protected boolean open() {
-        this.push();
-        if (this.isEndOfContainer()) {
-            return false;
-        }
-        this.read();
-        this.readWhitespace();
-        return true;
-    }
-
-    protected <T extends JsonContainer> T close(
-            final T container) {
-        this.setTrailing();
-        this.takeFormatting(container);
-        this.pop();
-        this.read();
-        return container;
+        return false;
     }
 
     protected JsonValue readImplicit(final int offset) {

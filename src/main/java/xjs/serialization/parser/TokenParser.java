@@ -47,10 +47,10 @@ import java.util.ArrayList;
  *   </li>
  * </ul>
  *
- * <p>Implementors should note that while regular, lazily-evaluated {@link
- * TokenStream token streams} are supported by this API, their <b>support is
- * still work in progress.</b> Additional work may be required for now that
- * will eventually be offset by this API.
+ * <p>For non-containerized inputs, most of the containerized methods accept
+ * and optional parameter specifying the opening or closing character. For
+ * example, to <code>pop</code> the current container off the stack without
+ * swapping iterators, call {@link #pop(char)}.
  *
  * Todo: most of these methods are missing direct unit test coverage
  */
@@ -176,6 +176,7 @@ public abstract class TokenParser implements ValueParser {
      * @return <code>true</code>, if the method was able to pop the container.
      */
     protected boolean pop() {
+        this.expectEndOfContainer();
         if (this.stack.isEmpty()) {
             this.iterator = EMPTY_ITERATOR;
             return false;
@@ -184,6 +185,103 @@ public abstract class TokenParser implements ValueParser {
         this.iterator = this.stack.getFirst();
         this.formatting = this.stack.getSecond();
         return true;
+    }
+
+    /**
+     * Begins recursion into a new container. Takes care of reading any initial
+     * whitespace at the top of the container.
+     *
+     * @return <code>true</code>, if there are more tokens to parse.
+     */
+    protected boolean open() {
+        this.push();
+        if (this.isEndOfContainer()) {
+            return false;
+        }
+        this.read();
+        this.readWhitespace();
+        return true;
+    }
+
+    /**
+     * Closes the current container and pops one frame of the stack, resetting
+     * the formatting and iterator to that of the previous level.
+     *
+     * @param container The current container being parsed.
+     * @param <T> The type of container being parsed.
+     * @return The input container, with formatting applied.
+     */
+    protected <T extends JsonContainer> T close(
+            final T container) {
+        this.setTrailing();
+        this.takeFormatting(container);
+        this.pop();
+        this.read();
+        return container;
+    }
+
+    /**
+     * Variant of {@link #push()} for non-containerized input streams.
+     *
+     * <p>This method assumes that a matching opener has been found.
+     *
+     * @param opener The opening character of the container.
+     * @throws SyntaxException if the opener is not found.
+     * @see #push()
+     */
+    protected void push(final char opener) {
+        this.expect(opener);
+        this.stack.push(null, this.formatting);
+        this.formatting = new JsonArray();
+    }
+
+    /**
+     * Variant of {@link #pop()} for non-containerized input streams.
+     *
+     * <p>This method assumes that a matching closer has been found.
+     *
+     * @param closer The closing character of the container.
+     * @throws SyntaxException if the closer is not found.
+     * @see #pop()
+     */
+    protected void pop(final char closer) {
+        this.expectEndOfContainer(closer);
+        this.stack.pop();
+        this.formatting = this.stack.getSecond();
+    }
+
+    /**
+     * Variant of {@link #open()} for non-containerized input streams.
+     *
+     * @param opener The opening character for this container.
+     * @param closer The closing character for this container.
+     * @return <code>true</code> if there are more tokens to parse.
+     * @see #open()
+     */
+    protected boolean open(final char opener, final char closer) {
+        this.push(opener);
+        this.read();
+        this.readWhitespace();
+        return !this.isEndOfContainer(closer);
+    }
+
+    /**
+     * Variant of {@link #close(JsonContainer)} for non-containerized
+     * input streams.
+     *
+     * @param container The container being closed and formatted.
+     * @param closer The closing character for this type of container.
+     * @param <T> The type of container being closed.
+     * @return The input container, with formatting applied.
+     * @see #close(JsonContainer)
+     */
+    protected <T extends JsonContainer> T close(
+            final T container, final char closer) {
+        this.setTrailing();
+        this.takeFormatting(container);
+        this.pop(closer);
+        this.read();
+        return container;
     }
 
     /**
@@ -235,6 +333,27 @@ public abstract class TokenParser implements ValueParser {
      */
     protected boolean isEndOfContainer() {
         return this.current == EMPTY_VALUE;
+    }
+
+    /**
+     * Indicates whether the parser has reached the end of input.
+     *
+     * @return <code>true</code>, if the parser has reached end of input.
+     */
+    protected boolean isEndOfText() {
+        return this.stack.isEmpty() && !this.iterator.hasNext();
+    }
+
+    /**
+     * Variant of {@link #isEndOfContainer()} for non-containerized input
+     * streams.
+     *
+     * @param closer The symbol indicating the end of this container.
+     * @return <code>true</code>, if the parser has reached this token.
+     * @see #isEndOfContainer()
+     */
+    protected boolean isEndOfContainer(final char closer) {
+        return this.current == EMPTY_VALUE || this.current.isSymbol(closer);
     }
 
     /**
@@ -490,7 +609,7 @@ public abstract class TokenParser implements ValueParser {
      * Throws a syntax exception if more tokens are found in the input.
      */
     protected void expectEndOfText() {
-        if (!this.stack.isEmpty() || this.iterator.hasNext()) {
+        if (!this.isEndOfText()) {
             throw this.unexpected(this.current.type() + " before end of file");
         }
     }
@@ -509,6 +628,38 @@ public abstract class TokenParser implements ValueParser {
             return this.expected("'" + symbol + "' or new line");
         }
         return this.expected(symbol);
+    }
+
+    /**
+     * Throws an exception if there are more tokens left in the current
+     * container.
+     */
+    protected void expectEndOfContainer() {
+        if (!this.isEndOfContainer()) {
+            throw this.tokensInContainer();
+        }
+    }
+
+    /**
+     * Variant of {@link #expectEndOfContainer()} for non-containerized
+     * input streams.
+     *
+     * @param closer The closing character for this type of container.
+     */
+    protected void expectEndOfContainer(final char closer) {
+        if (!this.isEndOfContainer(closer)) {
+            throw this.tokensInContainer();
+        }
+    }
+
+    /**
+     * Indicates that unexpected tokens were found before the end of the
+     * current container.
+     *
+     * @return The exception to be thrown.
+     */
+    protected SyntaxException tokensInContainer() {
+        return this.unexpected(this.current.type() + " before end of container (missing delimiter?)");
     }
 
     /**

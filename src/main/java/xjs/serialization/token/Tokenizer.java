@@ -161,7 +161,7 @@ public class Tokenizer implements Closeable {
     protected Token word(final int i, final int l, final int o) throws IOException {
         do {
             final char c = (char) reader.current;
-            if (c == '_' || Character.isLetterOrDigit(c)) {
+            if (this.isLegalWordCharacter(c)) {
                 reader.read();
             } else if (reader.index - i == 0) {
                 reader.read();
@@ -171,6 +171,10 @@ public class Tokenizer implements Closeable {
             }
         } while (!reader.isEndOfText());
         return new Token(i, reader.index, l, o, Type.WORD);
+    }
+
+    protected boolean isLegalWordCharacter(final char c) {
+        return c == '_' || Character.isLetterOrDigit(c);
     }
 
     protected Token dot(final int i, final int l, final int o) throws IOException {
@@ -271,7 +275,7 @@ public class Tokenizer implements Closeable {
             el = next.line;
         }
         if (closer != '\u0000') {
-            throw SyntaxException.expected(closer, s, o);
+            throw SyntaxException.expected(closer, l, o);
         }
         return new ContainerToken(reference.toString(), s, e, l, el, o, type, tokens);
     }
