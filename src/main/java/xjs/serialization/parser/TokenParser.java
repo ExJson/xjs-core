@@ -260,7 +260,6 @@ public abstract class TokenParser implements ValueParser {
      */
     protected boolean open(final char opener, final char closer) {
         this.push(opener);
-        this.read();
         this.readWhitespace();
         return !this.isEndOfContainer(closer);
     }
@@ -353,7 +352,7 @@ public abstract class TokenParser implements ValueParser {
      * @see #isEndOfContainer()
      */
     protected boolean isEndOfContainer(final char closer) {
-        return this.current == EMPTY_VALUE || this.current.isSymbol(closer);
+        return this.current.isSymbol(closer);
     }
 
     /**
