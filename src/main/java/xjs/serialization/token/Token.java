@@ -174,6 +174,11 @@ public class Token {
         TRIPLE_QUOTE,
 
         /**
+         * A string generated as the output of other tokens.
+         */
+        GENERATED_STRING,
+
+        /**
          * An open stream of tokens with no encapsulation.
          */
         OPEN,

@@ -91,8 +91,17 @@ public abstract class TokenParser implements ValueParser {
      * A reference to the input text. Callers must be aware that, when using
      * lazily-evaluated {@link TokenStream token streams}, <b>this sequence
      * may not represent the full input <em>until</em> parsing is complete.</b>
+     *
+     * <p>Additionally, this reference may point to a different text body
+     * depending on the current iterator. For any token stream where sub-streams
+     * have been generated, this reference may point to that generated source.
+     *
+     * <p>In other words, the indices of this reference <b>may only correspond
+     * the current token or any tokens in the current token stream.</b> Authors
+     * should <b>avoid doing any manual inspection of this text</b> if generated
+     * streams are to be supported.
      */
-    protected final CharSequence reference;
+    protected CharSequence reference;
 
     /**
      * Houses any formatting data for the current value. As with {@link #stack},
@@ -165,6 +174,7 @@ public abstract class TokenParser implements ValueParser {
             this.stack.push(this.iterator, this.formatting);
             this.iterator = ((TokenStream) this.current).iterator();
             this.formatting = new JsonArray();
+            this.reference = this.iterator.getReference();
             return true;
         }
         return false;
@@ -184,6 +194,7 @@ public abstract class TokenParser implements ValueParser {
         this.stack.pop();
         this.iterator = this.stack.getFirst();
         this.formatting = this.stack.getSecond();
+        this.reference = this.iterator.getReference();
         return true;
     }
 

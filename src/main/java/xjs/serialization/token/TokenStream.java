@@ -8,6 +8,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -24,6 +25,7 @@ import java.util.List;
  */
 public class TokenStream extends Token implements Iterable<Token>, Closeable {
     protected final List<Token> tokens;
+    protected final List<Token> unmodifiableView;
     protected volatile @Nullable Tokenizer tokenizer;
     public final CharSequence reference;
 
@@ -45,6 +47,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
         super(start, end, line, lastLine, offset, type);
         this.reference = reference;
         this.tokens = new ArrayList<>(tokens);
+        this.unmodifiableView = Collections.unmodifiableList(this.tokens);
     }
 
     /**
@@ -56,6 +59,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
     public TokenStream(final @NotNull Tokenizer tokenizer, final Type type) {
         super(tokenizer.reader.index, -1, tokenizer.reader.line, -1, tokenizer.reader.index, type);
         this.tokens = new ArrayList<>();
+        this.unmodifiableView = Collections.unmodifiableList(this.tokens);
         this.tokenizer = tokenizer;
         this.reference = tokenizer.reader.getFullText();
     }
@@ -134,9 +138,17 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
         }
     }
 
+    public List<Token> viewTokens() {
+        return this.unmodifiableView;
+    }
+
     @Override
     public Itr iterator() {
         return new Itr();
+    }
+
+    public Itr rangedIterator(final int s, final int e) {
+        return new RangedItr(s, e);
     }
 
     @Override
@@ -197,14 +209,14 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
             final Token next = this.peek(1);
             this.next = next;
             if (next != null) {
-                this.tryClose();
                 TokenStream.this.end = next.end;
                 TokenStream.this.lastLine = next.line;
             }
+            this.tryClose();
         }
 
         protected void tryClose() {
-            if (this.tokenizer != null && this.next != null) {
+            if (this.tokenizer != null && this.next == null) {
                 try {
                     this.tokenizer.close();
                 } catch (final IOException e) {
@@ -280,6 +292,43 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
                 tokens.add(next);
             }
             return next;
+        }
+    }
+
+    public class RangedItr extends Itr {
+        protected final int elementStart;
+        protected final int elementEnd;
+
+        protected RangedItr(final int s, final int e) {
+            this.elementStart = s;
+            this.elementEnd = e;
+            this.skipTo(this.elementStart);
+        }
+
+        @Override
+        public boolean hasNext() {
+            return this.elementIndex < this.elementEnd;
+        }
+
+        @Override
+        protected void read() {
+            if (this.elementIndex >= 0) {
+                super.read();
+            }
+        }
+
+        @Override
+        public @Nullable Token peek() {
+            return this.hasNext() ? super.peek() : null;
+        }
+
+        @Override
+        public @Nullable Token peek(final int amount) {
+            final int peekIdx = this.elementIndex + amount - 1;
+            if (peekIdx >= this.elementEnd || peekIdx < this.elementStart) {
+                return null;
+            }
+            return super.peek(amount);
         }
     }
 }

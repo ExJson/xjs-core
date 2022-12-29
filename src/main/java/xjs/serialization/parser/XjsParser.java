@@ -219,6 +219,8 @@ public class XjsParser extends CommentedTokenParser {
                     ((StringToken) this.current).parsed, StringType.DOUBLE);
                 case TRIPLE_QUOTE: return new JsonString(
                     ((StringToken) this.current).parsed, StringType.MULTI);
+                case GENERATED_STRING: return new JsonString(
+                    ((StringToken) this.current).parsed, StringType.IMPLICIT);
             }
         }
         final int end = this.current.end();
