@@ -1,8 +1,10 @@
 package xjs.serialization.token;
 
+import xjs.core.StringType;
+
 /**
- * Represents a single string token, either a single-quoted
- * string or a double-quoted string.
+ * Represents a single string token: either a single-quoted,
+ * double-quoted, triple-quoted, or generated string,
  *
  * <p>For example, the following text:
  *
@@ -16,13 +18,8 @@ package xjs.serialization.token;
  *   [ double('123') ]
  * </pre>
  */
-public class StringToken extends Token {
-
-    /**
-     * The text represented by this token. Authors will need
-     * to access this field directly to analyze the token.
-     */
-    public final String parsed;
+public class StringToken extends ParsedToken {
+    private final StringType stringType;
 
     /**
      * Constructs a new Token object to be placed on an AST.
@@ -35,9 +32,10 @@ public class StringToken extends Token {
      * @param parsed The un-escaped, parsed text.
      */
     public StringToken(
-            final int start, final int end, final int line, final int offset, final Type type, final String parsed) {
-        super(start, end, line, offset, type);
-        this.parsed = parsed;
+            final int start, final int end, final int line, final int offset,
+            final StringType type, final String parsed) {
+        super(start, end, line, offset, TokenType.STRING, parsed);
+        this.stringType = type;
     }
 
     /**
@@ -53,8 +51,24 @@ public class StringToken extends Token {
      */
     public StringToken(
             final int start, final int end, final int line, final int lastLine,
-            final int offset, final Type type, final String parsed) {
-        super(start, end, line, lastLine, offset, type);
-        this.parsed = parsed;
+            final int offset, final StringType type, final String parsed) {
+        super(start, end, line, lastLine, offset, TokenType.STRING, parsed);
+        this.stringType = type;
+    }
+
+    /**
+     * Constructs a new String token with effectively no scope.
+     *
+     * @param type   The style of string written.
+     * @param parsed The parsed text of the string.
+     */
+    public StringToken(final StringType type, final String parsed) {
+        super(TokenType.STRING, parsed);
+        this.stringType = type;
+    }
+
+    @Override
+    public StringType stringType() {
+        return this.stringType;
     }
 }

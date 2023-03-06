@@ -1,9 +1,7 @@
-package xjs.core;
+package xjs.comments;
 
-import xjs.serialization.util.CommentUtils;
-
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Utility layer and container housing comments for any JSON value. This object exposes the position,
@@ -13,12 +11,9 @@ import java.util.Objects;
  * this implementation may change.
  */
 public class CommentHolder {
+    private static final CommentData EMPTY_COMMENT = CommentData.immutable();
 
-    private String headerData;
-    private String eolData;
-    private String footerData;
-    private String valueData;
-    private String interiorData;
+    private final Map<CommentType, CommentData> map = new HashMap<>();
 
     /**
      * Indicates whether <b>any</b> comment is present within this container.
@@ -26,11 +21,7 @@ public class CommentHolder {
      * @return <code>true</code> if any comment is present.
      */
     public boolean hasAny() {
-        return this.headerData != null
-            && this.eolData != null
-            && this.footerData != null
-            && this.valueData != null
-            && this.interiorData != null;
+        return !this.map.isEmpty();
     }
 
     /**
@@ -40,13 +31,7 @@ public class CommentHolder {
      * @return <code>true</code> if this type of comment is present.
      */
     public boolean has(final CommentType type) {
-        switch (type) {
-            case HEADER: return this.headerData != null;
-            case EOL: return this.eolData != null;
-            case FOOTER: return this.footerData != null;
-            case VALUE: return this.valueData != null;
-            default: return this.interiorData != null;
-        }
+        return this.map.containsKey(type);
     }
 
     /**
@@ -68,7 +53,7 @@ public class CommentHolder {
      * @return The message of this comment, or else <code>""</code>.
      */
     public String get(final CommentType type) {
-        return CommentUtils.strip(this.getData(type));
+        return this.getData(type).toString();
     }
 
     /**
@@ -91,14 +76,18 @@ public class CommentHolder {
      * @param type The type of comment being queried.
      * @return The entire comment data being stored by this container, or else <code>""</code>.
      */
-    public String getData(final CommentType type) {
-        switch (type) {
-            case HEADER: return emptyIfNull(this.headerData);
-            case EOL: return emptyIfNull(this.eolData);
-            case FOOTER: return emptyIfNull(this.footerData);
-            case VALUE: return emptyIfNull(this.valueData);
-            default: return emptyIfNull(this.interiorData);
-        }
+    public CommentData getData(final CommentType type) {
+        return this.map.getOrDefault(type, EMPTY_COMMENT);
+    }
+
+    /**
+     * Variant of {@link #getData} returning an appendable value if absent.
+     *
+     * @param type The type of comment being queried.
+     * @return The entire comment data being stored by this container.
+     */
+    public CommentData getOrCreate(final CommentType type) {
+        return this.map.computeIfAbsent(type, t -> new CommentData());
     }
 
     /**
@@ -110,7 +99,9 @@ public class CommentHolder {
      * @return <code>this</code>, for method chaining.
      */
     public CommentHolder set(final CommentType type, final CommentStyle style, final String text) {
-        return this.setData(type, CommentUtils.format(style, text));
+        final CommentData data = new CommentData();
+        data.append(new Comment(style, text));
+        return this.setData(type, data);
     }
 
     /**
@@ -124,7 +115,10 @@ public class CommentHolder {
      * @return <code>this</code>, for method chaining.
      */
     public CommentHolder set(final CommentType type, final CommentStyle style, final String text, final int lines) {
-        return this.setData(type, CommentUtils.format(style, text) + createLines(lines));
+        final CommentData data = new CommentData();
+        data.append(new Comment(style, text));
+        data.append(lines);
+        return this.setData(type, data);
     }
 
     /**
@@ -155,11 +149,10 @@ public class CommentHolder {
      * @return <code>this</code>, for method chaining.
      */
     public CommentHolder append(final CommentType type, final CommentStyle style, final String text) {
-        final String data = this.getData(type);
-        if (data.isEmpty()) {
-            return this.setData(type, CommentUtils.format(style, text));
-        }
-        return this.setData(type, data + "\n" + CommentUtils.format(style, text));
+        final CommentData data = this.getOrCreate(type);
+        data.append(1);
+        data.append(new Comment(style, text));
+        return this;
     }
 
     /**
@@ -169,26 +162,9 @@ public class CommentHolder {
      * @return <code>this</code>, for method chaining.
      */
     public CommentHolder appendAll(final CommentHolder comments) {
-        if (comments.headerData != null) {
-            this.headerData = emptyIfNull(this.headerData) + comments.headerData;
-        }
-        if (comments.eolData != null) {
-            this.eolData = emptyIfNull(this.eolData) + comments.eolData;
-        }
-        if (comments.footerData != null) {
-            this.footerData = emptyIfNull(this.footerData) + comments.footerData;
-        }
-        if (comments.valueData != null) {
-            this.valueData = emptyIfNull(this.valueData) + comments.valueData;
-        }
-        if (comments.interiorData != null) {
-            this.interiorData = emptyIfNull(this.interiorData) + comments.interiorData;
-        }
+        comments.map.forEach((type, otherData) ->
+            this.getOrCreate(type).append(otherData));
         return this;
-    }
-
-    private static String emptyIfNull(final String comment) {
-        return comment != null ? comment : "";
     }
 
     /**
@@ -200,11 +176,10 @@ public class CommentHolder {
      * @return <code>this</code>, for method chaining.
      */
     public CommentHolder prepend(final CommentType type, final CommentStyle style, final String text) {
-        final String data = this.getData(type);
-        if (data.isEmpty()) {
-            return this.setData(type, CommentUtils.format(style, text));
-        }
-        return this.setData(type, CommentUtils.format(style, text) + "\n" + data);
+        final CommentData data = this.getOrCreate(type);
+        data.prepend(1);
+        data.prepend(new Comment(style, text));
+        return this;
     }
 
     /**
@@ -215,14 +190,8 @@ public class CommentHolder {
      * @param data The raw, <b>already formatted</b> data being placed on the corresponding value.
      * @return <code>this</code>, for method chaining.
      */
-    public CommentHolder setData(final CommentType type, final String data) {
-        switch (type) {
-            case HEADER: this.headerData = data; break;
-            case EOL: this.eolData = data; break;
-            case FOOTER: this.footerData = data; break;
-            case VALUE: this.valueData = data; break;
-            default: this.interiorData = data;
-        }
+    public CommentHolder setData(final CommentType type, final CommentData data) {
+        this.map.put(type, data);
         return this;
     }
 
@@ -234,30 +203,8 @@ public class CommentHolder {
      * @return <code>this</code>, for method chaining.
      */
     public CommentHolder setLinesAfter(final CommentType type, final int lines) {
-        switch (type) {
-            case HEADER: this.headerData = replaceLines(this.headerData, lines); break;
-            case EOL: this.eolData = replaceLines(this.eolData, lines); break;
-            case FOOTER: this.footerData = replaceLines(this.footerData, lines); break;
-            case VALUE: this.valueData = replaceLines(this.valueData, lines); break;
-            default: this.interiorData = replaceLines(this.interiorData, lines);
-        }
+        this.map.computeIfAbsent(type, t -> new CommentData()).setLinesAfter(lines);
         return this;
-    }
-
-    private static String replaceLines(final String data, final int lines) {
-        if (data == null) {
-            return lines > 0 ? createLines(lines) : null;
-        }
-        return data.replaceFirst("[\\s\\n]*$", createLines(lines));
-    }
-
-    private static String createLines(final int lines) {
-        if (lines == 0) {
-            return "";
-        }
-        final char[] newlines = new char[lines];
-        Arrays.fill(newlines, '\n');
-        return new String(newlines);
     }
 
     /**
@@ -267,37 +214,21 @@ public class CommentHolder {
      */
     public CommentHolder copy() {
         final CommentHolder copy = new CommentHolder();
-        copy.headerData = this.headerData;
-        copy.eolData = this.eolData;
-        copy.footerData = this.footerData;
-        copy.valueData = this.valueData;
-        copy.interiorData = this.interiorData;
+        this.map.forEach((type, data) -> copy.map.put(type, data.copy()));
         return copy;
     }
 
     @Override
     public int hashCode() {
-        int result = 0;
-        if (this.headerData != null) result = 31 * result + this.headerData.hashCode();
-        if (this.eolData != null) result = 31 * result + this.eolData.hashCode();
-        if (this.footerData != null) result = 31 * result + this.footerData.hashCode();
-        if (this.valueData != null) result = 31 * result + this.valueData.hashCode();
-        if (this.interiorData != null) result = 31 * result + this.interiorData.hashCode();
-        return result;
+        return this.map.hashCode();
     }
 
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
-        }
-        if (o instanceof CommentHolder) {
-            final CommentHolder other = (CommentHolder) o;
-            return Objects.equals(this.headerData, other.headerData)
-                && Objects.equals(this.eolData, other.eolData)
-                && Objects.equals(this.footerData, other.footerData)
-                && Objects.equals(this.valueData, other.valueData)
-                && Objects.equals(this.interiorData, other.interiorData);
+        } else if (o instanceof CommentHolder) {
+            return this.map.equals(((CommentHolder) o).map);
         }
         return false;
     }

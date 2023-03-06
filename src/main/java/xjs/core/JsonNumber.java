@@ -49,6 +49,14 @@ public class JsonNumber extends JsonValue {
     }
 
     @Override
+    public String intoString() {
+        if (this.value % 1.0 == 0) {
+            return String.valueOf((int) this.value);
+        }
+        return String.valueOf(this.value);
+    }
+
+    @Override
     public JsonNumber copy(final int options) {
         return withMetadata(new JsonNumber(this.value), this, options);
     }

@@ -2,7 +2,18 @@ package xjs.performance.legacy.parser;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import xjs.core.*;
+import xjs.comments.Comment;
+import xjs.comments.CommentData;
+import xjs.comments.CommentStyle;
+import xjs.comments.CommentType;
+import xjs.core.JsonArray;
+import xjs.core.JsonContainer;
+import xjs.core.JsonLiteral;
+import xjs.core.JsonNumber;
+import xjs.core.JsonObject;
+import xjs.core.JsonString;
+import xjs.core.JsonValue;
+import xjs.core.StringType;
 import xjs.serialization.util.ImplicitStringUtils;
 import xjs.serialization.util.StringContext;
 
@@ -68,8 +79,8 @@ public class LegacyXjsParser extends LegacyAbstractJsonParser {
         if (!this.isEndOfText()) {
             throw this.unexpected((char) this.current);
         }
-        this.appendComment(result, CommentType.HEADER, header);
-        this.appendComment(result, CommentType.FOOTER, footer);
+        this.appendComment(result, xjs.comments.CommentType.HEADER, header);
+        this.appendComment(result, xjs.comments.CommentType.FOOTER, footer);
         return result;
     }
 
@@ -106,13 +117,13 @@ public class LegacyXjsParser extends LegacyAbstractJsonParser {
         this.valueOffset = this.lineOffset;
 
         final JsonValue value = this.readValue();
-        this.appendComment(value, CommentType.HEADER, header);
+        this.appendComment(value, xjs.comments.CommentType.HEADER, header);
         value.setLinesAbove(linesAbove);
 
         array.add(value);
 
         final boolean delimiter = this.readDelimiter();
-        this.appendComment(value, CommentType.EOL, this.takeComment(true));
+        this.appendComment(value, xjs.comments.CommentType.EOL, this.takeComment(true));
         return delimiter;
     }
 
@@ -127,7 +138,7 @@ public class LegacyXjsParser extends LegacyAbstractJsonParser {
                 break;
             }
         } while (this.readNextMember(object));
-        this.appendComment(object, CommentType.FOOTER, false);
+        this.appendComment(object, xjs.comments.CommentType.FOOTER, false);
         object.setLinesTrailing(this.linesSkipped);
         if (!this.isEndOfText()) {
             throw this.unexpected("'" + (char) this.current + "' before end of file");
@@ -140,7 +151,10 @@ public class LegacyXjsParser extends LegacyAbstractJsonParser {
             final String header = this.commentBuffer.toString();
             final int end = this.getLastGap(header);
             if (end > 0) {
-                root.getComments().setData(CommentType.HEADER, header.substring(0, end));
+                // PERFORMANCE TESTING ONLY. CODE IS NOT ACCURATE
+                final CommentData data = new CommentData();
+                data.append(new Comment(CommentStyle.LINE, header.substring(0, end)));
+                root.getComments().setData(xjs.comments.CommentType.HEADER, data);
                 root.setLinesAbove(this.linesSkipped);
                 this.commentBuffer.delete(0, header.indexOf('\n', end + 1) + 1);
                 this.linesSkipped = 0;
@@ -194,15 +208,15 @@ public class LegacyXjsParser extends LegacyAbstractJsonParser {
         final int linesBetween = this.linesSkipped;
 
         final JsonValue value = this.readValue();
-        this.appendComment(value, CommentType.HEADER, header);
-        this.appendComment(value, CommentType.VALUE, valueComment);
+        this.appendComment(value, xjs.comments.CommentType.HEADER, header);
+        this.appendComment(value, xjs.comments.CommentType.VALUE, valueComment);
         value.setLinesAbove(linesAbove);
         value.setLinesBetween(linesBetween);
 
         object.add(key, value);
 
         final boolean delimiter = this.readDelimiter();
-        this.appendComment(value, CommentType.EOL, true);
+        this.appendComment(value, xjs.comments.CommentType.EOL, true);
         return delimiter;
     }
 
@@ -228,10 +242,10 @@ public class LegacyXjsParser extends LegacyAbstractJsonParser {
     }
 
     protected JsonContainer closeContainer(final JsonContainer container, final boolean trim) throws IOException {
-        this.appendComment(container, CommentType.INTERIOR, trim);
+        this.appendComment(container, xjs.comments.CommentType.INTERIOR, trim);
         container.setLinesTrailing(this.linesSkipped);
         this.skipLineWhitespace();
-        this.appendComment(container, CommentType.EOL, true);
+        this.appendComment(container, xjs.comments.CommentType.EOL, true);
         return container;
     }
 
@@ -476,13 +490,15 @@ public class LegacyXjsParser extends LegacyAbstractJsonParser {
 
     protected void appendComment(final JsonValue value, final CommentType type, final String data) {
         if (!data.isEmpty()) {
-            value.getComments().setData(type, data);
+            // PERFORMANCE TESTING ONLY -- CODE IS NOT ACCURATE
+            value.getComments().setData(type, new CommentData());
         }
     }
 
     protected void appendComment(final JsonValue value, final CommentType type, final boolean trim) {
         if (this.commentBuffer.length() > 0) {
-            value.getComments().setData(type, this.takeComment(trim));
+            // PERFORMANCE TESTING ONLY -- CODE IS NOT ACCURATE
+            value.getComments().setData(type, new CommentData());
         }
     }
 

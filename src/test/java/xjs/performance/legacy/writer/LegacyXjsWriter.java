@@ -1,7 +1,8 @@
 package xjs.performance.legacy.writer;
 
+import xjs.comments.CommentData;
+import xjs.comments.CommentType;
 import xjs.core.*;
-import xjs.serialization.util.CommentUtils;
 import xjs.serialization.util.ImplicitStringUtils;
 import xjs.serialization.util.StringContext;
 import xjs.serialization.writer.JsonWriterOptions;
@@ -73,9 +74,9 @@ public class LegacyXjsWriter extends LegacyAbstractJsonWriter {
     }
 
     protected void writeOpenHeader(final JsonObject root) throws IOException {
-        if (this.outputComments && root.hasComment(CommentType.HEADER)) {
+        if (this.outputComments && root.hasComment(xjs.comments.CommentType.HEADER)) {
             this.writeLinesAbove(-1, null, null, false, root);
-            this.writeComment(-1, root, CommentType.HEADER);
+            this.writeComment(-1, root, xjs.comments.CommentType.HEADER);
             this.nl(-1);
             if (!root.isEmpty() && root.getReference(0).getOnly().getLinesAbove() <= 0) {
                 this.nl(-1);
@@ -85,22 +86,22 @@ public class LegacyXjsWriter extends LegacyAbstractJsonWriter {
 
     protected void writeOpenFooter(final JsonObject root) throws IOException {
         if (this.outputComments) {
-            if (root.hasComment(CommentType.INTERIOR)) {
+            if (root.hasComment(xjs.comments.CommentType.INTERIOR)) {
                 if (root.getLinesTrailing() < 0) {
                     this.nl(-1);
                 }
-                this.writeComment(-1, root, CommentType.INTERIOR);
-                if (root.hasComment(CommentType.FOOTER)) {
+                this.writeComment(-1, root, xjs.comments.CommentType.INTERIOR);
+                if (root.hasComment(xjs.comments.CommentType.FOOTER)) {
                     this.nl(-1);
                     this.nl(-1);
-                    this.writeComment(-1, root, CommentType.FOOTER);
+                    this.writeComment(-1, root, xjs.comments.CommentType.FOOTER);
                 }
-            } else if (root.hasComment(CommentType.FOOTER)) {
+            } else if (root.hasComment(xjs.comments.CommentType.FOOTER)) {
                 if (root.getLinesTrailing() < 0) {
                     this.nl(-1);
                     this.nl(-1);
                 }
-                this.writeComment(-1, root, CommentType.FOOTER);
+                this.writeComment(-1, root, xjs.comments.CommentType.FOOTER);
             }
         }
     }
@@ -276,10 +277,10 @@ public class LegacyXjsWriter extends LegacyAbstractJsonWriter {
     }
 
     protected void writeValueComment(final int level, final JsonValue value) throws IOException {
-        if (this.outputComments && value.hasComment(CommentType.VALUE)) {
-            final String comment = value.getComments().getData(CommentType.VALUE);
-            this.writeComment(level, comment);
-            if (!comment.endsWith("\n")) {
+        if (this.outputComments && value.hasComment(xjs.comments.CommentType.VALUE)) {
+            final CommentData data = value.getComments().getData(xjs.comments.CommentType.VALUE);
+            this.writeComment(level, data);
+            if (!data.endsWithNewline()) {
                 // Typically, coerce this value onto the next line
                 if (value.getLinesBetween() > 0) {
                     this.nl(level);
@@ -291,64 +292,52 @@ public class LegacyXjsWriter extends LegacyAbstractJsonWriter {
     }
 
     protected void writeHeader(final int level, final JsonValue value) throws IOException {
-        if (this.outputComments && value.hasComment(CommentType.HEADER)) {
-            this.writeComment(level, value, CommentType.HEADER);
+        if (this.outputComments && value.hasComment(xjs.comments.CommentType.HEADER)) {
+            this.writeComment(level, value, xjs.comments.CommentType.HEADER);
             this.nl(level);
         }
     }
 
     protected void writeInteriorComment(final int level, final JsonContainer c) throws IOException {
-        if (this.outputComments && c.hasComment(CommentType.INTERIOR)) {
-            final String comment = c.getComments().getData(CommentType.INTERIOR);
+        if (this.outputComments && c.hasComment(xjs.comments.CommentType.INTERIOR)) {
+            final CommentData data = c.getComments().getData(xjs.comments.CommentType.INTERIOR);
 
-            if (c.isEmpty() && c.getLinesTrailing() < 1 && !comment.contains("\n")) {
+            if (c.isEmpty() && c.getLinesTrailing() < 1 && data.getLines() == 1) {
                 this.tw.write(this.separator);
-                this.writeComment(level + 1, comment, false);
+                this.writeComment(level + 1, data, false);
                 this.tw.write(this.separator);
                 return;
             }
-            if (comment.contains("\n") && c.getLinesTrailing() < 1) {
+            if (data.getLines() > 0 && c.getLinesTrailing() < 1) {
                 this.nl(level + 1);
             } else {
                 this.tw.write(this.indent); // newline was printed for upper level
             }
-            this.writeComment(level + 1, comment, false);
+            this.writeComment(level + 1, data, false);
             this.nl(level);
         }
     }
 
     protected void writeFooterComment(final JsonValue value) throws IOException {
-        if (this.outputComments && value.hasComment(CommentType.FOOTER)) {
+        if (this.outputComments && value.hasComment(xjs.comments.CommentType.FOOTER)) {
             this.nl(0);
-            this.writeComment(0, value, CommentType.FOOTER);
+            this.writeComment(0, value, xjs.comments.CommentType.FOOTER);
         }
     }
 
-    protected void writeComment(final int level, final JsonValue value, final CommentType type) throws IOException {
+    protected void writeComment(final int level, final JsonValue value, final xjs.comments.CommentType type) throws IOException {
         this.writeComment(level, value.getComments().getData(type));
     }
 
-    protected void writeComment(final int level, final String comment) throws IOException {
+    protected void writeComment(final int level, final CommentData comment) throws IOException {
         this.writeComment(level, comment, true);
     }
 
-    protected void writeComment(final int level, final String comment, final boolean indentLast) throws IOException {
-        for (int i = 0; i < comment.length(); i++) {
-            final char c = comment.charAt(i);
-            if (c == '\n') {
-                if (i == comment.length() - 1) {
-                    if (indentLast) {
-                        this.nl(level);
-                    } else {
-                        this.tw.write(c);
-                    }
-                } else if (comment.charAt(i + 1) != '\n') {
-                    this.nl(level);
-                } else {
-                    this.tw.write(this.eol);
-                }
-            } else if (c != '\r') {
-                this.tw.write(c);
+    protected void writeComment(final int level, final CommentData data, final boolean indentLast) throws IOException {
+        data.writeTo(this.tw, this.separator, level, this.eol);
+        if (indentLast && data.endsWithNewline()) {
+            for (int i = 0; i < level; i++) {
+                this.tw.write(this.indent);
             }
         }
     }
@@ -357,21 +346,18 @@ public class LegacyXjsWriter extends LegacyAbstractJsonWriter {
         if (previous == null) {
             return;
         }
-        if (this.outputComments && previous.hasComment(CommentType.EOL)) {
-            String comment = previous.getComments().getData(CommentType.EOL);
+        if (this.outputComments && previous.hasComment(xjs.comments.CommentType.EOL)) {
+            CommentData data = previous.getComments().getData(CommentType.EOL);
             if (next != null && next.getLinesAbove() == 0 && this.allowCondense) {
-                comment = CommentUtils.rewrite(CommentStyle.BLOCK, comment) + " ";
+                // NOT UPDATED -- LEGACY CODE -- TO BE REMOVED
+                // data = CommentUtils.rewrite(CommentStyle.BLOCK, data) + " ";
             } else {
                 this.tw.write(this.separator);
             }
-            if (comment.contains("\n")) {
-                for (final String line : comment.split("\r?\n")) {
-                    this.nl(level);
-                    this.tw.write(line);
-                }
-            } else {
-                this.tw.write(comment);
+            if (data.getLines() > 1) {
+                this.nl(level);
             }
+            data.writeTo(this.tw, this.separator, level, this.eol);
         }
     }
 

@@ -129,7 +129,7 @@ public final class JsonContainerTest {
 
     @Test
     public void into_supportsMultipleTypes() {
-        assertEquals("number: 1.0", Json.any("number:", 1.0).intoString());
+        assertEquals("number: 1", Json.any("number:", 1).intoString());
     }
 
     @Test

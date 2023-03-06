@@ -43,7 +43,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
      */
     protected TokenStream(final CharSequence reference, final int start, final int end,
                           final int line, final int lastLine, final int offset,
-                          final Type type, final List<Token> tokens) {
+                          final TokenType type, final List<Token> tokens) {
         super(start, end, line, lastLine, offset, type);
         this.reference = reference;
         this.tokens = new ArrayList<>(tokens);
@@ -56,7 +56,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
      * @param tokenizer A tokenizer for generating tokens OTF.
      * @param type      The type of token.
      */
-    public TokenStream(final @NotNull Tokenizer tokenizer, final Type type) {
+    public TokenStream(final @NotNull Tokenizer tokenizer, final TokenType type) {
         super(tokenizer.reader.index, -1, tokenizer.reader.line, -1, tokenizer.reader.index, type);
         this.tokens = new ArrayList<>();
         this.unmodifiableView = Collections.unmodifiableList(this.tokens);
@@ -118,8 +118,8 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
     private void stringifySingle(
             final StringBuilder sb, final Token token, final int level, final boolean readToEnd) {
         this.writeNewLine(sb, level);
-        sb.append(token.type).append('(');
-        if (token.type == Type.NUMBER) {
+        sb.append(token.type()).append('(');
+        if (token.type() == TokenType.NUMBER) {
             sb.append(((NumberToken) token).number);
         } else if (token instanceof TokenStream) {
             sb.append(((TokenStream) token).stringify(level + 1, readToEnd));
@@ -145,10 +145,6 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
     @Override
     public Itr iterator() {
         return new Itr();
-    }
-
-    public Itr rangedIterator(final int s, final int e) {
-        return new RangedItr(s, e);
     }
 
     @Override
@@ -209,8 +205,12 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
             final Token next = this.peek(1);
             this.next = next;
             if (next != null) {
-                TokenStream.this.end = next.end;
-                TokenStream.this.lastLine = next.line;
+                if (next.end() > TokenStream.this.end) {
+                    TokenStream.this.end = next.end();
+                }
+                if (next.lastLine() > TokenStream.this.lastLine) {
+                    TokenStream.this.lastLine = next.lastLine();
+                }
             }
             this.tryClose();
         }
@@ -226,7 +226,6 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
             }
         }
 
-        @ApiStatus.Experimental
         public void skipTo(final int index) {
             final int amount = index - this.elementIndex;
             this.next = this.peek(amount + 1);
@@ -234,7 +233,6 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
             this.tryClose();
         }
 
-        @ApiStatus.Experimental
         public void skip(final int amount) {
             this.next = this.peek(amount + 1);
             this.elementIndex = this.elementIndex + amount;
@@ -247,7 +245,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
 
         public String getText() {
             final Token t = this.peekOrParent();
-            return this.getText(t.start, t.end);
+            return this.getText(t.start(), t.end());
         }
 
         public String getText(final int s, final int e) {
@@ -292,43 +290,6 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
                 tokens.add(next);
             }
             return next;
-        }
-    }
-
-    public class RangedItr extends Itr {
-        protected final int elementStart;
-        protected final int elementEnd;
-
-        protected RangedItr(final int s, final int e) {
-            this.elementStart = s;
-            this.elementEnd = e;
-            this.skipTo(this.elementStart);
-        }
-
-        @Override
-        public boolean hasNext() {
-            return this.elementIndex < this.elementEnd;
-        }
-
-        @Override
-        protected void read() {
-            if (this.elementIndex >= 0) {
-                super.read();
-            }
-        }
-
-        @Override
-        public @Nullable Token peek() {
-            return this.hasNext() ? super.peek() : null;
-        }
-
-        @Override
-        public @Nullable Token peek(final int amount) {
-            final int peekIdx = this.elementIndex + amount - 1;
-            if (peekIdx >= this.elementEnd || peekIdx < this.elementStart) {
-                return null;
-            }
-            return super.peek(amount);
         }
     }
 }

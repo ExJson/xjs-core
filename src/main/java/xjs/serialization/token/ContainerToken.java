@@ -10,14 +10,16 @@ import java.util.List;
  *
  * <p>Unlike the regular {@link TokenStream stream variant},
  * the ContainerToken subclass includes all container types:
- * {@link Type#BRACES}, {@link Type#BRACKETS}, and
- * {@link Type#PARENTHESES}.
+ * {@link TokenType#BRACES}, {@link TokenType#BRACKETS}, and
+ * {@link TokenType#PARENTHESES}.
  *
  * <p>For example, the following tokens:
  *
  * <pre>{@code
  *   (a[b]c)
  * }</pre>
+ *
+ * <b>here's some bold text</b>
  *
  * <p>Would be represented as the following container token:
  *
@@ -48,8 +50,18 @@ public class ContainerToken extends TokenStream {
     public ContainerToken(
             final String reference, final int start, final int end,
             final int line, final int lastLine, final int offset,
-            final Type type, final List<Token> tokens) {
+            final TokenType type, final List<Token> tokens) {
         super(reference, start, end, line, lastLine, offset, type, tokens);
+    }
+
+    /**
+     * Constructs a new container token with effectively no scope.
+     *
+     * @param type   The type of token.
+     * @param tokens A known set of tokens to be written into.
+     */
+    public ContainerToken(final TokenType type, final List<Token> tokens) {
+        super("", 0, 0, 0, 0, 0, type, tokens);
     }
 
     public Token get(final int i) {
@@ -102,7 +114,7 @@ public class ContainerToken extends TokenStream {
             nextLookup = this.lookup(c, fromIndex + i, false);
             if (nextLookup == null) {
                 return null;
-            } else if (nextLookup.token.start != previousLookup.token.end
+            } else if (nextLookup.token.start() != previousLookup.token.end()
                     || nextLookup.index - previousLookup.index != 1) {
                 return this.lookup(symbol, firstLookup.index + 1, exact);
             }
@@ -126,7 +138,7 @@ public class ContainerToken extends TokenStream {
         final Token last = this.tokens.get(e);
         final List<Token> slice = this.tokens.subList(s, e);
         return new ContainerToken(
-            this.reference.toString(), first.start, last.end, first.line, last.line, first.offset, Type.OPEN, slice);
+            this.reference.toString(), first.start(), last.end(), first.line(), last.line(), first.offset(), TokenType.OPEN, slice);
     }
 
     public class Lookup {
@@ -141,7 +153,7 @@ public class ContainerToken extends TokenStream {
         public boolean followsOtherSymbol() {
             if (this.index > 0) {
                 final Token previous = tokens.get(this.index - 1);
-                return previous.type == Type.SYMBOL && this.token.start == previous.end;
+                return previous.type() == TokenType.SYMBOL && this.token.start() == previous.end();
             }
             return false;
         }
@@ -149,7 +161,7 @@ public class ContainerToken extends TokenStream {
         public boolean precedesOtherSymbol() {
             if (this.index < tokens.size() - 1) {
                 final Token following = tokens.get(this.index + 1);
-                return following.type == Type.SYMBOL && this.token.end == following.start;
+                return following.type() == TokenType.SYMBOL && this.token.end() == following.start();
             }
             return false;
         }
@@ -158,7 +170,7 @@ public class ContainerToken extends TokenStream {
         public boolean isFollowedBy(final char symbol) {
             if (tokens.size() > this.index + 1) {
                 final Token following = tokens.get(index + 1);
-                return this.token.end == following.start
+                return this.token.end() == following.start()
                     && following.isSymbol(symbol);
             }
             return false;

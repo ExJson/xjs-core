@@ -5,10 +5,12 @@ import org.openjdk.jmh.annotations.*;
 import xjs.core.Json;
 import xjs.core.JsonCopy;
 import xjs.core.JsonValue;
+import xjs.exception.SyntaxException;
 import xjs.performance.experimental.util.ExperimentalInputStreamByteReader;
 import xjs.performance.legacy.parser.LegacyXjsParser;
 import xjs.performance.legacy.token.LegacyTokenStream;
 import xjs.performance.legacy.token.LegacyTokenizer;
+import xjs.performance.legacy.util.LegacyImplicitStringUtils;
 import xjs.performance.legacy.writer.LegacyJsonWriter;
 import xjs.performance.legacy.writer.LegacyXjsWriter;
 import xjs.serialization.parser.JsonParser;
@@ -28,6 +30,46 @@ public class PerformanceTest {
 
     private static final String SIMPLE_XJS_SAMPLE =
         "[1234,5,6,7,'abc',\"def\",[[[['ghi',{},{}]]]],true,false,null,hello,world]";
+
+    private static final String XJS_COMMENTS_SAMPLE = """
+        /**
+         * banana
+         *asdf
+         *  as;ldkfjapoiwemaoiwcm;lzksdvmpaoiefj[qi23fmalsdmva;s/dv
+         *
+         *ffff
+         *  asd;lfkmapwoi2mqp3ocasd;lk;asdklma;lwekvm   WPOIWQ3E
+         *
+         *alsidmfa;lwiem2qoicjo-3efa
+         *  ASLDKFMAPLIWJQ0398WJAOPSIDFJPOAWIERA;LWIERU:lzDIFU;er
+         *
+         */
+         
+         
+        // never gonna
+         
+        # give
+         
+        // you
+        
+        # a banana
+        
+        /*
+         *
+         *ASD;FLKMAWEasdfI C[AOI JV;LAISD JVLA;ISDJVLK;ASDV;KLAMSD; VKNSDV
+         *
+         *asdkvm;alskm[ OFaesfawergqehqergasd
+         *
+         *asdf
+         *ASDF;LKAMSD[CFVAM;EWLKVMA;SLDCMA.KSDVMA.wke
+         *
+         *FFFFFF
+         *TORTURE
+         *asdf
+         * sadfja;sldkfmaio[WFFFFOEIF
+         *
+         */
+        """;
 
     private static final String SIMPLE_JSON_SAMPLE =
         "[1234,5,6,7,\"abc\",\"def\",[[[[\"ghi\",{},{}]]]],true,false,null,\"hello\",\"world\"]";
@@ -78,203 +120,231 @@ public class PerformanceTest {
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public JsonValue legacyXjsParsingSample() throws IOException {
-        return new LegacyXjsParser(SIMPLE_XJS_SAMPLE).parse();
+    public boolean legacyIsBalanced() {
+        return LegacyImplicitStringUtils.isBalanced(generateNormallyDistributedSample());
     }
 
     @Benchmark
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public JsonValue xjsParsingSample() {
-        return new XjsParser(SIMPLE_XJS_SAMPLE).parse();
+    public boolean containerizedIsBalanced() {
+        try {
+            Tokenizer.containerize(generateNormallyDistributedSample());
+            return true;
+        } catch (final SyntaxException ignored) {}
+        return false;
     }
 
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String xjsWritingSample() throws IOException {
-        final StringWriter sw = new StringWriter();
-        new XjsWriter(sw, true).write(XJS_WRITING_SAMPLE);
-        return sw.toString();
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String legacyXjsWritingSample() throws IOException {
-        final StringWriter sw = new StringWriter();
-        new LegacyXjsWriter(sw, true).write(XJS_WRITING_SAMPLE);
-        return sw.toString();
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public JsonValue jsonParsingSample() throws IOException {
-        return new JsonParser(JSON_SAMPLE).parse();
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String jsonWritingSample() throws IOException {
-        final StringWriter sw = new StringWriter();
-        new JsonWriter(sw, true).write(JSON_WRITING_SAMPLE);
-        return sw.toString();
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String legacyJsonWritingSample() throws IOException {
-        final StringWriter sw = new StringWriter();
-        new LegacyJsonWriter(sw, true).write(JSON_WRITING_SAMPLE);
-        return sw.toString();
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String stringReaderSample() throws IOException {
-        return PositionTrackingReader.fromString(
-            READER_INPUT_SAMPLE).readToEnd();
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String byteBufferSample_smallestBuffer() throws IOException {
-        return new ExperimentalInputStreamByteReader(
-            getReadingSampleIS(), 8, true).readToEnd();
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String byteBufferSample_mediumBuffer() throws IOException {
-        return new ExperimentalInputStreamByteReader(
-            getReadingSampleIS(), 128, true).readToEnd();
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String byteBufferSample_normalBuffer() throws IOException {
-        return new ExperimentalInputStreamByteReader(
-            getReadingSampleIS(), 1024, true).readToEnd();
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String charBufferSample_smallestBuffer() throws IOException {
-        return PositionTrackingReader.fromIs(
-            getReadingSampleIS(), 8, true).readToEnd();
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String charBufferSample_mediumBuffer() throws IOException {
-        return PositionTrackingReader.fromIs(
-            getReadingSampleIS(), 128, true).readToEnd();
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String charBufferSample_normalBuffer() throws IOException {
-        return PositionTrackingReader.fromIs(
-            getReadingSampleIS(), 1024, true).readToEnd();
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public TokenStream stream_fromStandardReader() throws IOException {
-        final Reader reader =
-            new InputStreamReader(getReadingSampleIS());
-        final StringBuilder sb = new StringBuilder();
-        final char[] buffer = new char[1024];
-        int bytesRead;
-        while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
-            sb.append(buffer, 0, bytesRead);
+    private static String generateNormallyDistributedSample() {
+        if (Math.random() >= 0.5) {
+            return XJS_SAMPLE + "//";
+        } else {
+            return XJS_SAMPLE + ")";
         }
-        return Tokenizer.stream(sb.toString());
     }
 
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public TokenStream stream_fromPositionTrackingReader() throws IOException {
-        final PositionTrackingReader reader =
-            PositionTrackingReader.fromIs(getReadingSampleIS());
-        return Tokenizer.stream(reader.readToEnd());
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public LegacyTokenStream stream_fromString() throws IOException {
-        final Reader reader =
-            new InputStreamReader(getReadingSampleIS());
-        final StringBuilder sb = new StringBuilder();
-        final char[] buffer = new char[1024];
-        int bytesRead;
-        while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
-            sb.append(buffer, 0, bytesRead);
-        }
-        final LegacyTokenStream stream = LegacyTokenizer.stream(sb.toString());
-        stream.forEach(t -> {});
-        return stream;
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public TokenStream stream_fromStreamReader() throws IOException {
-        final TokenStream stream = Tokenizer.stream(getReadingSampleIS());
-        stream.forEach(t -> {});
-        return stream;
-    }
-
-    @Benchmark
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public TokenStream stream_fromStringReader() throws IOException {
-        final Reader reader =
-            new InputStreamReader(getReadingSampleIS());
-        final StringBuilder sb = new StringBuilder();
-        final char[] buffer = new char[1024];
-        int bytesRead;
-        while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
-            sb.append(buffer, 0, bytesRead);
-        }
-        final TokenStream stream = Tokenizer.stream(sb.toString());
-        stream.forEach(t -> {});
-        return stream;
-    }
-
-    private static InputStream getReadingSampleIS() {
-        return new ByteArrayInputStream(
-            READER_INPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
-    }
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public JsonValue legacyXjsParsingSample() throws IOException {
+//        return new LegacyXjsParser(SIMPLE_XJS_SAMPLE).parse();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public JsonValue xjsParsingSample() {
+//        return new XjsParser(SIMPLE_XJS_SAMPLE).parse();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public String xjsWritingSample() throws IOException {
+//        final StringWriter sw = new StringWriter();
+//        new XjsWriter(sw, true).write(XJS_WRITING_SAMPLE);
+//        return sw.toString();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public String legacyXjsWritingSample() throws IOException {
+//        final StringWriter sw = new StringWriter();
+//        new LegacyXjsWriter(sw, true).write(XJS_WRITING_SAMPLE);
+//        return sw.toString();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public JsonValue jsonParsingSample() throws IOException {
+//        return new JsonParser(JSON_SAMPLE).parse();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public String jsonWritingSample() throws IOException {
+//        final StringWriter sw = new StringWriter();
+//        new JsonWriter(sw, true).write(JSON_WRITING_SAMPLE);
+//        return sw.toString();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public String legacyJsonWritingSample() throws IOException {
+//        final StringWriter sw = new StringWriter();
+//        new LegacyJsonWriter(sw, true).write(JSON_WRITING_SAMPLE);
+//        return sw.toString();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public String stringReaderSample() throws IOException {
+//        return PositionTrackingReader.fromString(
+//            READER_INPUT_SAMPLE).readToEnd();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public String byteBufferSample_smallestBuffer() throws IOException {
+//        return new ExperimentalInputStreamByteReader(
+//            getReadingSampleIS(), 8, true).readToEnd();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public String byteBufferSample_mediumBuffer() throws IOException {
+//        return new ExperimentalInputStreamByteReader(
+//            getReadingSampleIS(), 128, true).readToEnd();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public String byteBufferSample_normalBuffer() throws IOException {
+//        return new ExperimentalInputStreamByteReader(
+//            getReadingSampleIS(), 1024, true).readToEnd();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public String charBufferSample_smallestBuffer() throws IOException {
+//        return PositionTrackingReader.fromIs(
+//            getReadingSampleIS(), 8, true).readToEnd();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public String charBufferSample_mediumBuffer() throws IOException {
+//        return PositionTrackingReader.fromIs(
+//            getReadingSampleIS(), 128, true).readToEnd();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public String charBufferSample_normalBuffer() throws IOException {
+//        return PositionTrackingReader.fromIs(
+//            getReadingSampleIS(), 1024, true).readToEnd();
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public TokenStream stream_fromStandardReader() throws IOException {
+//        final Reader reader =
+//            new InputStreamReader(getReadingSampleIS());
+//        final StringBuilder sb = new StringBuilder();
+//        final char[] buffer = new char[1024];
+//        int bytesRead;
+//        while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
+//            sb.append(buffer, 0, bytesRead);
+//        }
+//        return Tokenizer.stream(sb.toString());
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public TokenStream stream_fromPositionTrackingReader() throws IOException {
+//        final PositionTrackingReader reader =
+//            PositionTrackingReader.fromIs(getReadingSampleIS());
+//        return Tokenizer.stream(reader.readToEnd());
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public LegacyTokenStream stream_fromString() throws IOException {
+//        final Reader reader =
+//            new InputStreamReader(getReadingSampleIS());
+//        final StringBuilder sb = new StringBuilder();
+//        final char[] buffer = new char[1024];
+//        int bytesRead;
+//        while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
+//            sb.append(buffer, 0, bytesRead);
+//        }
+//        final LegacyTokenStream stream = LegacyTokenizer.stream(sb.toString());
+//        stream.forEach(t -> {});
+//        return stream;
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public TokenStream stream_fromStreamReader() throws IOException {
+//        final TokenStream stream = Tokenizer.stream(getReadingSampleIS());
+//        stream.forEach(t -> {});
+//        return stream;
+//    }
+//
+//    @Benchmark
+//    @Threads(4)
+//    @BenchmarkMode(Mode.AverageTime)
+//    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+//    public TokenStream stream_fromStringReader() throws IOException {
+//        final Reader reader =
+//            new InputStreamReader(getReadingSampleIS());
+//        final StringBuilder sb = new StringBuilder();
+//        final char[] buffer = new char[1024];
+//        int bytesRead;
+//        while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
+//            sb.append(buffer, 0, bytesRead);
+//        }
+//        final TokenStream stream = Tokenizer.stream(sb.toString());
+//        stream.forEach(t -> {});
+//        return stream;
+//    }
+//
+//    private static InputStream getReadingSampleIS() {
+//        return new ByteArrayInputStream(
+//            READER_INPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
+//    }
 }

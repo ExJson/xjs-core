@@ -30,6 +30,7 @@ public class JsonWriterOptions {
     private int maxSpacing = Integer.MAX_VALUE;
     private int defaultSpacing = 1;
     private boolean smartSpacing = false;
+    private boolean nextLineMulti = true;
 
     /**
      * Construct a new instance with default settings.
@@ -55,6 +56,7 @@ public class JsonWriterOptions {
         this.maxSpacing = source.maxSpacing;
         this.defaultSpacing = source.defaultSpacing;
         this.smartSpacing = source.smartSpacing;
+        this.nextLineMulti = source.nextLineMulti;
     }
 
     /**
@@ -601,6 +603,53 @@ public class JsonWriterOptions {
      */
     public JsonWriterOptions setSmartSpacing(final boolean smartSpacing) {
         this.smartSpacing = smartSpacing;
+        return this;
+    }
+
+    /**
+     * Indicates whether the formatter should move multiline strings onto the
+     * next line by default. Supporting formats only.
+     *
+     * <p>For example, when this is enabled, an unformatted multiline string
+     * will be moved onto the following line, as follows:
+     *
+     * <pre>{@code
+     *
+     * string:
+     *   '''
+     *   line 1
+     *   line 2
+     *   '''
+     *
+     * }</pre>
+     *
+     * <p>Otherwise, it will be formatted on the same line, as follows:
+     *
+     * <pre>{@code
+     *
+     *   string: '''
+     *     line 1
+     *     line 2
+     *     '''
+     *
+     * }</pre>
+     *
+     * @return
+     */
+    public boolean isNextLineMulti() {
+        return this.nextLineMulti;
+    }
+
+    /**
+     * Sets whether to move unformatted multiline strings onto the next line
+     * by default.
+     *
+     * @param nextLineMulti Whether to enable this formatting feature by default.
+     * @return <code>this</code>, for method chaining.
+     * @see #isNextLineMulti()
+     */
+    public JsonWriterOptions setNextLineMulti(final boolean nextLineMulti) {
+        this.nextLineMulti = nextLineMulti;
         return this;
     }
 }

@@ -2,6 +2,9 @@ package xjs.core;
 
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
+import xjs.comments.CommentHolder;
+import xjs.comments.CommentStyle;
+import xjs.comments.CommentType;
 import xjs.jel.JelFlags;
 import xjs.serialization.JsonContext;
 import xjs.serialization.writer.JsonWriter;

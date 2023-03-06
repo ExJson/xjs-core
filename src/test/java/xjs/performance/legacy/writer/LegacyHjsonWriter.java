@@ -1,5 +1,6 @@
 package xjs.performance.legacy.writer;
 
+import xjs.comments.CommentType;
 import xjs.core.*;
 import xjs.serialization.writer.JsonWriterOptions;
 

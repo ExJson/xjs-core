@@ -1,4 +1,6 @@
-package xjs.core;
+package xjs.comments;
+
+import xjs.core.JsonValue;
 
 /**
  * This class represents the specific type of comment to be used in conjunction with a {@link JsonValue}.

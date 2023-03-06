@@ -3,6 +3,8 @@ package xjs.serialization.writer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import xjs.comments.CommentStyle;
+import xjs.comments.CommentType;
 import xjs.core.*;
 import xjs.serialization.JsonContext;
 import xjs.serialization.parser.XjsParser;
@@ -66,7 +68,13 @@ public final class XjsWriterTest {
     @Test
     public void write_inObject_indentsMultiString() {
         final JsonValue s = new JsonString("value", StringType.MULTI);
-        assertEquals("key: '''\n  value\n  '''", write(Json.object().add("key", s)));
+        assertEquals("key: \n  '''\n  value\n  '''", write(Json.object().add("key", s)));
+    }
+
+    @Test
+    public void write_multiString_preservesSignificantWhitespace() {
+        final JsonValue s = new JsonString("l1\n  l2", StringType.MULTI);
+        assertEquals("key: \n  '''\n  l1\n    l2\n  '''", write(Json.object().add("key", s)));
     }
 
     @Test
@@ -273,10 +281,18 @@ public final class XjsWriterTest {
               
               
               /**
-               * Interior
+               * Interior 1
+               * Interior 2
                */
             
             ] # eol
+            
+            a1:
+              /**
+               * 1
+               * 2
+               */
+              block value
             
             enter: {
               level: {
@@ -340,7 +356,7 @@ public final class XjsWriterTest {
     @Test
     public void writeValueComment_withLinesBetween_andLinesBelow_doesNotInsertExtraLines() {
         final JsonValue v = new JsonString("v", StringType.IMPLICIT);
-        v.getComments().setData(CommentType.VALUE, "/* Value */\n");
+        v.setComment(CommentType.VALUE, CommentStyle.BLOCK, "Value");
         v.setLinesBetween(1);
 
         assertEquals("k:\n  /* Value */\n  v", write(new JsonObject().add("k", v)));

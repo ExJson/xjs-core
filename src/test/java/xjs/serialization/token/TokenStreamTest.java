@@ -2,7 +2,6 @@ package xjs.serialization.token;
 
 import org.junit.jupiter.api.Test;
 import xjs.exception.SyntaxException;
-import xjs.serialization.token.Token.Type;
 
 import java.util.Iterator;
 import java.util.List;
@@ -30,7 +29,7 @@ public final class TokenStreamTest {
             Tokenizer.stream("'''1\n2'''");
         final String expected = """
             [
-             TRIPLE_QUOTE(''''1\\n2'''')
+             STRING(''''1\\n2'''')
             ]""";
         assertEquals(expected, stream.stringify());
     }
@@ -219,33 +218,11 @@ public final class TokenStreamTest {
         assertEquals(number(3, 4, 5), iterator.next());
     }
 
-    @Test
-    public void rangedIterator_startsAt_startIndex() {
-        final String reference = "1 2 3";
-        final TokenStream stream = Tokenizer.stream(reference);
-        final TokenStream.Itr iterator = stream.rangedIterator(1, 3);
-
-        assertEquals(number(2, 2, 3), iterator.next());
-    }
-
-    @Test
-    public void rangedIterator_endsAt_endIndex() {
-        final String reference = "1 2 3";
-        final TokenStream stream = Tokenizer.stream(reference);
-        final TokenStream.Itr iterator = stream.rangedIterator(1, 3);
-
-        Token last = null;
-        while (iterator.hasNext()) {
-            last = iterator.next();
-        }
-        assertEquals(number(3, 4, 5), last);
-    }
-
     private static Token number(final double number, final int s, final int e) {
         return new NumberToken(s, e, 0, s, number);
     }
 
-    private static Token token(final Type type, final int s, final int e) {
+    private static Token token(final TokenType type, final int s, final int e) {
         return new Token(s, e, 0, s, type);
     }
 }

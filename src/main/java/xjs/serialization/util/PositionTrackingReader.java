@@ -1,6 +1,8 @@
 package xjs.serialization.util;
 
+import xjs.comments.CommentStyle;
 import xjs.exception.SyntaxException;
+import xjs.serialization.token.CommentToken;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -207,13 +209,30 @@ public abstract class PositionTrackingReader implements Closeable {
      * @return The full text of the capture buffer.
      */
     public String endCapture() {
+        return this.endCapture(this.index);
+    }
+
+    /**
+     * Terminates the capture, generating new string value from the contents.
+     *
+     * @param idx The last index to include in the capture.
+     * @return The full text of the capture buffer.
+     */
+    public String endCapture(final int idx) {
         final String captured;
         if (this.capture.length() > 0) {
             this.appendToCapture();
+            if (idx < this.index) {
+                this.capture.setLength(
+                    this.capture.length() - (this.index - idx));
+            }
             captured = this.capture.toString();
             this.capture.setLength(0);
         } else {
+            final int tmp = this.index;
+            this.index = idx;
             captured = this.slice();
+            this.index = tmp;
         }
         this.captureStart = -1;
         return captured;
@@ -506,6 +525,115 @@ public abstract class PositionTrackingReader implements Closeable {
                 }
                 this.read();
             }
+        }
+    }
+
+    public CommentToken readLineComment() throws IOException {
+        final int s = this.index - 1;
+        final int o = this.column - 1;
+        this.expect('/');
+        if (this.readIf('/')) {
+            return this.readSingleComment(CommentStyle.LINE_DOC, s, o);
+        }
+        return this.readSingleComment(CommentStyle.LINE, s, o);
+    }
+
+    public CommentToken readHashComment() throws IOException {
+        this.expect('#');
+        return this.readSingleComment(
+            CommentStyle.HASH, this.index - 1, this.column - 1);
+    }
+
+    private CommentToken readSingleComment(
+            final CommentStyle type, final int s, final int o) throws IOException {
+        if (this.isLineWhitespace()) {
+            this.read();
+        }
+        this.startCapture();
+        final int e = this.skipToNL() + 1;
+        return new CommentToken(s, e, this.line, o, type, this.endCapture(e));
+    }
+
+    public CommentToken readBlockComment() throws IOException {
+        final int s = this.index - 1;
+        final int o = this.column - 1;
+        this.expect('*');
+        if (this.readIf('*')) {
+            return this.readMultiComment(CommentStyle.MULTILINE_DOC, s, o);
+        }
+        return this.readMultiComment(CommentStyle.BLOCK, s, o);
+    }
+
+    private CommentToken readMultiComment(
+            final CommentStyle type, final int s, final int o) throws IOException {
+        final int line = this.line;
+        this.skipLineWhitespace();
+        this.readIf('\n');
+
+        final CharSequence reference = this.getFullText();
+        final StringBuilder output = new StringBuilder();
+
+        while (true) {
+            if (this.current == -1) {
+                throw this.expected("end of comment (*/)");
+            }
+            final int lineStart = this.skipToBlockLineStart();
+            if (lineStart == -1) {
+                this.expect('/');
+                break;
+            }
+            this.appendLine(reference, output, lineStart);
+            if (this.readIf('/')) {
+                break;
+            }
+            if (this.current != -1) {
+                this.read();
+            }
+        }
+        final int len = output.length();
+        if (len > 0 && output.charAt(len - 1) == '\n') {
+            output.setLength(len - 1);
+        }
+        return new CommentToken(
+            s, this.index, line, this.line, o, type, output.toString());
+    }
+
+    protected int skipToBlockLineStart() throws IOException {
+        this.skipLineWhitespace();
+        if (this.current == '*') {
+            this.read();
+            if (this.current == '/') {
+                return -1;
+            }
+            if (this.isLineWhitespace()) {
+                this.read();
+            }
+        }
+        return this.index;
+    }
+
+    protected void appendLine(
+            final CharSequence reference, final StringBuilder output, final int lineStart) throws IOException {
+        int lastChar = this.index;
+        while (this.current != -1) {
+            if (this.current == '\n') {
+                output.append(reference, lineStart, lastChar + 1);
+                if (this.index > lineStart) {
+                    output.append('\n');
+                }
+                return;
+            } else if (this.current == '*') {
+                this.read();
+                if (this.current == '/') {
+                    output.append(reference, lineStart, lastChar + 1);
+                    return;
+                }
+                lastChar = this.index - 1;
+                continue;
+            } else if (!this.isWhitespace()) {
+                lastChar = this.index;
+            }
+            this.read();
         }
     }
 

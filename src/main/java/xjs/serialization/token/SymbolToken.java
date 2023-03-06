@@ -59,7 +59,7 @@ public class SymbolToken extends Token {
      * @param symbol   The raw symbol represented by this token.
      */
     public SymbolToken(final int start, final int end, final int line, final int offset, final char symbol) {
-        this(start, end, line, offset, Type.SYMBOL, symbol);
+        this(start, end, line, offset, TokenType.SYMBOL, symbol);
     }
 
     /**
@@ -73,8 +73,18 @@ public class SymbolToken extends Token {
      * @param symbol   The raw symbol represented by this token.
      */
     public SymbolToken(
-            final int start, final int end, final int line, final int offset, final Type type, final char symbol) {
+            final int start, final int end, final int line, final int offset, final TokenType type, final char symbol) {
         super(start, end, line, offset, type);
+        this.symbol = symbol;
+    }
+
+    /**
+     * Constructs a new symbol token with effectively no scope.
+     *
+     * @param symbol The raw symbol represented by this token.
+     */
+    public SymbolToken(final char symbol) {
+        super(symbol == '\n' ? TokenType.BREAK : TokenType.SYMBOL);
         this.symbol = symbol;
     }
 

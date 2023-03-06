@@ -1,40 +1,14 @@
 package xjs.serialization.token;
 
+import xjs.comments.CommentStyle;
+import xjs.core.StringType;
+import xjs.serialization.Span;
+
 /**
  * Represents a single token: either a character, group of characters,
  * or any other sequence of tokens.
  */
-public class Token {
-
-    /**
-     * The inclusive start index of this token.
-     */
-    protected int start;
-
-    /**
-     * The exclusive end index of this token.
-     */
-    protected int end;
-
-    /**
-     * The inclusive line number of this token.
-     */
-    protected int line;
-
-    /**
-     * The inclusive line number at the end of this token.
-     */
-    protected int lastLine;
-
-    /**
-     * The column of the start index.
-     */
-    protected int offset;
-
-    /**
-     * The type of token.
-     */
-    protected Type type;
+public class Token extends Span<TokenType> {
 
     /**
      * Constructs a new Token object to be placed on an AST.
@@ -45,13 +19,8 @@ public class Token {
      * @param offset   The column of the start index.
      * @param type     The type of token.
      */
-    public Token(final int start, final int end, final int line, final int offset, final Type type) {
-        this.start = start;
-        this.end = end;
-        this.line = line;
-        this.lastLine = line;
-        this.offset = offset;
-        this.type = type;
+    public Token(final int start, final int end, final int line, final int offset, final TokenType type) {
+        super(start, end, line, offset, type);
     }
 
     /**
@@ -65,25 +34,53 @@ public class Token {
      * @param type     The type of token.
      */
     public Token(
-            final int start, final int end, final int line, final int lastLine, final int offset, final Type type) {
-        this.start = start;
-        this.end = end;
-        this.line = line;
-        this.lastLine = lastLine;
-        this.offset = offset;
-        this.type = type;
+            final int start, final int end, final int line, final int lastLine, final int offset, final TokenType type) {
+        super(start, end, line, lastLine, offset, type);
     }
 
+    /**
+     * Constructs a new superficial token with effectively no scope.
+     */
+    protected Token(final TokenType type) {
+        super(type);
+    }
 
     /**
-     * Creates a slice of the given {@link CharSequence} representing
-     * the region described by this token.
+     * Retrieves the parsed text of this token, if applicable. Else,
+     * returns a subsequence of the given reference.
      *
-     * @param reference The reference text being sliced.
-     * @return The string subsequence of the given reference text.
+     * @param reference A reference to the original parent text body.
+     * @return A string representing the parsed text of this token.
      */
-    public String textOf(final CharSequence reference) {
-        return reference.subSequence(this.start, this.end).toString();
+    public String parsed(final CharSequence reference) {
+        return this.textOf(reference);
+    }
+
+    /**
+     * Retrieves the parsed text of this token, if applicable. Else,
+     * throws an exception.
+     *
+     * @return A string representing the parsed text of this token.
+     * @throws UnsupportedOperationException If the token is not parsed.
+     */
+    public String parsed() {
+        throw new UnsupportedOperationException("not parsed");
+    }
+
+    /**
+     * Builds a new token with identical scope and type, inserting an up-front
+     * text representation.
+     *
+     * @param reference A reference to the original text body.
+     * @return A new pre-parsed version of this token.
+     */
+    public ParsedToken intoParsed(final CharSequence reference) {
+        if (this instanceof ParsedToken) {
+            return (ParsedToken) this;
+        }
+        return new ParsedToken(
+            this.start, this.end, this.line, this.lastLine,
+            this.offset, this.type, this.parsed(reference));
     }
 
     /**
@@ -96,126 +93,86 @@ public class Token {
         return false;
     }
 
-    public int start() {
-        return this.start;
+    /**
+     * Indicates whether this token <em>represents</em> the given text.
+     *
+     * @param reference A reference to the original parent text body.
+     * @param text      The text being compared against.
+     * @return true, if this token matches the text.
+     */
+    public boolean isText(final CharSequence reference, final String text) {
+        return reference.toString().regionMatches(this.start, text, 0, this.length());
     }
 
-    public int end() {
-        return this.end;
+    /**
+     * Indicates whether this token <em>represents</em> the given text.
+     *
+     * @return true, if this token matches the text.
+     * @throws UnsupportedOperationException if the text is not parsed.
+     */
+    public boolean isText(final String text) {
+        throw new UnsupportedOperationException("not parsed");
     }
 
-    public int line() {
-        return this.line;
+    /**
+     * Retrieves the type of string represented by this token, if applicable.
+     * Else, returns {@link StringType#NONE}.
+     *
+     * @return The type of string represented by this token.
+     */
+    public StringType stringType() {
+        return StringType.NONE;
     }
 
-    public int lastLine() {
-        return this.lastLine;
+    /**
+     * Retrieves the type of comment represented by this token, if applicable.
+     * Else, throws an exception.
+     *
+     * @return The type of comment represented by this token.
+     * @throws UnsupportedOperationException If this is not a comment token.
+     */
+    public CommentStyle commentStyle() {
+        throw new UnsupportedOperationException("not a comment");
     }
 
-    public int offset() {
-        return this.offset;
+    /**
+     * Indicates whether this token is either a line break or comment.
+     *
+     * @return <code>true</code>, if this token is
+     */
+    public boolean isMetadata() {
+        return this.type == TokenType.BREAK || this.type == TokenType.COMMENT;
     }
 
-    public Type type() {
-        return this.type;
+    protected void setStart(final int start) {
+        this.start = start;
+    }
+
+    protected void setEnd(final int end) {
+        this.end = end;
+    }
+
+    protected void setOffset(final int offset) {
+        this.offset = offset;
+    }
+
+    protected void setLine(final int line) {
+        this.line = line;
+    }
+
+    protected void setLastLine(final int lastLine) {
+        this.lastLine = lastLine;
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o instanceof Token) {
-            final Token t = (Token) o;
-            return this.start == t.start
-                && this.end == t.end
-                && this.line == t.line
-                && this.offset == t.offset
-                && this.type == t.type;
+    public boolean equals(final Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other instanceof Token) {
+            return this.spanEquals((Token) other);
         }
         return false;
     }
 
-    @Override
-    public String toString() {
-        return this.type + "(start:" + this.start + ",end:" + this.end + ",line:" + this.line + ",offset:" + this.offset + ")";
-    }
-
-    /**
-     * The type of token represented by this wrapper.
-     */
-    public enum Type {
-
-        /**
-         * A single word, matching the pattern \\w+
-         */
-        WORD,
-
-        /**
-         * Any non-word stream of characters
-         */
-        SYMBOL,
-
-        /**
-         * Represents any sequence of numeric symbols.
-         */
-        NUMBER,
-
-        /**
-         * A single-quoted string.
-         */
-        SINGLE_QUOTE,
-
-        /**
-         * A double-quoted string.
-         */
-        DOUBLE_QUOTE,
-
-        /**
-         * A triple-quoted string.
-         */
-        TRIPLE_QUOTE,
-
-        /**
-         * A string generated as the output of other tokens.
-         */
-        GENERATED_STRING,
-
-        /**
-         * An open stream of tokens with no encapsulation.
-         */
-        OPEN,
-
-        /**
-         * Any stream of tokens encapsulated inside of braces.
-         */
-        BRACES,
-
-        /**
-         * Any stream of tokens encapsulated inside of brackets.
-         */
-        BRACKETS,
-
-        /**
-         * Any stream of tokens encapsulated inside of parentheses.
-         */
-        PARENTHESES,
-
-        /**
-         * A single-line, hash-style comment
-         */
-        HASH_COMMENT,
-
-        /**
-         * A single-line, C-style comment
-         */
-        LINE_COMMENT,
-
-        /**
-         * A multi-line, block comment
-         */
-        BLOCK_COMMENT,
-
-        /**
-         * A line-break, either \n or \r\n
-         */
-        BREAK
-    }
 }

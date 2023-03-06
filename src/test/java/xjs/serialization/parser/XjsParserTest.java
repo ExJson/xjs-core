@@ -3,7 +3,7 @@ package xjs.serialization.parser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import xjs.core.CommentType;
+import xjs.comments.CommentType;
 import xjs.core.JsonArray;
 import xjs.core.JsonObject;
 import xjs.core.JsonString;
@@ -170,58 +170,59 @@ public final class XjsParserTest extends CommonParserTest {
     @ParameterizedTest
     @CsvSource({"/*header*/", "#header", "//header"})
     public void parse_preservesHeaderComment_atTopOfFile(final String comment) {
-        assertEquals(comment,
-            this.parse(comment + "\n{}").getComments().getData(CommentType.HEADER));
+        assertEquals("header",
+            this.parse(comment + "\n{}").getComment(CommentType.HEADER));
     }
 
     @ParameterizedTest
     @CsvSource({"/*footer*/", "#footer", "//footer"})
     public void parse_preservesFooterComment_atBottomOfFile(final String comment) {
-        assertEquals(comment,
-            this.parse("{}\n" + comment).getComments().getData(CommentType.FOOTER));
+        assertEquals("footer",
+            this.parse("{}\n" + comment).getComment(CommentType.FOOTER));
     }
 
     @ParameterizedTest
     @CsvSource({"/*eol*/", "#eol", "//eol"})
     public void parse_preservesEolComment_afterClosingRootBrace(final String comment) {
-        assertEquals(comment,
-            this.parse("{}" +  comment).getComments().getData(CommentType.EOL));
+        assertEquals("eol",
+            this.parse("{}" +  comment).getComment(CommentType.EOL));
     }
 
     @ParameterizedTest
     @CsvSource({"/*header*/", "#header", "//header"})
     public void parse_preservesHeader_aboveValue(final String comment) {
-        assertEquals(comment,
-            this.parse(comment + "\nk:v").asObject().get(0).getComments().getData(CommentType.HEADER));
+        assertEquals("header",
+            this.parse(comment + "\nk:v").asObject().get(0).getComment(CommentType.HEADER));
     }
 
     @ParameterizedTest
     @CsvSource({"/*value*/", "#value", "//value"})
     public void parse_preservesValueComment_betweenKeyValue(final String comment) {
-        assertEquals(comment + "\n",
-            this.parse("k:\n" + comment + "\nv").asObject().get(0).getComments().getData(CommentType.VALUE));
+        assertEquals("value\n",
+            this.parse("k:\n" + comment + "\nv")
+                .asObject().get(0).getComment(CommentType.VALUE));
     }
 
     @ParameterizedTest
     @CsvSource({"/*eol*/", "#eol", "//eol"})
     public void parse_preservesEolComment_afterValue(final String comment) {
-        assertEquals(comment,
-            this.parse("k:v" + comment).asObject().get(0).getComments().getData(CommentType.EOL));
+        assertEquals("eol",
+            this.parse("k:v" + comment).asObject().get(0).getComment(CommentType.EOL));
     }
 
     @ParameterizedTest
     @CsvSource({"/*interior*/", "#interior", "//interior"})
     public void parse_preservesInteriorComment_inContainer(final String comment) {
-        assertEquals(comment + "\n",
-            this.parse("{\n" + comment + "\n}").getComments().getData(CommentType.INTERIOR));
+        assertEquals("interior\n",
+            this.parse("{\n" + comment + "\n}").getComment(CommentType.INTERIOR));
     }
 
     @ParameterizedTest
     @CsvSource({"/*comment*/", "#comment", "//comment"})
     public void parse_preservesNewlines_afterComments(final String comment) {
-        assertEquals(comment + "\n",
+        assertEquals("comment\n",
             this.parse("k1:v1\n" + comment + "\n\nk:v")
-                .asObject().get(1).getComments().getData(CommentType.HEADER));
+                .asObject().get(1).getComment(CommentType.HEADER));
     }
 
     @Test
@@ -235,9 +236,14 @@ public final class XjsParserTest extends CommonParserTest {
 
             // comment of "key"
             key: value""";
+        final String expected = """
+            header part 1
+            header part 2
+            
+            header part 3""";
 
         final JsonValue parsed = this.parse(header + "\n" + json);
-        assertEquals(header, parsed.getComments().getData(CommentType.HEADER));
+        assertEquals(expected, parsed.getComment(CommentType.HEADER));
     }
 
     @Test

@@ -1,9 +1,12 @@
 
+plugins {
+    id 'maven-publish'
+}
+
 apply plugin: 'java'
 
 repositories {
-    // Temporary repo for xjs-jel
-    maven { url = "https://jitpack.io" }
+    mavenLocal()
     mavenCentral()
 }
 
@@ -14,7 +17,7 @@ configurations {
 
 dependencies {
     implementation group: 'org.jetbrains', name: 'annotations', version: '23.0.0'
-    lintOnly group: 'com.github.Exjson', name: 'xjs-jel', version: '0.1'
+    lintOnly group: 'org.xjs', name: 'xjs-jel', version: '0.2'
 
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.8.1'
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: '5.8.1'
@@ -73,10 +76,38 @@ jar {
 }
 
 javadoc {
-    options.tags = [ "apiNote:a:API note" ]
+    options.tags = [ 'apiNote:a:API note' ]
 }
 
 artifacts {
     archives jar
     archives javadocJar
+}
+
+publishing {
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = 'https://maven.pkg.github.com/Exjson/xjs-core'
+            credentials {
+                username = System.getenv('GITHUB_ACTOR')
+                password = System.getenv('GITHUB_TOKEN')
+            }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = group
+            artifactId = pom_artifact_id
+            version = version
+
+            pom {
+                name = pom_name
+                description = pom_description
+                url = pom_url
+            }
+
+            from components.java
+        }
+    }
 }

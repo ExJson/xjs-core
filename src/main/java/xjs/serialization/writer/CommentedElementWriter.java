@@ -1,18 +1,17 @@
 package xjs.serialization.writer;
 
-import xjs.core.CommentStyle;
-import xjs.core.CommentType;
+import xjs.comments.CommentData;
+import xjs.comments.CommentStyle;
+import xjs.comments.CommentType;
 import xjs.core.JsonValue;
-import xjs.serialization.util.CommentUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 
-// todo: simplify via Comment object
-
 public abstract class CommentedElementWriter extends ElementWriter {
     protected final boolean outputComments;
+    protected CommentStyle forcedStyle;
 
     protected CommentedElementWriter(
             final File file, final boolean format) throws IOException {
@@ -44,7 +43,7 @@ public abstract class CommentedElementWriter extends ElementWriter {
             && this.current().hasComment(type);
     }
 
-    protected String getComment(final CommentType type) {
+    protected CommentData getComment(final CommentType type) {
         return this.current().getComments().getData(type);
     }
 
@@ -53,11 +52,11 @@ public abstract class CommentedElementWriter extends ElementWriter {
         if (this.format) {
             this.writeLines(this.getActualLinesAbove());
             if (this.hasComment(CommentType.HEADER)) {
-                final String data = this.getComment(CommentType.HEADER);
-                this.writeIndented(data, this.level);
+                final CommentData data = this.getComment(CommentType.HEADER);
+                this.writeComment(data);
                 this.nl();
                 if (this.level == -1
-                        && !data.endsWith("\n")
+                        && !data.endsWithNewline()
                         && this.getLinesAbove(this.getFirst(this.current())) <= 0) {
                     this.nl();
                 }
@@ -78,18 +77,18 @@ public abstract class CommentedElementWriter extends ElementWriter {
             if (!this.hasComment(CommentType.VALUE)) {
                 return;
             }
-            String data =
+            CommentData data =
                 this.getComment(CommentType.VALUE);
 
-            if (lines == 0 && !data.endsWith("\n")) {
-                data = CommentUtils.rewrite(
-                    CommentStyle.BLOCK, data);
+            CommentStyle style = this.forcedStyle;
+            if (lines == 0 && !data.endsWithNewline()) {
+                style = CommentStyle.BLOCK;
             }
-            this.writeIndented(data, this.level + 1);
+            this.writeComment(data, style, this.level + 1, false);
 
-            if (lines <= 0 && !data.endsWith("\n")) {
+            if (lines <= 0 && !data.endsWithNewline()) {
                 this.tw.write(this.separator);
-            } else if (!data.endsWith("\n")) {
+            } else if (!data.endsWithNewline()) {
                 // coerce value onto the next line
                 this.nl(this.level + 1);
             }
@@ -101,14 +100,14 @@ public abstract class CommentedElementWriter extends ElementWriter {
         if (!this.hasComment(CommentType.EOL)) {
             return;
         }
-        final String data =
+        final CommentData data =
             this.getComment(CommentType.EOL);
         final boolean separatorWritten =
             this.getLinesAbove(this.peek()) == 0;
         if (!separatorWritten) {
             this.tw.write(this.separator);
         }
-        this.writeIndented(data);
+        this.writeComment(data);
         if (separatorWritten) {
             this.tw.write(this.separator);
         }
@@ -122,11 +121,8 @@ public abstract class CommentedElementWriter extends ElementWriter {
 
         // todo: simplify
 
-        final boolean hasComment =
-            this.parent().hasComment(CommentType.INTERIOR);
-        final String data = hasComment
-            ? this.parent().getComments().getData(CommentType.INTERIOR)
-            : "";
+        final CommentData data =
+            this.parent().getComments().getData(CommentType.INTERIOR);
 
         final boolean empty = this.parent().isEmpty();
 
@@ -134,28 +130,29 @@ public abstract class CommentedElementWriter extends ElementWriter {
         if (empty) {
             lines = Math.min(1, lines);
         }
-        if (data.contains("\n")) {
+        if (data.getLines() > 0) {
             lines = Math.max(1, lines);
         }
 
-        final int level = hasComment ? this.level : this.level - 1;
+        final int level = !data.isEmpty()
+            ? this.level : this.level - 1;
         this.writeLines(lines, level);
 
-        if (!hasComment) {
+        if (data.isEmpty()) {
             return lines > 0;
         }
 
-        final boolean trim = data.endsWith("\n");
+        final boolean trim = data.endsWithNewline();
 
         if (lines <= 0) {
             this.tw.write(this.separator);
         }
-        this.writeIndented(data, this.level, trim);
+        this.writeComment(data, this.forcedStyle, this.level, true);
         if (empty && lines <= 0) {
             this.tw.write(this.separator);
         }
 
-        if (trim || lines > 0) {
+        if (!trim && lines > 0) {
             this.nl(this.level - 1);
         }
 
@@ -168,10 +165,20 @@ public abstract class CommentedElementWriter extends ElementWriter {
         if (source == null || !source.hasComment(CommentType.FOOTER)) {
             return;
         }
-        final String data =
+        final CommentData data =
             source.getComments().getData(CommentType.FOOTER);
         this.nl(0);
-        this.writeIndented(data);
+        this.writeComment(data);
+    }
+
+    protected void writeComment(final CommentData data) throws IOException {
+        this.writeComment(data, this.forcedStyle, this.level, false);
+    }
+
+    protected void writeComment(
+            final CommentData data, final CommentStyle style,
+            final int level, final boolean dedentLast) throws IOException {
+        data.writeTo(this.tw, style, this.indent, level, this.eol, dedentLast);
     }
 
     @Override

@@ -3,9 +3,9 @@ package xjs.serialization.token;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import xjs.comments.CommentStyle;
+import xjs.core.StringType;
 import xjs.exception.SyntaxException;
-import xjs.serialization.token.Token.Type;
-import xjs.serialization.util.PositionTrackingReader;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -21,7 +21,7 @@ public final class TokenizerTest {
     public void single_parsesLineComment() {
         final String reference = "// Hello, world!";
         assertEquals(
-            token(reference, Type.LINE_COMMENT),
+            comment(reference, CommentStyle.LINE),
             single(reference));
     }
 
@@ -29,7 +29,7 @@ public final class TokenizerTest {
     public void single_parsesHashComment() {
         final String reference = "# Hello, world!";
         assertEquals(
-            token(reference, Type.HASH_COMMENT),
+            comment(reference, CommentStyle.HASH),
             single(reference));
     }
 
@@ -37,7 +37,7 @@ public final class TokenizerTest {
     public void single_parseBlockComment() {
         final String reference = "/*\nHello\nworld!\n*/";
         assertEquals(
-            token(reference, Type.BLOCK_COMMENT),
+            comment(reference, CommentStyle.BLOCK),
             single(reference));
     }
 
@@ -45,7 +45,7 @@ public final class TokenizerTest {
     public void single_parsesDoubleQuote() {
         final String reference = "\"Hello, world!\"";
         assertEquals(
-            token(reference, Type.DOUBLE_QUOTE),
+            string(reference, StringType.DOUBLE),
             single(reference));
     }
 
@@ -53,7 +53,7 @@ public final class TokenizerTest {
     public void single_parsesSingleQuote() {
         final String reference = "'Hello, world!'";
         assertEquals(
-            token(reference, Type.SINGLE_QUOTE),
+            string(reference, StringType.SINGLE),
             single(reference));
     }
 
@@ -61,7 +61,7 @@ public final class TokenizerTest {
     public void single_parsesTripleQuote() {
         final String reference = "'''\nHello\nworld!\n'''";
         assertEquals(
-            token(reference, Type.TRIPLE_QUOTE),
+            string(reference, StringType.MULTI),
             single(reference));
     }
 
@@ -78,6 +78,30 @@ public final class TokenizerTest {
         final String reference = "1234.5";
         assertEquals(
             number(reference, 1234.5),
+            single(reference));
+    }
+
+    @Test
+    public void single_parsesNegativeInteger() {
+        final String reference = "-1234";
+        assertEquals(
+            number(reference, -1234),
+            single(reference));
+    }
+
+    @Test
+    public void single_parsesNegativeDecimal() {
+        final String reference = "-1234.5";
+        assertEquals(
+            number(reference, -1234.5),
+            single(reference));
+    }
+
+    @Test
+    public void single_parsesMinus_withoutFollowingNumber_asSymbol() {
+        final String reference = "-.1";
+        assertEquals(
+            symbol("-", '-'),
             single(reference));
     }
 
@@ -101,7 +125,31 @@ public final class TokenizerTest {
     public void single_parsesSignAfterNumber_asWord() {
         final String reference = "1234e+";
         assertEquals(
-            token(Type.WORD, 0, 6),
+            token(TokenType.WORD, 0, 6),
+            single(reference));
+    }
+
+    @Test
+    public void single_parsesLeadingZero_asWord() {
+        final String reference = "01234";
+        assertEquals(
+            token(TokenType.WORD, 0, 5),
+            single(reference));
+    }
+
+    @Test
+    public void single_parsesLeadingZero_withDecimal_asNumber() {
+        final String reference = "0.1234";
+        assertEquals(
+            number(reference, 0.1234),
+            single(reference));
+    }
+
+    @Test
+    public void single_parsesSingleZero_asNumber() {
+        final String reference = "0";
+        assertEquals(
+            number(reference, 0),
             single(reference));
     }
 
@@ -109,7 +157,7 @@ public final class TokenizerTest {
     public void single_parsesBreak() {
         final String reference = "\n";
         assertEquals(
-            token(reference, Type.BREAK),
+            token(reference, TokenType.BREAK),
             single(reference));
     }
 
@@ -125,7 +173,7 @@ public final class TokenizerTest {
     public void single_parsesWord() {
         final String reference = "word";
         assertEquals(
-            token(Type.WORD, 0, 4),
+            token(TokenType.WORD, 0, 4),
             single(reference));
     }
 
@@ -133,7 +181,7 @@ public final class TokenizerTest {
     public void single_skipsWhitespace() {
         final String reference = " \t \t \t 'Hello, world!'";
         assertEquals(
-            token(Type.SINGLE_QUOTE, 7, reference.length()),
+            string(StringType.SINGLE, 7, reference.length()),
             single(reference));
     }
 
@@ -166,12 +214,17 @@ public final class TokenizerTest {
         assertEquals(
             container(
                 reference,
-                Type.BRACES,
+                TokenType.OPEN,
                 0,
                 13,
-                token(Type.WORD, 1, 6),
-                symbol(',', 6, 7),
-                token(Type.WORD, 7, 12)),
+                container(
+                    reference,
+                    TokenType.BRACES,
+                    0,
+                    13,
+                    token(TokenType.WORD, 1, 6),
+                    symbol(',', 6, 7),
+                    token(TokenType.WORD, 7, 12))),
             Tokenizer.containerize(reference));
     }
 
@@ -179,19 +232,20 @@ public final class TokenizerTest {
     public void containerize_readsNestedContainer() {
         final String reference = "{hello,[world]}";
         assertEquals(
-            container(
-                reference,
-                Type.BRACES,
-                0,
-                15,
-                token(Type.WORD, 1, 6),
-                symbol(',', 6, 7),
+            container(reference, TokenType.OPEN, 0, 15,
                 container(
                     reference,
-                    Type.BRACKETS,
-                    7,
-                    14,
-                    token(Type.WORD, 8, 13))),
+                    TokenType.BRACES,
+                    0,
+                    15,
+                    token(TokenType.WORD, 1, 6),
+                    symbol(',', 6, 7),
+                    container(
+                        reference,
+                        TokenType.BRACKETS,
+                        7,
+                        14,
+                        token(TokenType.WORD, 8, 13)))),
             Tokenizer.containerize(reference));
     }
 
@@ -201,12 +255,17 @@ public final class TokenizerTest {
         assertEquals(
             container(
                 reference,
-                Type.BRACES,
+                TokenType.OPEN,
                 0,
                 13,
-                token(Type.WORD, 1, 6),
-                symbol(',', 6, 7),
-                token(Type.WORD, 7, 12)),
+                container(
+                    reference,
+                    TokenType.BRACES,
+                    0,
+                    13,
+                    token(TokenType.WORD, 1, 6),
+                    symbol(',', 6, 7),
+                    token(TokenType.WORD, 7, 12))),
             Tokenizer.containerize(reference));
     }
 
@@ -228,17 +287,29 @@ public final class TokenizerTest {
     
     private static Token single(final String reference) {
         try {
-            return new Tokenizer(PositionTrackingReader.fromString(reference)).single();
+            return new Tokenizer(reference).single();
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    private static Token token(final String reference, final Type type) {
+    private static Token token(final String reference, final TokenType type) {
         return token(type, 0, reference.length());
     }
 
-    private static Token token(final Type type, final int s, final int e) {
+    private static Token comment(final String reference, final CommentStyle type) {
+        return new CommentToken(0, reference.length(), 0, lines(reference), 0, type, "todo");
+    }
+
+    private static Token string(final String reference, final StringType type) {
+        return new StringToken(0, reference.length(), 0, lines(reference), 0, type, "todo");
+    }
+
+    private static Token string(final StringType type, final int s, final int e) {
+        return new StringToken(s, e, 0, s, type, "todo");
+    }
+
+    private static Token token(final TokenType type, final int s, final int e) {
         return new Token(s, e, 0, s, type);
     }
 
@@ -255,7 +326,11 @@ public final class TokenizerTest {
     }
 
     private static Token container(
-            final String reference, final Type type, final int s, final int e, final Token... tokens) {
+            final String reference, final TokenType type, final int s, final int e, final Token... tokens) {
         return new ContainerToken(reference, s, e, 0, 0, s, type, List.of(tokens));
+    }
+
+    private static int lines(final String reference) {
+        return (int) reference.lines().count() - 1;
     }
 }

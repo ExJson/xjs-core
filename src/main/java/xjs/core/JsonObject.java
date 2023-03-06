@@ -3,11 +3,11 @@ package xjs.core;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import xjs.serialization.util.HashIndexTable;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -595,6 +595,17 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
     }
 
     /**
+     * Removes any number of values from this container by key.
+     *
+     * @param keys The keys of the values being purged.
+     * @return <code>this</code>, for method chaining.
+     */
+    public JsonObject removeAllKeys(final Iterable<String> keys) {
+        keys.forEach(this::remove);
+        return this;
+    }
+
+    /**
      * Returns the index of the <em>last</em> value paired with the
      * given key.
      *
@@ -858,50 +869,6 @@ public class JsonObject extends JsonContainer implements JsonContainer.View<Json
         @Override
         public String toString() {
             return "(" + this.key + "=" + this.reference + ")";
-        }
-    }
-
-    private static class HashIndexTable {
-        final byte[] indices = new byte[32];
-
-        void init(final List<String> values) {
-            for (int i = 0; i < values.size(); i++) {
-                this.add(values.get(i), i);
-            }
-        }
-
-        void add(final String key, final int index) {
-            int slot = getSlot(key);
-            if (index < 0xff) {
-                // increment by 1, 0 stands for empty
-                this.indices[slot] = (byte) (index + 1);
-            } else {
-                this.indices[slot] = 0;
-            }
-        }
-
-        void remove(final int index) {
-            for (int i = 0; i < this.indices.length; i++) {
-                final int current = this.indices[i] & 0xff;
-                if (current == index + 1) {
-                    this.indices[i] = 0;
-                } else if (current > index + 1) {
-                    this.indices[i]--;
-                }
-            }
-        }
-
-        int get(final String key) {
-            // subtract 1, 0 stands for empty
-            return (this.indices[getSlot(key)] & 0xff) - 1;
-        }
-
-        private int getSlot(final String key) {
-            return key.hashCode() & this.indices.length - 1;
-        }
-
-        private void clear() {
-            Arrays.fill(this.indices, (byte) 0);
         }
     }
 }

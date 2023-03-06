@@ -7,7 +7,7 @@ import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;
 import xjs.serialization.token.ContainerToken;
 import xjs.serialization.token.Token;
-import xjs.serialization.token.Token.Type;
+import xjs.serialization.token.TokenType;
 import xjs.serialization.token.TokenStream;
 import xjs.serialization.util.BufferedStack;
 
@@ -42,13 +42,12 @@ import java.util.ArrayList;
  *       implementors have the option to call <code>{@link #push()}</code>
  *       to open the current token and push its iterator onto the stack, and
  *       <code>{@link #pop()}</code> to pop the current iterator out of the
- *       stack. Push and pop operations are not yet supported for non-
- *       containerized token types.
+ *       stack.
  *   </li>
  * </ul>
  *
  * <p>For non-containerized inputs, most of the containerized methods accept
- * and optional parameter specifying the opening or closing character. For
+ * an optional parameter specifying the opening or closing character. For
  * example, to <code>pop</code> the current container off the stack without
  * swapping iterators, call {@link #pop(char)}.
  *
@@ -60,7 +59,7 @@ public abstract class TokenParser implements ValueParser {
      * Represents that no values are left in the input.
      */
     protected static final TokenStream EMPTY_VALUE =
-        new ContainerToken("", 0, 0, 0, 0, 0, Type.OPEN, new ArrayList<>());
+        new ContainerToken("", 0, 0, 0, 0, 0, TokenType.OPEN, new ArrayList<>());
 
     /**
      * An iterator which always returns empty, representing the end of input.
@@ -317,7 +316,7 @@ public abstract class TokenParser implements ValueParser {
      * @return <code>true</code>, if the current token is a newline.
      */
     protected boolean readNl() {
-        if (this.current.type() == Type.BREAK) {
+        if (this.current.type() == TokenType.BREAK) {
             this.read();
             this.flagLineAsSkipped();
             return true;
@@ -431,7 +430,7 @@ public abstract class TokenParser implements ValueParser {
      * @return <code>true</code>, if the token was consumed.
      */
     protected boolean consumeWhitespace(final Token t, final boolean nl) {
-        if (nl && t.type() == Type.BREAK) {
+        if (nl && t.type() == TokenType.BREAK) {
             this.flagLineAsSkipped();
             return true;
         }
@@ -485,7 +484,7 @@ public abstract class TokenParser implements ValueParser {
         int peekAmount = 1;
         while (t != null) { // newlines would only be inside of containers for values
             if (t.isSymbol(symbol)
-                    || (nl && t.type() == Type.BREAK)) {
+                    || (nl && t.type() == TokenType.BREAK)) {
                 itr.skip(peekAmount - 1);
                 this.current = lastRecorded;
                 return peekAmount - 1;

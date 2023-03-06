@@ -45,7 +45,17 @@ public class NumberToken extends Token {
      */
     public NumberToken(
             final int start, final int end, final int line, final int offset, final double number) {
-        super(start, end, line, offset, Type.NUMBER);
+        super(start, end, line, offset, TokenType.NUMBER);
+        this.number = number;
+    }
+
+    /**
+     * Constructs a new number token with effectively no scope.
+     *
+     * @param number The number captured by the token.
+     */
+    public NumberToken(final double number) {
+        super(TokenType.NUMBER);
         this.number = number;
     }
 }

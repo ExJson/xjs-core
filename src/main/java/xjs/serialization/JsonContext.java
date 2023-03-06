@@ -1,6 +1,6 @@
 package xjs.serialization;
 
-import xjs.core.CommentStyle;
+import xjs.comments.CommentStyle;
 import xjs.core.Json;
 import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;

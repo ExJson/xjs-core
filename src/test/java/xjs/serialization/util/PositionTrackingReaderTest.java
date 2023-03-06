@@ -7,7 +7,9 @@ import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import xjs.comments.CommentStyle;
 import xjs.exception.SyntaxException;
+import xjs.serialization.token.CommentToken;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -199,7 +201,8 @@ public final class PositionTrackingReaderTest {
     public void readNumber_readsFullNumber() throws IOException {
         final Sample sample = new Sample("123456789", MINIMUM_BUFFER);
         for (final PositionTrackingReader reader : sample.getAllReaders()) {
-            assertEquals(123456789, reader.readNumber());
+            assertEquals(123456789, reader.readNumber(),
+                reader.getClass().getSimpleName());
         }
     }
 
@@ -209,7 +212,8 @@ public final class PositionTrackingReaderTest {
         final String text = "'Hello, world!'";
         final Sample sample = new Sample(quote + text + quote, MINIMUM_BUFFER);
         for (final PositionTrackingReader reader : sample.getAllReaders()) {
-            assertEquals(text, reader.readQuoted(quote));
+            assertEquals(text, reader.readQuoted(quote),
+                reader.getClass().getSimpleName());
         }
     }
 
@@ -219,7 +223,293 @@ public final class PositionTrackingReaderTest {
         final String text = "\\t\\n\\u1234";
         final Sample sample = new Sample(quote + text + quote, MINIMUM_BUFFER);
         for (final PositionTrackingReader reader : sample.getAllReaders()) {
-            assertEquals("\t\n\u1234", reader.readQuoted(quote));
+            assertEquals("\t\n\u1234", reader.readQuoted(quote),
+                reader.getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    public void readBlockComment_readsExpandedBlock() throws IOException {
+        final String text = """
+            /*
+             * expanded block
+             */""";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            final CommentToken comment = reader.readBlockComment();
+            assertEquals(CommentStyle.BLOCK, comment.commentStyle(),
+                reader.getClass().getSimpleName());
+            assertEquals("expanded block", comment.parsed(),
+                reader.getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    public void readBlockComment_readsExpandedDocumentation() throws IOException {
+        final String text = """
+            /**
+             * expanded documentation
+             */""";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            final CommentToken comment = reader.readBlockComment();
+            assertEquals(CommentStyle.MULTILINE_DOC, comment.commentStyle(),
+                reader.getClass().getSimpleName());
+            assertEquals("expanded documentation", comment.parsed(),
+                reader.getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    public void readBlockComment_readsMultipleLines() throws IOException {
+        final String text = "/**\n * line 1\n * line 2\n*/";
+        final String expected = "line 1\nline 2";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            assertEquals(expected, reader.readBlockComment().parsed(),
+                reader.getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    public void readBlockComment_ignoresCarriageReturns() throws IOException {
+        final String text = "/**\r\n * 1\r\n * 2\r\n*/";
+        final String expected = "1\n2";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            assertEquals(expected, reader.readBlockComment().parsed(),
+                reader.getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    public void readBlockComment_preservesIndentation_afterAsterisk() throws IOException {
+        final String text = """
+            /**
+             * 0
+             *  1
+             *   2
+             */""";
+        final String expected = """
+            0
+             1
+              2""";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            assertEquals(expected, reader.readBlockComment().parsed(),
+                reader.getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    public void readBlockComment_ignoresIndentation_beforeAsterisk() throws IOException {
+        final String text = """
+            /*
+             * 0
+              * 1
+               * 2
+             */""";
+        final String expected = """
+            0
+            1
+            2""";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            assertEquals(expected, reader.readBlockComment().parsed(),
+                reader.getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    public void readBlockComment_preservesEmptyLines() throws IOException {
+        final String text = """
+            /*
+             * line 1
+
+             *
+
+             * line 2
+             */""";
+        final String expected = """
+            line 1
+
+
+
+            line 2""";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+        
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            assertEquals(expected, reader.readBlockComment().parsed(),
+                reader.getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    public void readBlockComment_readsCollapsedBlock() throws IOException {
+        final String text = "/* collapsed block */";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            final CommentToken comment = reader.readBlockComment();
+            assertEquals(CommentStyle.BLOCK, comment.commentStyle(),
+                reader.getClass().getSimpleName());
+            assertEquals("collapsed block", comment.parsed(),
+                reader.getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    public void readBlockComment_readsCollapsedDocumentation() throws IOException {
+        final String text = "/** collapsed block */";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            final CommentToken comment = reader.readBlockComment();
+            assertEquals(CommentStyle.MULTILINE_DOC, comment.commentStyle(),
+                reader.getClass().getSimpleName());
+            assertEquals("collapsed block", comment.parsed(),
+                reader.getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    public void readBlockComment_withoutCloser_throwsException() throws IOException {
+        final String text = "/* collapsed block\n1\n2 * /";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            assertThrows(SyntaxException.class, reader::readBlockComment,
+                reader.getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    public void readLineComment_capturesCommentText() throws IOException {
+        final String text = "//comment";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            final CommentToken comment = reader.readLineComment();
+            assertEquals(CommentStyle.LINE, comment.commentStyle());
+            assertEquals("comment", comment.parsed());
+        }
+    }
+
+    @Test
+    public void readLineComment_ignoresFirstWhitespace() throws IOException {
+        final String text = "// comment";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            final CommentToken comment = reader.readLineComment();
+            assertEquals(CommentStyle.LINE, comment.commentStyle());
+            assertEquals("comment", comment.parsed());
+        }
+    }
+
+    @Test
+    public void readLineComment_doesCaptureAdditionalLeadingWhitespace() throws IOException {
+        final String text = "//  comment";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            final CommentToken comment = reader.readLineComment();
+            assertEquals(CommentStyle.LINE, comment.commentStyle());
+            assertEquals(" comment", comment.parsed());
+        }
+    }
+
+    @Test
+    public void readLineComment_ignoresTrailingWhitespace() throws IOException {
+        final String text = "//comment  ";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            final CommentToken comment = reader.readLineComment();
+            assertEquals(CommentStyle.LINE, comment.commentStyle());
+            assertEquals("comment", comment.parsed());
+        }
+    }
+
+    @Test
+    public void readHashComment_capturesCommentText() throws IOException {
+        final String text = "#comment";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            final CommentToken comment = reader.readHashComment();
+            assertEquals(CommentStyle.HASH, comment.commentStyle());
+            assertEquals("comment", comment.parsed());
+        }
+    }
+
+    @Test
+    public void readHashComment_ignoresFirstWhitespace() throws IOException {
+        final String text = "# comment";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            final CommentToken comment = reader.readHashComment();
+            assertEquals(CommentStyle.HASH, comment.commentStyle());
+            assertEquals("comment", comment.parsed());
+        }
+    }
+
+    @Test
+    public void readHashComment_doesCaptureAdditionalLeadingWhitespace() throws IOException {
+        final String text = "#  comment";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            final CommentToken comment = reader.readHashComment();
+            assertEquals(CommentStyle.HASH, comment.commentStyle());
+            assertEquals(" comment", comment.parsed());
+        }
+    }
+
+    @Test
+    public void readHashComment_ignoresTrailingWhitespace() throws IOException {
+        final String text = "#comment  ";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            final CommentToken comment = reader.readHashComment();
+            assertEquals(CommentStyle.HASH, comment.commentStyle());
+            assertEquals("comment", comment.parsed());
         }
     }
 

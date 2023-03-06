@@ -40,6 +40,7 @@ public abstract class ElementWriter implements ValueWriter {
     protected final int maxSpacing;
     protected final int defaultSpacing;
     protected final boolean smartSpacing;
+    protected final boolean nextLineMulti;
     protected final String separator;
 
     protected final BufferedStack.OfTwo<
@@ -70,6 +71,7 @@ public abstract class ElementWriter implements ValueWriter {
         this.maxSpacing = Integer.MAX_VALUE;
         this.defaultSpacing = format ? 1 : 0;
         this.smartSpacing = false;
+        this.nextLineMulti = true;
         this.separator = format ? " " : "";
         this.stack = BufferedStack.ofTwo();
         this.level = 0;
@@ -93,6 +95,7 @@ public abstract class ElementWriter implements ValueWriter {
         this.maxSpacing = options.getMaxSpacing();
         this.defaultSpacing = options.getDefaultSpacing();
         this.smartSpacing = options.isSmartSpacing();
+        this.nextLineMulti = options.isNextLineMulti();
         this.separator = options.getSeparator();
         this.stack = BufferedStack.ofTwo();
         this.level = 0;
@@ -533,6 +536,12 @@ public abstract class ElementWriter implements ValueWriter {
     protected void writeMulti(final String value) throws IOException {
         final int level = this.current instanceof Member
             ? this.level + 1 : this.level;
+        final JsonValue source = this.current.getOnly();
+        if (source.getLinesAbove() == -1
+                && level > 0
+                && this.nextLineMulti) {
+            this.nl(level);
+        }
         this.tw.write("'''");
         this.nl(level);
         int lastLine = 0;
@@ -544,12 +553,12 @@ public abstract class ElementWriter implements ValueWriter {
                 if (i < value.length() - 1
                         && value.charAt(i + 1) == '\n') {
                     this.writeLine(value, level, lastLine, i);
-                    lastLine = i;
+                    lastLine = i + 1;
                     i++;
                 }
             } else if (c == '\n') {
                 this.writeLine(value, level, lastLine, i);
-                lastLine = i;
+                lastLine = i + 1;
             } else if (c == '\'') {
                 quotes++;
                 if (quotes == 3) {
@@ -610,6 +619,9 @@ public abstract class ElementWriter implements ValueWriter {
             this.tw.write(value, s, e - s);
         }
         this.nl(level);
+//        for (int i = 0; i < level; i++) {
+//            this.tw.write(this.indent);
+//        }
     }
 
     @Override

@@ -1,6 +1,7 @@
-package xjs.serialization.util;
+package xjs.performance.legacy.util;
 
 import xjs.exception.SyntaxException;
+import xjs.serialization.util.StringContext;
 
 /**
  * A collection of utilities for highlighting streams of miscellaneous tokens,
@@ -60,9 +61,9 @@ import xjs.exception.SyntaxException;
  *   assert 15 == closer;
  * }</pre>
  */
-public final class ImplicitStringUtils {
+public final class LegacyImplicitStringUtils {
 
-    private ImplicitStringUtils() {}
+    private LegacyImplicitStringUtils() {}
 
     /**
      * Indicates whether the given text is "balanced."
@@ -573,32 +574,5 @@ public final class ImplicitStringUtils {
             }
         }
         return new int[] { line, column };
-    }
-
-    private static class CharBuffer {
-        char[] stack = new char[32];
-        int index = 0;
-
-        void push(final char c) {
-            if (this.index == this.stack.length) {
-                this.grow();
-            }
-            this.stack[this.index++] = c;
-        }
-
-        char pop() {
-            return this.stack[--this.index];
-        }
-
-        boolean hasAny() {
-            return this.index > 0;
-        }
-
-        void grow() {
-            final char[] newStack = new char[this.stack.length + 32];
-            System.arraycopy(this.stack, 0, newStack, 0, this.index);
-            this.stack = newStack;
-
-        }
     }
 }

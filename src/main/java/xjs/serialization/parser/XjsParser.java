@@ -1,7 +1,7 @@
 package xjs.serialization.parser;
 
 import org.jetbrains.annotations.NotNull;
-import xjs.core.CommentType;
+import xjs.comments.CommentType;
 import xjs.core.Json;
 import xjs.core.JsonArray;
 import xjs.core.JsonLiteral;
@@ -13,7 +13,7 @@ import xjs.serialization.token.ContainerToken;
 import xjs.serialization.token.NumberToken;
 import xjs.serialization.token.StringToken;
 import xjs.serialization.token.Token;
-import xjs.serialization.token.Token.Type;
+import xjs.serialization.token.TokenType;
 import xjs.serialization.token.Tokenizer;
 
 import java.io.File;
@@ -80,7 +80,7 @@ public class XjsParser extends CommentedTokenParser {
     }
 
     protected JsonValue readClosedRoot() {
-        if (this.current.type() == Type.OPEN) {
+        if (this.current.type() == TokenType.OPEN) {
             this.read();
         }
         this.readAbove();
@@ -156,7 +156,7 @@ public class XjsParser extends CommentedTokenParser {
         this.read();
 
         if (skipped == 0 && previous instanceof StringToken) {
-            return ((StringToken) previous).parsed;
+            return previous.parsed();
         }
         final int end = previous.end();
         return this.getText(lineBefore, start, offset, end);
@@ -213,14 +213,8 @@ public class XjsParser extends CommentedTokenParser {
             switch (this.current.type()) {
                 case NUMBER: return Json.value(
                     ((NumberToken) this.current).number);
-                case SINGLE_QUOTE: return new JsonString(
-                    ((StringToken) this.current).parsed, StringType.SINGLE);
-                case DOUBLE_QUOTE: return new JsonString(
-                    ((StringToken) this.current).parsed, StringType.DOUBLE);
-                case TRIPLE_QUOTE: return new JsonString(
-                    ((StringToken) this.current).parsed, StringType.MULTI);
-                case GENERATED_STRING: return new JsonString(
-                    ((StringToken) this.current).parsed, StringType.IMPLICIT);
+                case STRING: return new JsonString(
+                    this.current.parsed(), this.current.stringType());
             }
         }
         final int end = this.current.end();

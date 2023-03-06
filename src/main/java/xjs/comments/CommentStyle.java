@@ -1,4 +1,6 @@
-package xjs.core;
+package xjs.comments;
+
+import xjs.core.JsonValue;
 
 /**
  * This class represents the various comment styles that can be used when adding
