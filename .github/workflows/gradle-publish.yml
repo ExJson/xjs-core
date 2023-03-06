@@ -31,7 +31,7 @@ jobs:
         settings-path: ${{ github.workspace }} # location for the settings.xml file
 
     - name: Fix gradle permissions
-      run: chmod +x ./gradlew
+      run: chmod +x /home/runner/work/xjs-core/xjs-core/gradlew
 
     - name: Build with Gradle
       uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
