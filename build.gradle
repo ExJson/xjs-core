@@ -1,6 +1,7 @@
 
 plugins {
     id 'maven-publish'
+    id 'signing'
 }
 
 apply plugin: 'java'
@@ -57,6 +58,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
+    duplicatesStrategy 'include'
     classifier 'sources'
     from sourceSets.main.allSource
 }
@@ -82,16 +84,22 @@ javadoc {
 artifacts {
     archives jar
     archives javadocJar
+    archives sourcesJar
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
 publishing {
     repositories {
         maven {
-            name = 'GitHubPackages'
-            url = 'https://maven.pkg.github.com/Exjson/xjs-core'
+            name = 'OSSRH'
+            url = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
             credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
-                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+                username = project.findProperty('ossrh.username') ?: System.getenv('OSSRH_USERNAME')
+                password = project.findProperty('ossrh.password') ?: System.getenv('OSSRH_PASSWORD')
             }
         }
     }
@@ -105,9 +113,31 @@ publishing {
                 name = pom_name
                 description = pom_description
                 url = pom_url
+                licenses {
+                    license {
+                        name = pom_license_name
+                        url = pom_license_url
+                    }
+                }
+                developers {
+                    developer {
+                        id = pom_developer
+                        name = pom_developer_name
+                        email = pom_developer_email
+                    }
+                }
+                scm {
+                    connection = pom_scm_connection
+                    developerConnection = pom_scm_developer_connection
+                    url = pom_scm_url
+                }
             }
 
             from components.java
         }
     }
+}
+
+signing {
+    sign publishing.publications.mavenJava
 }
