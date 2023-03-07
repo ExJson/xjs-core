@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import xjs.comments.CommentHolder;
 import xjs.comments.CommentStyle;
 import xjs.comments.CommentType;
-//import xjs.jel.JelFlags;
+import xjs.jel.JelFlags;
 import xjs.serialization.JsonContext;
 import xjs.serialization.writer.JsonWriter;
 import xjs.serialization.writer.JsonWriterOptions;
@@ -87,8 +87,7 @@ public abstract class JsonValue implements Serializable {
     protected JsonValue() {
         this.linesAbove = -1;
         this.linesBetween = -1;
-//        this.flags = JelFlags.NULL;
-        this.flags = 1 << 31;
+        this.flags = JelFlags.NULL;
         this.comments = null;
     }
 
@@ -165,7 +164,7 @@ public abstract class JsonValue implements Serializable {
      *
      * @return All flags configured for this field, as an integer.
      */
-//    @MagicConstant(flagsFromClass = JelFlags.class)
+    @MagicConstant(flagsFromClass = JelFlags.class)
     public int getFlags() {
         return this.flags;
     }
@@ -177,8 +176,7 @@ public abstract class JsonValue implements Serializable {
      * @return <code>this</code>, for method chaining.
      */
     public JsonValue setFlags(
-//            final @MagicConstant(flagsFromClass = JelFlags.class)
-                    int flags) {
+            final @MagicConstant(flagsFromClass = JelFlags.class) int flags) {
         this.flags = flags;
         return this;
     }
@@ -190,8 +188,7 @@ public abstract class JsonValue implements Serializable {
      * @return Whether each flag in the given integer is present.
      */
     public boolean hasFlag(
-//            final @MagicConstant(flagsFromClass = JelFlags.class)
-                    int flag) {
+            final @MagicConstant(flagsFromClass = JelFlags.class) int flag) {
         return (this.flags & flag) == flag;
     }
 
@@ -202,10 +199,8 @@ public abstract class JsonValue implements Serializable {
      * @return <code>this</code>, for method chaining.
      */
     public JsonValue addFlag(
-//            final @MagicConstant(flagsFromClass = JelFlags.class)
-                    int flag) {
-//        this.flags &= ~JelFlags.NULL;
-        this.flags &= ~(1 << 31);
+            final @MagicConstant(flagsFromClass = JelFlags.class) int flag) {
+        this.flags &= ~JelFlags.NULL;
         this.flags |= flag;
         return this;
     }
@@ -217,8 +212,7 @@ public abstract class JsonValue implements Serializable {
      * @return <code>this</code>, for method chaining.
      */
     public JsonValue removeFlag(
-//            final @MagicConstant(flagsFromClass = JelFlags.class)
-                    int flag) {
+            final @MagicConstant(flagsFromClass = JelFlags.class) int flag) {
         this.flags &= ~flag;
         return this;
     }
@@ -402,8 +396,7 @@ public abstract class JsonValue implements Serializable {
     public JsonValue setDefaultMetadata(final JsonValue metadata) {
         if (this.linesAbove < 0) this.linesAbove = metadata.linesAbove;
         if (this.linesBetween < 0) this.linesBetween = metadata.linesBetween;
-//        if (this.hasFlag(JelFlags.NULL)) this.flags = metadata.flags;
-        if (this.hasFlag(1 << 31)) this.flags = metadata.flags;
+        if (this.hasFlag(JelFlags.NULL)) this.flags = metadata.flags;
 
         if (this.comments == null) {
             if (metadata.comments != null) {
