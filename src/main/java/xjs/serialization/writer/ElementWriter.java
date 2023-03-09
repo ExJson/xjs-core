@@ -554,7 +554,7 @@ public abstract class ElementWriter implements ValueWriter {
                 if (i < value.length() - 1
                         && value.charAt(i + 1) == '\n') {
                     this.writeLine(value, level, lastLine, i);
-                    lastLine = i + 1;
+                    lastLine = i + 2;
                     i++;
                 }
             } else if (c == '\n') {
@@ -610,8 +610,8 @@ public abstract class ElementWriter implements ValueWriter {
 
     protected void writeLine(
             final String value, int level, final int s, final int e) throws IOException {
-        if (e < value.length() - 1) {
-            final char peek = value.charAt(e + 1);
+        if (e < value.length() - 2) {
+            final char peek = value.charAt(e + 2);
             if (peek == '\r' || peek == '\n') {
                 level = 0; // optimize to trim unnecessary whitespace
             }
@@ -620,9 +620,6 @@ public abstract class ElementWriter implements ValueWriter {
             this.tw.write(value, s, e - s);
         }
         this.nl(level);
-//        for (int i = 0; i < level; i++) {
-//            this.tw.write(this.indent);
-//        }
     }
 
     @Override

@@ -62,21 +62,35 @@ public final class XjsWriterTest {
 
     @Test
     public void write_printsMultiString() {
-        assertEquals("'''\ntest\n'''", write(new JsonString("test", StringType.MULTI)));
+        assertEquals("'''\nl1\nl2\n'''", write(new JsonString("l1\nl2", StringType.MULTI)));
     }
 
     @Test
     public void write_formatsMultiString_forCurrentLevel() {
-        assertEquals("[\n  '''\n  test\n  '''\n]",
+        assertEquals("[\n  '''\n  l1\n  l2\n  '''\n]",
             write(new JsonArray()
-                .add(new JsonString("test", StringType.MULTI))));
+                .add(new JsonString("l1\nl2", StringType.MULTI))));
+    }
+
+    @Test
+    public void write_formatsMultiString_withWindowsLineEndings_forCurrentLevel() {
+        assertEquals("[\n  '''\n  l1\n  l2\n  '''\n]",
+            write(new JsonArray()
+                .add(new JsonString("l1\r\nl2", StringType.MULTI))));
     }
 
     @Test
     public void write_inObject_indentsMultiString() {
-        final JsonValue s = new JsonString("value", StringType.MULTI);
-        assertEquals("key: \n  '''\n  value\n  '''", write(Json.object().add("key", s)));
+        final JsonValue s = new JsonString("l1\nl2", StringType.MULTI);
+        assertEquals("key: \n  '''\n  l1\n  l2\n  '''", write(Json.object().add("key", s)));
     }
+
+    @Test
+    public void write_inObject_indentsMultiString_withWindowsLineEndings() {
+        final JsonValue s = new JsonString("l1\r\nl2", StringType.MULTI);
+        assertEquals("key: \n  '''\n  l1\n  l2\n  '''", write(Json.object().add("key", s)));
+    }
+
 
     @Test
     public void write_multiString_preservesSignificantWhitespace() {
