@@ -91,6 +91,11 @@ public final class XjsWriterTest {
         assertEquals("key: \n  '''\n  l1\n  l2\n  '''", write(Json.object().add("key", s)));
     }
 
+    @Test
+    public void write_inObject_whenMultiString_wasNotOriginallyMulti_coercesOntoNextLine() {
+        final JsonValue s = new JsonString("l1\nl2").setLinesBetween(0);
+        assertEquals("key: \n  '''\n  l1\n  l2\n  '''", write(Json.object().add("key", s)));
+    }
 
     @Test
     public void write_multiString_preservesSignificantWhitespace() {

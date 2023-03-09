@@ -6,7 +6,9 @@ import xjs.core.JsonContainer;
 import xjs.core.JsonObject;
 import xjs.core.JsonObject.Member;
 import xjs.core.JsonReference;
+import xjs.core.JsonString;
 import xjs.core.JsonValue;
+import xjs.core.StringType;
 import xjs.serialization.JsonContext;
 import xjs.serialization.util.BufferedStack;
 import xjs.serialization.util.WritingBuffer;
@@ -536,11 +538,7 @@ public abstract class ElementWriter implements ValueWriter {
     protected void writeMulti(final String value) throws IOException {
         final int level = this.current instanceof Member
             ? this.level + 1 : this.level;
-        final JsonValue source = this.current.getOnly();
-        if (source.getLinesAbove() == -1
-                && level > 0
-                && this.current instanceof Member
-                && this.nextLineMulti) {
+        if (this.shouldNextLineMulti()) {
             this.nl(level);
         }
         this.tw.write("'''");
@@ -575,6 +573,19 @@ public abstract class ElementWriter implements ValueWriter {
         this.tw.write(value, lastLine, i - lastLine);
         this.nl(level);
         this.tw.write("'''");
+    }
+
+    protected boolean shouldNextLineMulti() {
+        if (!this.nextLineMulti || !(this.current instanceof Member)) {
+            return false;
+        }
+        final JsonValue source = this.current.getOnly();
+        final int between = source.getLinesBetween();
+        if (source instanceof JsonString
+                && ((JsonString) source).getStringType() == StringType.MULTI) {
+            return between == -1;
+        }
+        return between < 1; // coerce if string was not originally multi
     }
 
     protected void writeIndented(final String data) throws IOException {
