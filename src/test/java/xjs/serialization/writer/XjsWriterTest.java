@@ -66,6 +66,13 @@ public final class XjsWriterTest {
     }
 
     @Test
+    public void write_formatsMultiString_forCurrentLevel() {
+        assertEquals("[\n  '''\n  test\n  '''\n]",
+            write(new JsonArray()
+                .add(new JsonString("test", StringType.MULTI))));
+    }
+
+    @Test
     public void write_inObject_indentsMultiString() {
         final JsonValue s = new JsonString("value", StringType.MULTI);
         assertEquals("key: \n  '''\n  value\n  '''", write(Json.object().add("key", s)));

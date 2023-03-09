@@ -539,6 +539,7 @@ public abstract class ElementWriter implements ValueWriter {
         final JsonValue source = this.current.getOnly();
         if (source.getLinesAbove() == -1
                 && level > 0
+                && this.current instanceof Member
                 && this.nextLineMulti) {
             this.nl(level);
         }
