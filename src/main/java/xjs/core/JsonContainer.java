@@ -554,15 +554,6 @@ public abstract class JsonContainer extends JsonValue {
     }
 
     /**
-     * Allows any {@link JsonContainer} type to be coerced into its first value.
-     *
-     * @return The first element in this container, or else "".
-     */
-    public String intoString() {
-        return this.values().stream().map(JsonValue::intoString).collect(Collectors.joining(" "));
-    }
-
-    /**
      * Override returning this value directly instead of constructing a new container.
      *
      * @return <code>this</code>, always

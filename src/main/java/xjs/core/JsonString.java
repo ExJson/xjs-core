@@ -70,9 +70,9 @@ public class JsonString extends JsonValue {
         return this.value;
     }
 
-    @Override
+    @Override // tbd
     public double intoDouble() {
-        return this.value.hashCode();
+        return this.value.length();
     }
 
     @Override
