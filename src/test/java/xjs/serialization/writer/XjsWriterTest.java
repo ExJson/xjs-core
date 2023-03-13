@@ -144,6 +144,46 @@ public final class XjsWriterTest {
     }
 
     @Test
+    public void writeVoidString_inArray_withFollowingValueOnSubsequentLine_printsSingleQuotes() {
+        final JsonArray array = new JsonArray()
+            .add(new JsonString("", StringType.IMPLICIT).setLinesAbove(1))
+            .add(Json.value(1).setLinesAbove(1));
+        assertEquals("[\n  ''\n  1\n]", write(array));
+    }
+
+    @Test
+    public void writeVoidString_inArray_withPreviousValueOnPreviousLine_printsSingleQuotes() {
+        final JsonArray array = new JsonArray()
+            .add(Json.value(1).setLinesAbove(1))
+            .add(new JsonString("", StringType.IMPLICIT).setLinesAbove(1));
+        assertEquals("[\n  1\n  ''\n]", write(array));
+    }
+
+    @Test
+    public void writeVoidString_inObject_withFollowingValueOnSubsequentLine_printsSingleQuotes() {
+        final JsonObject object = new JsonObject()
+            .add("a", new JsonString("", StringType.IMPLICIT).setLinesAbove(1))
+            .add("b", Json.value(1).setLinesAbove(1));
+        assertEquals("\na: ''\nb: 1", write(object));
+    }
+
+    @Test
+    public void writeVoidString_inObject_withPreviousValueOnPreviousLine_printsSingleQuotes() {
+        final JsonObject object = new JsonObject()
+            .add("a", Json.value(1).setLinesAbove(1))
+            .add("b", new JsonString("", StringType.IMPLICIT).setLinesAbove(1));
+        assertEquals("\na: 1\nb: ''", write(object));
+    }
+
+    @Test
+    public void writeVoidString_inObject_withLinesBetween_printsSingleQuotes() {
+        final JsonObject object = new JsonObject()
+            .add("a", new JsonString("", StringType.IMPLICIT).setLinesBetween(1))
+            .add("b", Json.value(1).setLinesAbove(1));
+        assertEquals("a:\n  ''\nb: 1", write(object));
+    }
+
+    @Test
     public void write_printsCondensedObject() {
         assertEquals("1: 1, 2: 2, 3: 3",
             write(new JsonObject().add("1", 1).add("2", 2).add("3", 3).condense()));

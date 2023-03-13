@@ -154,6 +154,14 @@ public final class TokenizerTest {
     }
 
     @Test
+    public void single_parsesSingleZero_withDecimal_asNumber() {
+        final String reference = "0.";
+        assertEquals(
+            number(reference, 0),
+            single(reference));
+    }
+
+    @Test
     public void single_parsesBreak() {
         final String reference = "\n";
         assertEquals(

@@ -179,7 +179,12 @@ public class Tokenizer implements Closeable {
             reader.read();
             if (Character.isDigit(reader.current)) {
                 return word(i, l, o);
-            } else if (reader.current != '.') {
+            } else if (reader.current == '.') {
+                reader.read();
+                if (!reader.isDigit()) {
+                    return new NumberToken(i, i + 2, l, o, 0);
+                }
+            } else {
                 return new NumberToken(i, i + 1, l , o, 0);
             }
         }

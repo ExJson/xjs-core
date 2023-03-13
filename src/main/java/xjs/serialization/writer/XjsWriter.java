@@ -139,15 +139,19 @@ public class XjsWriter extends CommentedElementWriter {
         if (this.peek != null) {
             if (!this.format) {
                 this.tw.write(',');
-            } else if (this.allowCondense && this.getLinesAbove(this.peek()) == 0) {
+            } else if (this.allowCondense &&
+                    (this.isVoidString(this.current()) || this.getLinesAbove(this.peek()) == 0)) {
                 this.tw.write(',');
                 if (!this.isVoidString(this.peek())) {
                     this.tw.write(this.separator);
                 }
             }
         } else if (this.parent().isArray()) {
-            if (this.isVoidString(
-                    this.parent().asArray(), this.parent().size() - 1)) {
+            if (this.isVoidString(this.parent().asArray(), this.parent().size() - 1)) {
+                if (this.parent().size() == this.index() + 1
+                        && this.getLinesAbove(this.current()) != 0) {
+                    return;
+                }
                 this.tw.write(',');
             }
         }
@@ -196,8 +200,21 @@ public class XjsWriter extends CommentedElementWriter {
             return this.omitQuotes
                 ? StringType.select(s)
                 : StringType.fast(s);
+        } else if (type == StringType.IMPLICIT) {
+            if (s.isEmpty()) {
+                if (value.getLinesAbove() != 0 || this.getLinesAbove(this.peek()) > 0) {
+                    return StringType.SINGLE;
+                }
+            } else if (this.isSurroundedByWhitespace(s)) {
+                return StringType.fast(s);
+            }
         }
         return type;
+    }
+
+    protected boolean isSurroundedByWhitespace(final String s) {
+        return Character.isWhitespace(s.charAt(0))
+            || Character.isWhitespace(s.charAt(s.length() - 1));
     }
 
     protected boolean isVoidString(final JsonArray array, final int i) {
@@ -205,7 +222,9 @@ public class XjsWriter extends CommentedElementWriter {
     }
 
     protected boolean isVoidString(final JsonValue value) {
-        if (value instanceof JsonString && value.asString().isEmpty()) {
+        if (value instanceof JsonString
+                && value.getLinesAbove() == 0
+                && value.asString().isEmpty()) {
             return ((JsonString) value).getStringType() == StringType.IMPLICIT;
         }
         return false;
