@@ -570,13 +570,18 @@ public abstract class JsonContainer extends JsonValue {
      * @return Either {@link #references} or a clone of it.
      */
     protected List<JsonReference> copyReferences(final int options) {
+        return copyReferences(this.references, options);
+    }
+
+    protected static List<JsonReference> copyReferences(
+            final List<JsonReference> references, final int options) {
         final boolean tracking = (options & JsonCopy.TRACKING) == JsonCopy.TRACKING;
         final boolean recursive = (options & JsonCopy.RECURSIVE) == JsonCopy.RECURSIVE;
         final boolean containers = (options & JsonCopy.CONTAINERS) == JsonCopy.CONTAINERS;
 
         if (recursive || containers) {
-            final List<JsonReference> copy = new ArrayList<>(this.references.size());
-            for (final JsonReference reference : this.references) {
+            final List<JsonReference> copy = new ArrayList<>(references.size());
+            for (final JsonReference reference : references) {
                 if (recursive || reference.getOnly().isContainer()) {
                     copy.add(reference.copy(tracking).applyOnly(v -> v.copy(options)));
                 } else {
@@ -585,7 +590,7 @@ public abstract class JsonContainer extends JsonValue {
             }
             return copy;
         }
-        return this.references;
+        return references;
     }
 
     /**
