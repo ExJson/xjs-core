@@ -2,7 +2,6 @@ package xjs.performance.legacy.writer;
 
 import xjs.core.JsonObject;
 import xjs.core.JsonValue;
-import xjs.serialization.writer.ElementWriter;
 import xjs.serialization.writer.JsonWriterOptions;
 
 import java.io.File;

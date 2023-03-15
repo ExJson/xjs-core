@@ -1,13 +1,15 @@
 package xjs.performance.legacy.parser;
 
 import org.junit.jupiter.api.Test;
-import xjs.core.*;
+import xjs.core.JsonArray;
+import xjs.core.JsonObject;
+import xjs.core.JsonString;
+import xjs.core.JsonValue;
+import xjs.core.StringType;
 import xjs.exception.SyntaxException;
 import xjs.serialization.parser.CommonParserTest;
-import xjs.serialization.writer.JsonWriter;
 
 import java.io.IOException;
-import java.io.StringWriter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

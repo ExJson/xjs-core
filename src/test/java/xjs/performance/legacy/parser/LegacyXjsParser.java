@@ -17,7 +17,11 @@ import xjs.core.StringType;
 import xjs.serialization.util.ImplicitStringUtils;
 import xjs.serialization.util.StringContext;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.Arrays;
 
 public class LegacyXjsParser extends LegacyAbstractJsonParser {

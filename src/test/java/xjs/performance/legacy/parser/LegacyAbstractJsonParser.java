@@ -5,7 +5,11 @@ import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;
 import xjs.serialization.parser.ValueParser;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 
 /**
  * A simple parser type which can be used for JSON formats.

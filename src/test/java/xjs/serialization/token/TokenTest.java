@@ -1,7 +1,7 @@
 package xjs.serialization.token;
 
-import xjs.core.StringType;
 import org.junit.jupiter.api.Test;
+import xjs.core.StringType;
 
 import java.util.List;
 

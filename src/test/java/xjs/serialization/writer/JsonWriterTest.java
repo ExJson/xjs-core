@@ -3,7 +3,10 @@ package xjs.serialization.writer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import xjs.core.*;
+import xjs.core.Json;
+import xjs.core.JsonArray;
+import xjs.core.JsonObject;
+import xjs.core.JsonValue;
 import xjs.serialization.JsonContext;
 import xjs.serialization.parser.JsonParser;
 

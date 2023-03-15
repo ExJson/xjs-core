@@ -2,7 +2,12 @@ package xjs.performance.legacy.writer;
 
 import xjs.comments.CommentData;
 import xjs.comments.CommentType;
-import xjs.core.*;
+import xjs.core.JsonArray;
+import xjs.core.JsonContainer;
+import xjs.core.JsonObject;
+import xjs.core.JsonString;
+import xjs.core.JsonValue;
+import xjs.core.StringType;
 import xjs.serialization.util.ImplicitStringUtils;
 import xjs.serialization.util.StringContext;
 import xjs.serialization.writer.JsonWriterOptions;

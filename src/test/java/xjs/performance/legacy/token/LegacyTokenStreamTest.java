@@ -1,11 +1,10 @@
 package xjs.performance.legacy.token;
 
 import org.junit.jupiter.api.Test;
-
-import java.util.Iterator;
-
 import xjs.exception.SyntaxException;
 import xjs.performance.legacy.token.LegacyToken.Type;
+
+import java.util.Iterator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

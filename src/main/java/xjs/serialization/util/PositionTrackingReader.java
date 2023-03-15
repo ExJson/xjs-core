@@ -4,7 +4,11 @@ import xjs.comments.CommentStyle;
 import xjs.exception.SyntaxException;
 import xjs.serialization.token.CommentToken;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
 /**

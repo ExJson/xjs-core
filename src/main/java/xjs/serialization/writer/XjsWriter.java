@@ -1,6 +1,10 @@
 package xjs.serialization.writer;
 
-import xjs.core.*;
+import xjs.core.JsonArray;
+import xjs.core.JsonContainer;
+import xjs.core.JsonString;
+import xjs.core.JsonValue;
+import xjs.core.StringType;
 import xjs.serialization.util.ImplicitStringUtils;
 import xjs.serialization.util.StringContext;
 

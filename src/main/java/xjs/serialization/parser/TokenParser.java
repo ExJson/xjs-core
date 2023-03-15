@@ -7,8 +7,8 @@ import xjs.core.JsonValue;
 import xjs.exception.SyntaxException;
 import xjs.serialization.token.ContainerToken;
 import xjs.serialization.token.Token;
-import xjs.serialization.token.TokenType;
 import xjs.serialization.token.TokenStream;
+import xjs.serialization.token.TokenType;
 import xjs.serialization.util.BufferedStack;
 
 import java.util.ArrayList;
