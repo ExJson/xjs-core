@@ -220,8 +220,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
      * @return <code>this</code>, for method chaining.
      */
     public JsonArray add(final JsonValue value) {
-        this.references.add(new JsonReference(value));
-        return this;
+        return this.addReference(new JsonReference(value));
     }
 
     /**
@@ -292,7 +291,7 @@ public class JsonArray extends JsonContainer implements JsonContainer.View<JsonV
      * @return <code>this</code>, for method chaining.
      */
     public JsonArray addAll(final JsonContainer container) {
-        this.references.addAll(container.references);
+        container.references.forEach(this::addReference);
         return this;
     }
 
