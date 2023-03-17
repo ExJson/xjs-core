@@ -8,7 +8,6 @@ import xjs.comments.CommentStyle;
  */
 public class CommentToken extends ParsedToken {
     private final CommentStyle commentStyle;
-    private boolean isParsed;
 
     /**
      * Constructs a new Token object to be placed on an AST.
@@ -18,14 +17,13 @@ public class CommentToken extends ParsedToken {
      * @param line   The inclusive line number of this token.
      * @param offset The column of the start index.
      * @param type   The style of comment represented by this token.
-     * @param text   The parsed or un-parsed text of the token.
+     * @param text   The parsed text of the token.
      */
     public CommentToken(
             final int start, final int end, final int line, final int offset,
             final CommentStyle type, final String text) {
         super(start, end, line, offset, TokenType.COMMENT, text);
         this.commentStyle = type;
-        this.isParsed = false;
     }
 
     /**
@@ -37,14 +35,13 @@ public class CommentToken extends ParsedToken {
      * @param lastLine The inclusive line number at the end of this token.
      * @param offset   The column of the start index.
      * @param type     The style of comment represented by this token.
-     * @param text   The parsed or un-parsed text of the token.
+     * @param text   The parsed text of the token.
      */
     public CommentToken(
             final int start, final int end, final int line, final int lastLine,
             final int offset, final CommentStyle type, final String text) {
         super(start, end, line, lastLine, offset, TokenType.COMMENT, text);
         this.commentStyle = type;
-        this.isParsed = false;
     }
 
     /**
@@ -55,11 +52,30 @@ public class CommentToken extends ParsedToken {
     public CommentToken(final String text) {
         super(TokenType.COMMENT, text);
         this.commentStyle = CommentStyle.LINE;
-        this.isParsed = false;
     }
 
     @Override
     public CommentStyle commentStyle() {
         return this.commentStyle;
+    }
+
+    @Override
+    public boolean equals(final Object other) {
+        if (this == other) {
+            return true;
+        } else if (other instanceof CommentToken) {
+            final CommentToken ct = (CommentToken) other;
+            return this.commentStyle == ct.commentStyle
+                && this.parsed.equals(ct.parsed)
+                && this.spanEquals(ct);
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return this.type + "(start:" + this.start + ",end:" + this.end + ",line:"
+            + this.line + ",lastLine:" + lastLine + ",offset:" + this.offset
+            + ",commentStyle:" + this.commentStyle + ",parsed:'" + this.parsed + "')";
     }
 }

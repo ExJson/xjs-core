@@ -58,4 +58,22 @@ public class NumberToken extends Token {
         super(TokenType.NUMBER);
         this.number = number;
     }
+
+    @Override
+    public boolean equals(final Object other) {
+        if (this == other) {
+            return true;
+        } else if (other instanceof NumberToken) {
+            final NumberToken nt = (NumberToken) other;
+            return this.number == nt.number && this.spanEquals(nt);
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return this.type + "(start:" + this.start + ",end:" + this.end + ",line:"
+            + this.line + ",lastLine:" + lastLine + ",offset:" + this.offset
+            + ",number:'" + this.number + ")";
+    }
 }

@@ -71,4 +71,24 @@ public class StringToken extends ParsedToken {
     public StringType stringType() {
         return this.stringType;
     }
+
+    @Override
+    public boolean equals(final Object other) {
+        if (this == other) {
+            return true;
+        } else if (other instanceof StringToken) {
+            final StringToken st = (StringToken) other;
+            return this.stringType == st.stringType
+                && this.parsed.equals(st.parsed)
+                && this.spanEquals(st);
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return this.type + "(start:" + this.start + ",end:" + this.end + ",line:"
+            + this.line + ",lastLine:" + lastLine + ",offset:" + this.offset
+            + ",stringType:'" + this.stringType + ",parsed:'" + this.parsed + "')";
+    }
 }

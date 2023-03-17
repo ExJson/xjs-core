@@ -81,4 +81,22 @@ public class ParsedToken extends Token {
     public boolean isText(final String text) {
         return this.parsed().equals(text);
     }
+
+    @Override
+    public boolean equals(final Object other) {
+        if (this == other) {
+            return true;
+        } else if (other instanceof ParsedToken) {
+            final ParsedToken pt = (ParsedToken) other;
+            return this.parsed.equals(pt.parsed) && this.spanEquals(pt);
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return this.type + "(start:" + this.start + ",end:" + this.end + ",line:"
+            + this.line + ",lastLine:" + lastLine + ",offset:" + this.offset
+            + ",parsed:'" + this.parsed + "')";
+    }
 }

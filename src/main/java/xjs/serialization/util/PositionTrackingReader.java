@@ -243,6 +243,16 @@ public abstract class PositionTrackingReader implements Closeable {
     }
 
     /**
+     * Terminates this capture, effectively destroying any data captured.
+     */
+    public void invalidateCapture() {
+        if (this.capture != null) {
+            this.capture.setLength(0);
+        }
+        this.captureStart = -1;
+    }
+
+    /**
      * Skips all whitespace from the current point.
      *
      * @throws IOException If the underlying reader throws an exception.

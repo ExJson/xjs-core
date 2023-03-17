@@ -175,20 +175,23 @@ public class Tokenizer implements Closeable {
     }
 
     protected Token number(int i, final int l, final int o) throws IOException {
+        reader.startCapture();
         if (reader.current == '0') { // disallow octal number format
             reader.read();
             if (Character.isDigit(reader.current)) {
+                reader.invalidateCapture();
                 return word(i, l, o);
             } else if (reader.current == '.') {
                 reader.read();
                 if (!reader.isDigit()) {
+                    reader.invalidateCapture();
                     return new NumberToken(i, i + 2, l, o, 0);
                 }
             } else {
+                reader.invalidateCapture();
                 return new NumberToken(i, i + 1, l , o, 0);
             }
         }
-        reader.startCapture();
         if (reader.current == '-') {
             reader.read();
             if (!reader.isDigit()) {

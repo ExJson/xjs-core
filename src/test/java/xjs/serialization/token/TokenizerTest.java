@@ -21,7 +21,7 @@ public final class TokenizerTest {
     public void single_parsesLineComment() {
         final String reference = "// Hello, world!";
         assertEquals(
-            comment(reference, CommentStyle.LINE),
+            comment(reference, CommentStyle.LINE, "Hello, world!"),
             single(reference));
     }
 
@@ -29,7 +29,7 @@ public final class TokenizerTest {
     public void single_parsesHashComment() {
         final String reference = "# Hello, world!";
         assertEquals(
-            comment(reference, CommentStyle.HASH),
+            comment(reference, CommentStyle.HASH, "Hello, world!"),
             single(reference));
     }
 
@@ -37,7 +37,7 @@ public final class TokenizerTest {
     public void single_parseBlockComment() {
         final String reference = "/*\nHello\nworld!\n*/";
         assertEquals(
-            comment(reference, CommentStyle.BLOCK),
+            comment(reference, CommentStyle.BLOCK, "Hello\nworld!"),
             single(reference));
     }
 
@@ -45,7 +45,7 @@ public final class TokenizerTest {
     public void single_parsesDoubleQuote() {
         final String reference = "\"Hello, world!\"";
         assertEquals(
-            string(reference, StringType.DOUBLE),
+            string(reference, StringType.DOUBLE, "Hello, world!"),
             single(reference));
     }
 
@@ -53,7 +53,7 @@ public final class TokenizerTest {
     public void single_parsesSingleQuote() {
         final String reference = "'Hello, world!'";
         assertEquals(
-            string(reference, StringType.SINGLE),
+            string(reference, StringType.SINGLE, "Hello, world!"),
             single(reference));
     }
 
@@ -61,7 +61,7 @@ public final class TokenizerTest {
     public void single_parsesTripleQuote() {
         final String reference = "'''\nHello\nworld!\n'''";
         assertEquals(
-            string(reference, StringType.MULTI),
+            string(reference, StringType.MULTI, "Hello\nworld!"),
             single(reference));
     }
 
@@ -189,7 +189,7 @@ public final class TokenizerTest {
     public void single_skipsWhitespace() {
         final String reference = " \t \t \t 'Hello, world!'";
         assertEquals(
-            string(StringType.SINGLE, 7, reference.length()),
+            string(StringType.SINGLE, 7, reference.length(), "Hello, world!"),
             single(reference));
     }
 
@@ -305,16 +305,16 @@ public final class TokenizerTest {
         return token(type, 0, reference.length());
     }
 
-    private static Token comment(final String reference, final CommentStyle type) {
-        return new CommentToken(0, reference.length(), 0, lines(reference), 0, type, "todo");
+    private static Token comment(final String reference, final CommentStyle type, final String parsed) {
+        return new CommentToken(0, reference.length(), 0, lines(reference), 0, type, parsed);
     }
 
-    private static Token string(final String reference, final StringType type) {
-        return new StringToken(0, reference.length(), 0, lines(reference), 0, type, "todo");
+    private static Token string(final String reference, final StringType type, final String parsed) {
+        return new StringToken(0, reference.length(), 0, lines(reference), 0, type, parsed);
     }
 
-    private static Token string(final StringType type, final int s, final int e) {
-        return new StringToken(s, e, 0, s, type, "todo");
+    private static Token string(final StringType type, final int s, final int e, final String parsed) {
+        return new StringToken(s, e, 0, s, type, parsed);
     }
 
     private static Token token(final TokenType type, final int s, final int e) {

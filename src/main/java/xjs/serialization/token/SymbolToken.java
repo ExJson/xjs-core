@@ -92,4 +92,22 @@ public class SymbolToken extends Token {
     public boolean isSymbol(final char symbol) {
         return this.symbol == symbol;
     }
+
+    @Override
+    public boolean equals(final Object other) {
+        if (this == other) {
+            return true;
+        } else if (other instanceof SymbolToken) {
+            final SymbolToken st = (SymbolToken) other;
+            return this.symbol == st.symbol && this.spanEquals(st);
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return this.type + "(start:" + this.start + ",end:" + this.end + ",line:"
+            + this.line + ",lastLine:" + lastLine + ",offset:" + this.offset
+            + ",symbol:" + this.symbol + ")";
+    }
 }
