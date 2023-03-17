@@ -191,11 +191,10 @@ public class Tokenizer implements Closeable {
                 reader.invalidateCapture();
                 return new NumberToken(i, i + 1, l , o, 0);
             }
-        }
-        if (reader.current == '-') {
+        } else if (reader.current == '-') {
             reader.read();
             if (!reader.isDigit()) {
-                reader.endCapture();
+                reader.invalidateCapture();
                 return new SymbolToken(i, i + 1, l, o, '-');
             }
         }
