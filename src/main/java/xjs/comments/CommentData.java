@@ -234,9 +234,10 @@ public class CommentData {
         int s = 0;
         for (int i = 0; i < text.length() + 1; i++) {
             if (i == text.length() || text.charAt(i) == '\n') {
+                final int e = i > 0 && text.charAt(i - 1) == '\r' ? i - 1 : i;
                 out.append(style.getPrefix());
                 out.append(' ');
-                out.append(text, s, i);
+                out.append(text, s, e);
                 if (i != text.length()) {
                     this.nl(out, separator, level, eol);
                 }
@@ -261,11 +262,12 @@ public class CommentData {
         int s = 0;
         for (int i = 0; i < text.length() + 1; i++) {
             if (i == text.length() || text.charAt(i) == '\n') {
+                final int e = i > 0 && text.charAt(i - 1) == '\r' ? i - 1 : i;
                 if (s != 0) {
                     this.nl(out, separator, level, eol);
                 }
                 out.append(" * ");
-                out.append(text, s, i);
+                out.append(text, s, e);
                 s = i + 1;
             }
         }

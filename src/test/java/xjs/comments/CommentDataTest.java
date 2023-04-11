@@ -69,6 +69,22 @@ public final class CommentDataTest {
     }
 
     @Test
+    public void formatLine_handlesCarriageReturn() {
+        final String comment = "here's a comment\r\nwith multiple lines";
+        final String expected = "// here's a comment\n// with multiple lines";
+
+        assertEquals(expected, format(CommentStyle.LINE, comment));
+    }
+
+    @Test
+    public void formatBlock_handlesCarriageReturn() {
+        final String comment = "here's a comment\r\nwith multiple lines";
+        final String expected = "/*\n * here's a comment\n * with multiple lines\n */";
+
+        assertEquals(expected, format(CommentStyle.BLOCK, comment));
+    }
+
+    @Test
     public void formatIndented_doesNotIndent_singleLine_lineComment() {
         final String comment = "here's a comment";
         final String expected = "# here's a comment";
